@@ -1,5 +1,5 @@
 """Constants for the Heatzy component."""
-API_TIMEOUT = 10
+API_TIMEOUT = 30
 CFT_TEMP_H = "cft_tempH"
 CFT_TEMP_L = "cft_tempL"
 CONF_ALIAS = "dev_alias"
