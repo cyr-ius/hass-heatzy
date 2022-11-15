@@ -1,5 +1,5 @@
 """Constants for the Heatzy component."""
-API_TIMEOUT = 30
+API_TIMEOUT = 10
 CFT_TEMP_H = "cft_tempH"
 CFT_TEMP_L = "cft_tempL"
 CONF_ALIAS = "dev_alias"
@@ -9,11 +9,16 @@ CONF_LOCK = "lock_switch"
 CONF_MODE = "mode"
 CONF_MODEL = "product_name"
 CONF_ON_OFF = "on_off"
+CONF_TIMER_SWITCH = "timer_switch"
+CONF_DEROG_MODE = "derog_mode"
+CONF_DEROG_TIME = "derog_time"
+CONF_CUR_MODE = "cur_mode"
 CONF_PRODUCT_KEY = "product_key"
 CONF_VERSION = "wifi_soft_version"
 CUR_TEMP_H = "cur_tempH"
 CUR_TEMP_L = "cur_tempL"
 DEBOUNCE_COOLDOWN = 10
+FROST_TEMP = 7
 DOMAIN = "heatzy"
 ECO_TEMP_H = "eco_tempH"
 ECO_TEMP_L = "eco_tempL"
