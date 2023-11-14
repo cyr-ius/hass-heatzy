@@ -111,7 +111,7 @@ class HeatzyThermostat(CoordinatorEntity[HeatzyDataUpdateCoordinator], ClimateEn
         """Return hvac action ie. heat, cool mode."""
         action = (
             HVACAction.OFF
-            if self._attr.get(CONF_MODE) == self.HEATZY_STOP
+            if self._attr.get(CONF_MODE) in [self.HEATZY_STOP, "stop"]
             else HVACAction.HEATING
         )
         return action
@@ -123,7 +123,7 @@ class HeatzyThermostat(CoordinatorEntity[HeatzyDataUpdateCoordinator], ClimateEn
         if self._attr.get(CONF_TIMER_SWITCH) == 1:
             return HVACMode.AUTO
         # If preset mode is NONE set HVAC Mode to OFF
-        if self._attr.get(CONF_MODE) == self.HEATZY_STOP:
+        if self._attr.get(CONF_MODE) in [self.HEATZY_STOP, "stop"]:
             return HVACMode.OFF
         # otherwise set HVAC Mode to HEAT
         return HVACMode.HEAT
@@ -221,7 +221,7 @@ class HeatzyPiloteV2Thermostat(HeatzyThermostat):
     HEATZY_TO_HA_STATE = {"cft": PRESET_COMFORT, "eco": PRESET_ECO, "fro": PRESET_AWAY}
     HA_TO_HEATZY_STATE = {PRESET_COMFORT: 0, PRESET_ECO: 1, PRESET_AWAY: 2}
 
-    HEATZY_STOP = "stop"
+    HEATZY_STOP = 3
 
     async def async_turn_on(self) -> None:
         """Turn device on."""
@@ -317,8 +317,7 @@ class Glowv1Thermostat(HeatzyPiloteV2Thermostat):
     HA_TO_HEATZY_STATE = {PRESET_COMFORT: "cft", PRESET_ECO: "eco", PRESET_AWAY: "fro"}
 
     _attr_supported_features = (
-        ClimateEntityFeature.PRESET_MODE
-        | ClimateEntityFeature.TARGET_TEMPERATURE_RANGE
+        ClimateEntityFeature.PRESET_MODE | ClimateEntityFeature.TARGET_TEMPERATURE_RANGE
     )
 
     @property
@@ -472,8 +471,7 @@ class Bloomv1Thermostat(HeatzyPiloteV2Thermostat):
     """Bloom."""
 
     _attr_supported_features = (
-        ClimateEntityFeature.PRESET_MODE
-        | ClimateEntityFeature.TARGET_TEMPERATURE_RANGE
+        ClimateEntityFeature.PRESET_MODE | ClimateEntityFeature.TARGET_TEMPERATURE_RANGE
     )
 
     @property
