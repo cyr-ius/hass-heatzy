@@ -215,8 +215,12 @@ class HeatzyPiloteV2Thermostat(HeatzyThermostat):
     # TIMER_SWITCH = 1 is PROGRAM Mode
     # DEROG_MODE = 1 is VACATION Mode
 
+    # HEATZY_TO_HA_STATE = {"cft": PRESET_COMFORT, "eco": PRESET_ECO, "fro": PRESET_AWAY}
+    # HA_TO_HEATZY_STATE = {preset: name for (name, preset) in HEATZY_TO_HA_STATE.items()}
+
     HEATZY_TO_HA_STATE = {"cft": PRESET_COMFORT, "eco": PRESET_ECO, "fro": PRESET_AWAY}
-    HA_TO_HEATZY_STATE = {preset: name for (name, preset) in HEATZY_TO_HA_STATE.items()}
+    HA_TO_HEATZY_STATE = {PRESET_COMFORT: 0, PRESET_ECO: 1, PRESET_AWAY: 2}
+
     HEATZY_STOP = "stop"
 
     async def async_turn_on(self) -> None:

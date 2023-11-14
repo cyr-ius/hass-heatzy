@@ -33,7 +33,7 @@ async def async_setup_entry(
     coordinator = hass.data[DOMAIN][entry.entry_id]
     entities: list[LockSwitchEntity] = []
     for unique_id, device in coordinator.data.items():
-        if device.get(CONF_ATTR, {}).get(ATTR_LOCK_SWITCH):
+        if device.get(CONF_ATTR, {}).get(ATTR_LOCK_SWITCH) is not None:
             entities.append(LockSwitchEntity(coordinator, unique_id))
     async_add_entities(entities)
 
