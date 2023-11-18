@@ -56,6 +56,7 @@ from .const import (
     PILOTE_V2,
     PRESET_COMFORT_1,
     PRESET_COMFORT_2,
+    SAUTER,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -77,6 +78,8 @@ async def async_setup_entry(
             entities.append(Glowv1Thermostat(coordinator, unique_id))
         elif product_key in BLOOM:
             entities.append(Bloomv1Thermostat(coordinator, unique_id))
+        elif product_key in SAUTER:
+            entities.append(SauterThermostat(coordinator, unique_id))
     async_add_entities(entities)
 
 
@@ -539,7 +542,7 @@ class Bloomv1Thermostat(HeatzyPiloteV2Thermostat):
                 _LOGGER.error("Error to set temperature: %s", error)
 
 
-class Sauter(HeatzyPiloteV2Thermostat):
+class SauterThermostat(HeatzyPiloteV2Thermostat):
     """Sauter."""
 
     HEATZY_TO_HA_STATE = {

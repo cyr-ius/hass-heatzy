@@ -42,4 +42,4 @@ GLOW = [
     "bb10d064f8de409db633b750faa22a52",  # ONYX
 ]
 BLOOM = ["480253852d574f11b2d7fbf4460d7a41"]
-SOC_3 = ["46409c7f29d4411c85a3a46e5ee3703e"]  # Sauter Pilote_Soc_C3
+SAUTER = ["46409c7f29d4411c85a3a46e5ee3703e"]  # Sauter Pilote_Soc_C3
