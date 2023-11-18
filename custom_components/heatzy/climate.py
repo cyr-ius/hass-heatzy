@@ -5,6 +5,7 @@ import logging
 from typing import Any
 
 from heatzypy.exception import HeatzyException
+
 from homeassistant.components.climate import (
     ATTR_TARGET_TEMP_HIGH,
     ATTR_TARGET_TEMP_LOW,
@@ -53,6 +54,8 @@ from .const import (
     GLOW,
     PILOTE_V1,
     PILOTE_V2,
+    PRESET_COMFORT_1,
+    PRESET_COMFORT_2,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -226,8 +229,8 @@ class HeatzyPiloteV2Thermostat(HeatzyThermostat):
     async def async_turn_on(self) -> None:
         """Turn device on."""
         try:
-            if (
-                self._attr.get(CONF_DEROG_MODE) == 1
+            if (  # DEROG MODE - 1: VACATION , 2: BOOST
+                self._attr.get(CONF_DEROG_MODE) > 0
                 or self._attr.get(CONF_TIMER_SWITCH) == 1
             ):
                 await self.coordinator.api.async_control_device(
@@ -252,8 +255,8 @@ class HeatzyPiloteV2Thermostat(HeatzyThermostat):
     async def async_turn_off(self) -> None:
         """Turn device on."""
         try:
-            if (
-                self._attr.get(CONF_DEROG_MODE) == 1
+            if (  # DEROG MODE - 1: VACATION , 2: BOOST
+                self._attr.get(CONF_DEROG_MODE) > 0
                 or self._attr.get(CONF_TIMER_SWITCH) == 1
             ):
                 await self.coordinator.api.async_control_device(
@@ -317,8 +320,7 @@ class Glowv1Thermostat(HeatzyPiloteV2Thermostat):
     HA_TO_HEATZY_STATE = {PRESET_COMFORT: "cft", PRESET_ECO: "eco", PRESET_AWAY: "fro"}
 
     _attr_supported_features = (
-        ClimateEntityFeature.PRESET_MODE
-        | ClimateEntityFeature.TARGET_TEMPERATURE_RANGE
+        ClimateEntityFeature.PRESET_MODE | ClimateEntityFeature.TARGET_TEMPERATURE_RANGE
     )
 
     @property
@@ -472,8 +474,7 @@ class Bloomv1Thermostat(HeatzyPiloteV2Thermostat):
     """Bloom."""
 
     _attr_supported_features = (
-        ClimateEntityFeature.PRESET_MODE
-        | ClimateEntityFeature.TARGET_TEMPERATURE_RANGE
+        ClimateEntityFeature.PRESET_MODE | ClimateEntityFeature.TARGET_TEMPERATURE_RANGE
     )
 
     @property
@@ -536,3 +537,22 @@ class Bloomv1Thermostat(HeatzyPiloteV2Thermostat):
                 await self.coordinator.async_request_refresh()
             except HeatzyException as error:
                 _LOGGER.error("Error to set temperature: %s", error)
+
+
+class Sauter(HeatzyPiloteV2Thermostat):
+    """Sauter."""
+
+    HEATZY_TO_HA_STATE = {
+        "cft": PRESET_COMFORT,
+        "eco": PRESET_ECO,
+        "fro": PRESET_AWAY,
+        "cft1": PRESET_COMFORT_1,
+        "cft2": PRESET_COMFORT_2,
+    }
+    HA_TO_HEATZY_STATE = {
+        PRESET_COMFORT: 0,
+        PRESET_ECO: 1,
+        PRESET_AWAY: 2,
+        PRESET_COMFORT_1: "cft1",
+        PRESET_COMFORT_2: "cft2",
+    }

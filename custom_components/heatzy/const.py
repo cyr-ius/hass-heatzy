@@ -27,18 +27,19 @@ ECO_TEMP_H = "eco_tempH"
 ECO_TEMP_L = "eco_tempL"
 FROST_TEMP = 7
 PLATFORMS = ["climate", "switch"]
+PRESET_COMFORT_1 = "comfort_1"
+PRESET_COMFORT_2 = "comfort_2"
 
 PILOTE_V1 = ["9420ae048da545c88fc6274d204dd25f"]
 PILOTE_V2 = [
     "51d16c22a5f74280bc3cfe9ebcdc6402",
     "b9a67b6ce24b437d9794103fd317e627",
     "4fc968a21e7243b390e9ede6f1c6465d",
-    "46409c7f29d4411c85a3a46e5ee3703e",
     "b8c6657b66c34148b4dee64d615cefc7",  # ELEC_PRO_SOC
 ]
 GLOW = [
     "2fd622e45283470f9e27e8e6167d7533",
     "bb10d064f8de409db633b750faa22a52",  # ONYX
-    "46409c7f29d4411c85a3a46e5ee3703e",
 ]
 BLOOM = ["480253852d574f11b2d7fbf4460d7a41"]
+SOC_3 = ["46409c7f29d4411c85a3a46e5ee3703e"]  # Sauter Pilote_Soc_C3
