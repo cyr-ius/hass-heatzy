@@ -479,6 +479,7 @@ class Bloomv1Thermostat(HeatzyPiloteV2Thermostat):
     _attr_supported_features = (
         ClimateEntityFeature.PRESET_MODE | ClimateEntityFeature.TARGET_TEMPERATURE_RANGE
     )
+    _attr_target_temperature_step = 1
 
     @property
     def current_temperature(self) -> float:
@@ -529,13 +530,18 @@ class Bloomv1Thermostat(HeatzyPiloteV2Thermostat):
         if (temp_eco := kwargs.get(ATTR_TARGET_TEMP_LOW)) and (
             temp_cft := kwargs.get(ATTR_TARGET_TEMP_HIGH)
         ):
-            self._attr[CONF_ECO_TEMP] = temp_eco
-            self._attr[CONF_COM_TEMP] = temp_cft
+            self._attr[CONF_ECO_TEMP] = int(temp_eco)
+            self._attr[CONF_COM_TEMP] = int(temp_cft)
 
             try:
                 await self.coordinator.api.async_control_device(
                     self.unique_id,
-                    {CONF_ATTRS: {CONF_COM_TEMP: temp_cft, CONF_ECO_TEMP: temp_eco}},
+                    {
+                        CONF_ATTRS: {
+                            CONF_COM_TEMP: self._attr[CONF_COM_TEMP],
+                            CONF_ECO_TEMP: self._attr[CONF_ECO_TEMP],
+                        }
+                    },
                 )
                 await self.coordinator.async_request_refresh()
             except HeatzyException as error:
