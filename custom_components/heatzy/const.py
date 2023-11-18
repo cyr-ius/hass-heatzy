@@ -27,8 +27,8 @@ ECO_TEMP_H = "eco_tempH"
 ECO_TEMP_L = "eco_tempL"
 FROST_TEMP = 7
 PLATFORMS = ["climate", "switch"]
-PRESET_COMFORT_1 = "comfort_1"
-PRESET_COMFORT_2 = "comfort_2"
+PRESET_COMFORT_1 = "Comfort 1"
+PRESET_COMFORT_2 = "Comfort 2"
 
 PILOTE_V1 = ["9420ae048da545c88fc6274d204dd25f"]
 PILOTE_V2 = [

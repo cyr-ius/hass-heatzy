@@ -545,6 +545,14 @@ class Bloomv1Thermostat(HeatzyPiloteV2Thermostat):
 class SauterThermostat(HeatzyPiloteV2Thermostat):
     """Sauter."""
 
+    _attr_preset_modes = [
+        PRESET_COMFORT,
+        PRESET_ECO,
+        PRESET_AWAY,
+        PRESET_COMFORT_1,
+        PRESET_COMFORT_2,
+    ]
+
     HEATZY_TO_HA_STATE = {
         "cft": PRESET_COMFORT,
         "eco": PRESET_ECO,
