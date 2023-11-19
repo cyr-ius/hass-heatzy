@@ -1,10 +1,10 @@
 """Coordinator Heatzy platform."""
 from __future__ import annotations
 
-import logging
+import asyncio
 from datetime import timedelta
+import logging
 
-import async_timeout
 from heatzypy import HeatzyClient
 from heatzypy.exception import AuthenticationFailed, HeatzyException
 
@@ -23,7 +23,7 @@ SCAN_INTERVAL = 60
 
 
 class HeatzyDataUpdateCoordinator(DataUpdateCoordinator):
-    """Define an object to fetch datas."""
+    """Define an object to fetch data."""
 
     def __init__(self, hass: HomeAssistant, entry: ConfigEntry) -> None:
         """Class to manage fetching Heatzy data API."""
@@ -45,7 +45,7 @@ class HeatzyDataUpdateCoordinator(DataUpdateCoordinator):
     async def _async_update_data(self) -> dict:
         """Update data."""
         try:
-            async with async_timeout.timeout(API_TIMEOUT):
+            async with asyncio.timeout(API_TIMEOUT):
                 return await self.api.async_get_devices()
         except AuthenticationFailed as error:
             raise ConfigEntryAuthFailed from error
