@@ -567,9 +567,9 @@ class SauterThermostat(HeatzyPiloteV2Thermostat):
         "cft2": PRESET_COMFORT_2,
     }
     HA_TO_HEATZY_STATE = {
-        PRESET_COMFORT: 0,
-        PRESET_ECO: 1,
-        PRESET_AWAY: 2,
+        PRESET_COMFORT: "cft",
+        PRESET_ECO: "eco",
+        PRESET_AWAY: "fro",
         PRESET_COMFORT_1: "cft1",
         PRESET_COMFORT_2: "cft2",
     }
