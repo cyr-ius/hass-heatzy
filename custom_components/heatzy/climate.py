@@ -4,8 +4,9 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-import voluptuous as vol
 from heatzypy.exception import HeatzyException
+import voluptuous as vol
+
 from homeassistant.components.climate import (
     ATTR_TARGET_TEMP_HIGH,
     ATTR_TARGET_TEMP_LOW,
@@ -22,8 +23,7 @@ from homeassistant.components.climate import (
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_DELAY, UnitOfTemperature
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers import config_validation as cv
-from homeassistant.helpers import entity_platform
+from homeassistant.helpers import config_validation as cv, entity_platform
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
@@ -118,7 +118,7 @@ class HeatzyThermostat(CoordinatorEntity[HeatzyDataUpdateCoordinator], ClimateEn
         self._attr_unique_id = unique_id
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, unique_id)},
-            manufacturer=DOMAIN,
+            manufacturer=DOMAIN.capitalize(),
             sw_version=coordinator.data[unique_id].get(CONF_VERSION),
             model=coordinator.data[unique_id].get(CONF_MODEL),
             name=coordinator.data[unique_id][CONF_ALIAS],
@@ -175,14 +175,10 @@ class HeatzyThermostat(CoordinatorEntity[HeatzyDataUpdateCoordinator], ClimateEn
 
     async def async_vacation_mode(self, delay: int) -> None:
         """Service Vacation Mode."""
-        await self._async_derog_mode(1, delay)
+        raise NotImplementedError()
 
     async def async_boost_mode(self, delay: int) -> None:
         """Service Boost Mode."""
-        await self._async_derog_mode(2, delay)
-
-    async def _async_derog_mode(self, mode: int, delay: int) -> None:
-        """Derog mode function."""
         raise NotImplementedError()
 
     @callback
@@ -226,7 +222,7 @@ class HeatzyPiloteV1Thermostat(HeatzyThermostat):
             )
             await self.coordinator.async_request_refresh()
         except HeatzyException as error:
-            _LOGGER.error("Error to turn off : %s (%s)", self.name, error)
+            _LOGGER.error("Error while turn off (%s)", error)
 
     async def async_set_preset_mode(self, preset_mode: str) -> None:
         """Set new preset mode."""
@@ -237,24 +233,19 @@ class HeatzyPiloteV1Thermostat(HeatzyThermostat):
             )
             await self.coordinator.async_request_refresh()
         except HeatzyException as error:
-            _LOGGER.error("Set preset mode (%s) %s (%s)", preset_mode, error, self.name)
+            _LOGGER.error("Error while preset mode: %s (%s)", preset_mode, error)
 
 
 class HeatzyPiloteV2Thermostat(HeatzyThermostat):
     """Heaty Pilote v2."""
 
-    _attr_preset_modes = [PRESET_COMFORT, PRESET_ECO, PRESET_AWAY, PRESET_BOOST]
-
     # TIMER_SWITCH = 1 is PROGRAM Mode
-    # DEROG_MODE = 1 is VACATION Mode , 2 is BOOST Mode
-
+    # DEROG_MODE = 1 is VACATION Mode
+    # DEROG_MODE = 2 is BOOST Mode
     HEATZY_TO_HA_STATE = {"cft": PRESET_COMFORT, "eco": PRESET_ECO, "fro": PRESET_AWAY}
-    HA_TO_HEATZY_STATE = {preset: name for (name, preset) in HEATZY_TO_HA_STATE.items()}
-
-    # HEATZY_TO_HA_STATE = {"cft": PRESET_COMFORT, "eco": PRESET_ECO, "fro": PRESET_AWAY}
-    # HA_TO_HEATZY_STATE = {PRESET_COMFORT: 0, PRESET_ECO: 1, PRESET_AWAY: 2}
-
+    HA_TO_HEATZY_STATE = {PRESET_COMFORT: 0, PRESET_ECO: 1, PRESET_AWAY: 2}
     HEATZY_STOP = "stop"
+    _attr_preset_modes = [PRESET_COMFORT, PRESET_ECO, PRESET_AWAY, PRESET_BOOST]
 
     @property
     def preset_mode(self) -> str | None:
@@ -287,12 +278,12 @@ class HeatzyPiloteV2Thermostat(HeatzyThermostat):
             )
             await self.coordinator.async_request_refresh()
         except HeatzyException as error:
-            _LOGGER.error("Error Turn on %s (%s)", self.name, error)
+            _LOGGER.error("Error to turn on (%s)", error)
 
     async def async_turn_off(self) -> None:
         """Turn device on."""
         try:
-            if (  # DEROG MODE - 1: VACATION , 2: BOOST
+            if (
                 self._attr.get(CONF_DEROG_MODE) > 0
                 or self._attr.get(CONF_TIMER_SWITCH) == 1
             ):
@@ -313,11 +304,10 @@ class HeatzyPiloteV2Thermostat(HeatzyThermostat):
             )
             await self.coordinator.async_request_refresh()
         except HeatzyException as error:
-            _LOGGER.error("Error Turn on %s (%s)", self.name, error)
+            _LOGGER.error("Error to turn off (%s)", error)
 
     async def async_turn_auto(self) -> None:
         """Turn device to Program mode."""
-        # For PROGRAM Mode we have to set TIMER_SWITCH = 1, but we also ensure VACATION Mode is OFF
         try:
             await self.coordinator.api.async_control_device(
                 self.unique_id,
@@ -331,7 +321,7 @@ class HeatzyPiloteV2Thermostat(HeatzyThermostat):
             )
             await self.coordinator.async_request_refresh()
         except HeatzyException as error:
-            _LOGGER.error("Error to turn off : %s (%s)", self.name, error)
+            _LOGGER.error("Error to turn auto (%s)", error)
 
     async def async_set_preset_mode(self, preset_mode: str) -> None:
         """Set new preset mode."""
@@ -348,12 +338,15 @@ class HeatzyPiloteV2Thermostat(HeatzyThermostat):
             await self.coordinator.api.async_control_device(self.unique_id, config)
             await self.coordinator.async_request_refresh()
         except HeatzyException as error:
-            _LOGGER.error(
-                "Error while setting preset mode (%s) %s (%s)",
-                preset_mode,
-                error,
-                self.name,
-            )
+            _LOGGER.error("Error to set preset mode: %s (%s)", preset_mode, error)
+
+    async def async_vacation_mode(self, delay: int) -> None:
+        """Service Vacation Mode."""
+        await self._async_derog_mode(1, delay)
+
+    async def async_boost_mode(self, delay: int) -> None:
+        """Service Boost Mode."""
+        await self._async_derog_mode(2, delay)
 
     async def _async_derog_mode(self, mode: int, delay: int) -> None:
         """Derog for boost and vacation mode."""
@@ -367,9 +360,7 @@ class HeatzyPiloteV2Thermostat(HeatzyThermostat):
             await self.coordinator.api.async_control_device(self.unique_id, config)
             await self.coordinator.async_request_refresh()
         except HeatzyException as error:
-            _LOGGER.error(
-                "Error while setting derog mode %s %s (%s)", mode, error, self.name
-            )
+            _LOGGER.error("Error to set derog mode: %s (%s)", mode, error)
 
 
 class Glowv1Thermostat(HeatzyPiloteV2Thermostat):
@@ -379,7 +370,7 @@ class Glowv1Thermostat(HeatzyPiloteV2Thermostat):
     # DEROG_MODE = 2 is VACATION Mode
     HEATZY_TO_HA_STATE = {0: PRESET_COMFORT, 1: PRESET_ECO, 2: PRESET_AWAY}
     HA_TO_HEATZY_STATE = {PRESET_COMFORT: "cft", PRESET_ECO: "eco", PRESET_AWAY: "fro"}
-
+    _attr_preset_modes = [PRESET_COMFORT, PRESET_ECO, PRESET_AWAY]
     _attr_supported_features = (
         ClimateEntityFeature.PRESET_MODE | ClimateEntityFeature.TARGET_TEMPERATURE_RANGE
     )
@@ -489,7 +480,7 @@ class Glowv1Thermostat(HeatzyPiloteV2Thermostat):
             )
             await self.coordinator.async_request_refresh()
         except HeatzyException as error:
-            _LOGGER.error("Error to turn off : %s", error)
+            _LOGGER.error("Error to turn auto : %s", error)
 
     async def async_set_temperature(self, **kwargs: Any) -> None:
         """Set new target temperature."""
@@ -511,7 +502,7 @@ class Glowv1Thermostat(HeatzyPiloteV2Thermostat):
                 )
                 await self.coordinator.async_request_refresh()
             except HeatzyException as error:
-                _LOGGER.error("Error to set temperature: %s", error)
+                _LOGGER.error("Error to set temperature (%s)", error)
 
     async def async_set_preset_mode(self, preset_mode: str) -> None:
         """Set new preset mode."""
@@ -528,12 +519,13 @@ class Glowv1Thermostat(HeatzyPiloteV2Thermostat):
             await self.coordinator.api.async_control_device(self.unique_id, config)
             await self.coordinator.async_request_refresh()
         except HeatzyException as error:
-            _LOGGER.error("Set preset mode (%s) %s (%s)", preset_mode, error, self.name)
+            _LOGGER.error("Error to set preset mode: %s (%s)", preset_mode, error)
 
 
 class Bloomv1Thermostat(HeatzyPiloteV2Thermostat):
     """Bloom."""
 
+    _attr_preset_modes = [PRESET_COMFORT, PRESET_ECO, PRESET_AWAY]
     _attr_supported_features = (
         ClimateEntityFeature.PRESET_MODE | ClimateEntityFeature.TARGET_TEMPERATURE_RANGE
     )
@@ -603,7 +595,7 @@ class Bloomv1Thermostat(HeatzyPiloteV2Thermostat):
                 )
                 await self.coordinator.async_request_refresh()
             except HeatzyException as error:
-                _LOGGER.error("Error to set temperature: %s", error)
+                _LOGGER.error("Error to set temperature (%s)", error)
 
 
 class SauterThermostat(HeatzyPiloteV2Thermostat):
