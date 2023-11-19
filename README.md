@@ -1,18 +1,19 @@
 # Heatzy
-This a *custom component* for [Home Assistant](https://www.home-assistant.io/). 
+
+This a _custom component_ for [Home Assistant](https://www.home-assistant.io/).
 
 With Heatzy, control all your heating systems from anywhere, via your smartphone
 
 There is currently support for the following device types within Home Assistant:
-* [Climate sensor](#sensor) with preset mode and automatic mode
-* [Switch sensor](#lock) lock your heatzy module
 
-
+- [Climate sensor](#sensor) with preset mode and automatic mode
+- [Switch sensor](#lock) lock your heatzy module
 
 ![GitHub release](https://img.shields.io/github/release/Cyr-ius/hass-heatzy)
 [![hacs_badge](https://img.shields.io/badge/HACS-Default-orange.svg)](https://github.com/hacs/integration)
 
 # Supported Devices
+
 - Heatzy Pilot 1 & 2
 - Acova Heatzy Elec'Pro
 - Glow by Heatzy
