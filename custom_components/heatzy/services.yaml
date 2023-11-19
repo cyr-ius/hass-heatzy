@@ -1,0 +1,40 @@
+---
+boost:
+  description: Start a boost
+  target:
+    entity:
+      integration: heatzy
+      domain: climate
+  fields:
+    delay:
+      required: true
+      name: Delay
+      description: Boost delay (minutes)
+      selector:
+        select:
+          translation_key: "boost_delay"
+          mode: dropdown
+          options:
+            - 30
+            - 60
+            - 120
+
+vacation:
+  description: Start a vacation
+  target:
+    entity:
+      integration: heatzy
+      domain: climate
+  fields:
+    delay:
+      required: true
+      name: Delay
+      description: Vacation delay (minutes)
+      selector:
+        select:
+          translation_key: "vacation_delay"
+          mode: dropdown
+          options:
+            - 30
+            - 60
+            - 120
