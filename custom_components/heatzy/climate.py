@@ -4,9 +4,8 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from heatzypy.exception import HeatzyException
 import voluptuous as vol
-
+from heatzypy.exception import HeatzyException
 from homeassistant.components.climate import (
     ATTR_TARGET_TEMP_HIGH,
     ATTR_TARGET_TEMP_LOW,
@@ -23,7 +22,8 @@ from homeassistant.components.climate import (
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_DELAY, UnitOfTemperature
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers import config_validation as cv, entity_platform
+from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers import entity_platform
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
@@ -336,13 +336,13 @@ class HeatzyPiloteV2Thermostat(HeatzyThermostat):
     async def async_set_preset_mode(self, preset_mode: str) -> None:
         """Set new preset mode."""
         if preset_mode == PRESET_BOOST:
-            return self.async_boost_mode(60)
+            return await self.async_boost_mode(60)
 
         config: dict[str, Any] = {
             CONF_ATTRS: {CONF_MODE: self.HA_TO_HEATZY_STATE.get(preset_mode)}
         }
         # If in VACATION mode then as well as setting preset mode we also stop the VACATION mode
-        if self._attr.get(CONF_DEROG_MODE) == 1:
+        if self._attr.get(CONF_DEROG_MODE) > 0:
             config[CONF_ATTRS].update({CONF_DEROG_MODE: 0, CONF_DEROG_TIME: 0})
         try:
             await self.coordinator.api.async_control_device(self.unique_id, config)
