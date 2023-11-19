@@ -4,7 +4,6 @@ from __future__ import annotations
 import logging
 
 from heatzypy.exception import HeatzyException
-
 from homeassistant.components.switch import SwitchEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
@@ -13,15 +12,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from . import HeatzyDataUpdateCoordinator
-from .const import (
-    ATTR_LOCK_SWITCH,
-    CONF_ATTR,
-    CONF_ATTRS,
-    CONF_LOCK,
-    CONF_PRODUCT_KEY,
-    DOMAIN,
-    PILOTE_V2,
-)
+from .const import ATTR_LOCK_SWITCH, CONF_ATTR, CONF_ATTRS, CONF_LOCK, DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
