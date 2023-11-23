@@ -4,9 +4,8 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from heatzypy.exception import HeatzyException
 import voluptuous as vol
-
+from heatzypy.exception import HeatzyException
 from homeassistant.components.climate import (
     ATTR_TARGET_TEMP_HIGH,
     ATTR_TARGET_TEMP_LOW,
@@ -23,7 +22,8 @@ from homeassistant.components.climate import (
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_DELAY, UnitOfTemperature
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers import config_validation as cv, entity_platform
+from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers import entity_platform
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
@@ -36,6 +36,7 @@ from .const import (
     CONF_ALIAS,
     CONF_ATTR,
     CONF_ATTRS,
+    CONF_CFT_TEMP,
     CONF_COM_TEMP,
     CONF_CUR_MODE,
     CONF_CUR_TEMP,
@@ -588,7 +589,7 @@ class Bloomv1Thermostat(HeatzyPiloteV2Thermostat):
                     self.unique_id,
                     {
                         CONF_ATTRS: {
-                            CONF_COM_TEMP: self._attr[CONF_COM_TEMP],
+                            CONF_CFT_TEMP: self._attr[CONF_COM_TEMP],
                             CONF_ECO_TEMP: self._attr[CONF_ECO_TEMP],
                         }
                     },
