@@ -37,7 +37,6 @@ from .const import (
     CONF_ATTR,
     CONF_ATTRS,
     CONF_CFT_TEMP,
-    CONF_COM_TEMP,
     CONF_CUR_MODE,
     CONF_CUR_TEMP,
     CONF_DEROG_MODE,
@@ -540,7 +539,7 @@ class Bloomv1Thermostat(HeatzyPiloteV2Thermostat):
     @property
     def target_temperature_high(self) -> float:
         """Return comfort temperature."""
-        return self._attr.get(CONF_COM_TEMP)
+        return self._attr.get(CONF_CFT_TEMP)
 
     @property
     def target_temperature_low(self) -> float:
@@ -582,14 +581,14 @@ class Bloomv1Thermostat(HeatzyPiloteV2Thermostat):
             temp_cft := kwargs.get(ATTR_TARGET_TEMP_HIGH)
         ):
             self._attr[CONF_ECO_TEMP] = int(temp_eco)
-            self._attr[CONF_COM_TEMP] = int(temp_cft)
+            self._attr[CONF_CFT_TEMP] = int(temp_cft)
 
             try:
                 await self.coordinator.api.async_control_device(
                     self.unique_id,
                     {
                         CONF_ATTRS: {
-                            CONF_CFT_TEMP: self._attr[CONF_COM_TEMP],
+                            CONF_CFT_TEMP: self._attr[CONF_CFT_TEMP],
                             CONF_ECO_TEMP: self._attr[CONF_ECO_TEMP],
                         }
                     },
