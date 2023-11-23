@@ -21,6 +21,11 @@ There is currently support for the following device types within Home Assistant:
 - Bloom by Heatzy
 - Sauter Orosi
 
+## Services
+
+- Boost Service with set duration
+- Vacation Service with set duration
+
 ## Configuration
 
 Add Heatzy module via HACS
