@@ -31,7 +31,9 @@ vacation:
       required: true
       name: Delay
       description: Vacation delay (days)
-      number:
-        unit_of_measurement: "days"
-        min: 1
-        max: 30
+      selector:
+        number:
+          mode: slider
+          unit_of_measurement: "days"
+          min: 1
+          max: 30
