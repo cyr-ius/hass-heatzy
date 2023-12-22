@@ -4,8 +4,9 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-import voluptuous as vol
 from heatzypy.exception import HeatzyException
+import voluptuous as vol
+
 from homeassistant.components.climate import (
     ATTR_TARGET_TEMP_HIGH,
     ATTR_TARGET_TEMP_LOW,
@@ -22,8 +23,7 @@ from homeassistant.components.climate import (
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_DELAY, UnitOfTemperature
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers import config_validation as cv
-from homeassistant.helpers import entity_platform
+from homeassistant.helpers import config_validation as cv, entity_platform
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
@@ -42,6 +42,7 @@ from .const import (
     CONF_DEROG_MODE,
     CONF_DEROG_TIME,
     CONF_ECO_TEMP,
+    CONF_IS_ONLINE,
     CONF_MODE,
     CONF_MODEL,
     CONF_ON_OFF,
@@ -124,6 +125,7 @@ class HeatzyThermostat(CoordinatorEntity[HeatzyDataUpdateCoordinator], ClimateEn
             name=coordinator.data[unique_id][CONF_ALIAS],
         )
         self._attr = coordinator.data[unique_id].get(CONF_ATTR, {})
+        self._attr_available = coordinator.data[unique_id].get(CONF_IS_ONLINE)
 
     @property
     def hvac_action(self) -> HVACAction:
@@ -185,6 +187,7 @@ class HeatzyThermostat(CoordinatorEntity[HeatzyDataUpdateCoordinator], ClimateEn
     def _handle_coordinator_update(self) -> None:
         """Handle updated data from the coordinator."""
         self._attr = self.coordinator.data[self.unique_id].get(CONF_ATTR, {})
+        self._attr_available = self.coordinator.data[self.unique_id].get(CONF_IS_ONLINE)
         self.async_write_ha_state()
 
 
