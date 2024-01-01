@@ -4,6 +4,7 @@ from __future__ import annotations
 import logging
 
 from heatzypy.exception import HeatzyException
+
 from homeassistant.components.switch import SwitchEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
@@ -47,7 +48,11 @@ class LockSwitchEntity(CoordinatorEntity[HeatzyDataUpdateCoordinator], SwitchEnt
     @property
     def is_on(self) -> bool:
         """Return true if switch is on."""
-        return self.coordinator.data[self.unique_id].get(CONF_ATTR, {}).get(CONF_LOCK)
+        return (
+            self.coordinator.data.get(self.unique_id, {})
+            .get(CONF_ATTR, {})
+            .get(CONF_LOCK)
+        )
 
     async def async_turn_on(self) -> None:
         """Turn the entity on."""

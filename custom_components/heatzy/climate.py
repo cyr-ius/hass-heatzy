@@ -125,7 +125,7 @@ class HeatzyThermostat(CoordinatorEntity[HeatzyDataUpdateCoordinator], ClimateEn
             name=coordinator.data[unique_id][CONF_ALIAS],
         )
         self._attr = coordinator.data[unique_id].get(CONF_ATTR, {})
-        self._attr_available = coordinator.data[unique_id].get(CONF_IS_ONLINE)
+        self._attr_available = coordinator.data[unique_id].get(CONF_IS_ONLINE, True)
 
     @property
     def hvac_action(self) -> HVACAction:
@@ -186,8 +186,11 @@ class HeatzyThermostat(CoordinatorEntity[HeatzyDataUpdateCoordinator], ClimateEn
     @callback
     def _handle_coordinator_update(self) -> None:
         """Handle updated data from the coordinator."""
-        self._attr = self.coordinator.data[self.unique_id].get(CONF_ATTR, {})
-        self._attr_available = self.coordinator.data[self.unique_id].get(CONF_IS_ONLINE)
+        _LOGGER.debug(self.coordinator.data)
+        self._attr = self.coordinator.data.get(self.unique_id, {}).get(CONF_ATTR, {})
+        self._attr_available = self.coordinator.data.get(self.unique_id, {}).get(
+            CONF_IS_ONLINE, True
+        )
         self.async_write_ha_state()
 
 
