@@ -3,9 +3,13 @@ from __future__ import annotations
 
 import logging
 
-from heatzypy import HeatzyClient
-from heatzypy.exception import AuthenticationFailed, HeatzyException, HttpRequestFailed
 import voluptuous as vol
+from wsheatzypy import HeatzyClient
+from wsheatzypy.exception import (
+    AuthenticationFailed,
+    HeatzyException,
+    HttpRequestFailed,
+)
 
 from homeassistant import config_entries
 from homeassistant.const import CONF_PASSWORD, CONF_USERNAME

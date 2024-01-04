@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import logging
 
-from heatzypy.exception import HeatzyException
+from wsheatzypy.exception import HeatzyException
 
 from homeassistant.components.switch import SwitchEntity
 from homeassistant.config_entries import ConfigEntry
