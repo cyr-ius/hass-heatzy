@@ -5,8 +5,6 @@ import logging
 from typing import Any
 
 import voluptuous as vol
-from wsheatzypy.exception import HeatzyException
-
 from homeassistant.components.climate import (
     ATTR_TARGET_TEMP_HIGH,
     ATTR_TARGET_TEMP_LOW,
@@ -23,10 +21,12 @@ from homeassistant.components.climate import (
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_DELAY, UnitOfTemperature
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers import config_validation as cv, entity_platform
+from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers import entity_platform
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
+from wsheatzypy.exception import HeatzyException
 
 from . import HeatzyDataUpdateCoordinator
 from .const import (
@@ -215,7 +215,7 @@ class HeatzyPiloteV1Thermostat(HeatzyThermostat):
         """Turn device to Program mode."""
         # For PROGRAM Mode we have to set TIMER_SWITCH = 1, but we also ensure VACATION Mode is OFF
         try:
-            await self.coordinator.api.async_control_event(
+            await self.coordinator.api.websocket.async_control(
                 self.unique_id,
                 {
                     "raw": {
@@ -231,7 +231,7 @@ class HeatzyPiloteV1Thermostat(HeatzyThermostat):
     async def async_set_preset_mode(self, preset_mode: str) -> None:
         """Set new preset mode."""
         try:
-            await self.coordinator.api.async_control_event(
+            await self.coordinator.api.websocket.async_control(
                 self.unique_id,
                 {"raw": self.HA_TO_HEATZY_STATE.get(preset_mode)},
             )
@@ -264,7 +264,7 @@ class HeatzyPiloteV2Thermostat(HeatzyThermostat):
                 self._attr.get(CONF_DEROG_MODE) > 0
                 or self._attr.get(CONF_TIMER_SWITCH) == 1
             ):
-                await self.coordinator.api.async_control_event(
+                await self.coordinator.api.websocket.async_control(
                     self.unique_id,
                     {
                         CONF_ATTRS: {
@@ -274,7 +274,7 @@ class HeatzyPiloteV2Thermostat(HeatzyThermostat):
                         }
                     },
                 )
-            await self.coordinator.api.async_control_event(
+            await self.coordinator.api.websocket.async_control(
                 self.unique_id,
                 {CONF_ATTRS: {CONF_MODE: self.HA_TO_HEATZY_STATE[PRESET_COMFORT]}},
             )
@@ -288,7 +288,7 @@ class HeatzyPiloteV2Thermostat(HeatzyThermostat):
                 self._attr.get(CONF_DEROG_MODE) > 0
                 or self._attr.get(CONF_TIMER_SWITCH) == 1
             ):
-                await self.coordinator.api.async_control_event(
+                await self.coordinator.api.websocket.async_control(
                     self.unique_id,
                     {
                         CONF_ATTRS: {
@@ -298,7 +298,7 @@ class HeatzyPiloteV2Thermostat(HeatzyThermostat):
                         }
                     },
                 )
-            await self.coordinator.api.async_control_event(
+            await self.coordinator.api.websocket.async_control(
                 self.unique_id,
                 {CONF_ATTRS: {CONF_MODE: self.HEATZY_STOP}},
             )
@@ -308,7 +308,7 @@ class HeatzyPiloteV2Thermostat(HeatzyThermostat):
     async def async_turn_auto(self) -> None:
         """Turn device to Program mode."""
         try:
-            await self.coordinator.api.async_control_event(
+            await self.coordinator.api.websocket.async_control(
                 self.unique_id,
                 {
                     CONF_ATTRS: {
@@ -333,7 +333,7 @@ class HeatzyPiloteV2Thermostat(HeatzyThermostat):
         if self._attr.get(CONF_DEROG_MODE) > 0:
             config[CONF_ATTRS].update({CONF_DEROG_MODE: 0, CONF_DEROG_TIME: 0})
         try:
-            await self.coordinator.api.async_control_event(self.unique_id, config)
+            await self.coordinator.api.websocket.async_control(self.unique_id, config)
         except HeatzyException as error:
             _LOGGER.error("Error to set preset mode: %s (%s)", preset_mode, error)
 
@@ -354,7 +354,7 @@ class HeatzyPiloteV2Thermostat(HeatzyThermostat):
             config[CONF_ATTRS][CONF_MODE] = self.HA_TO_HEATZY_STATE.get(PRESET_COMFORT)
 
         try:
-            await self.coordinator.api.async_control_event(self.unique_id, config)
+            await self.coordinator.api.websocket.async_control(self.unique_id, config)
         except HeatzyException as error:
             _LOGGER.error("Error to set derog mode: %s (%s)", mode, error)
 
@@ -449,7 +449,7 @@ class Glowv1Thermostat(HeatzyPiloteV2Thermostat):
         """Turn device on."""
         # When turning ON ensure PROGRAM and VACATION mode are OFF
         try:
-            await self.coordinator.api.async_control_event(
+            await self.coordinator.api.websocket.async_control(
                 self.unique_id, {CONF_ATTRS: {CONF_ON_OFF: 1, CONF_DEROG_MODE: 0}}
             )
         except HeatzyException as error:
@@ -458,7 +458,7 @@ class Glowv1Thermostat(HeatzyPiloteV2Thermostat):
     async def async_turn_off(self) -> None:
         """Turn device off."""
         try:
-            await self.coordinator.api.async_control_event(
+            await self.coordinator.api.websocket.async_control(
                 self.unique_id, {CONF_ATTRS: {CONF_ON_OFF: 0, CONF_DEROG_MODE: 0}}
             )
         except HeatzyException as error:
@@ -468,7 +468,7 @@ class Glowv1Thermostat(HeatzyPiloteV2Thermostat):
         """Turn device off."""
         # When setting to PROGRAM Mode we also ensure it's turned ON
         try:
-            await self.coordinator.api.async_control_event(
+            await self.coordinator.api.websocket.async_control(
                 self.unique_id, {CONF_ATTRS: {CONF_ON_OFF: 1, CONF_DEROG_MODE: 1}}
             )
         except HeatzyException as error:
@@ -483,7 +483,7 @@ class Glowv1Thermostat(HeatzyPiloteV2Thermostat):
             self._attr[CFT_TEMP_L] = int(temp_cft * 10)
 
             try:
-                await self.coordinator.api.async_control_event(
+                await self.coordinator.api.websocket.async_control(
                     self.unique_id,
                     {
                         CONF_ATTRS: {
@@ -507,7 +507,7 @@ class Glowv1Thermostat(HeatzyPiloteV2Thermostat):
         if self._attr.get(CONF_DEROG_MODE) == 2:
             config[CONF_ATTRS].update({CONF_DEROG_MODE: 0})
         try:
-            await self.coordinator.api.async_control_event(self.unique_id, config)
+            await self.coordinator.api.websocket.async_control(self.unique_id, config)
         except HeatzyException as error:
             _LOGGER.error("Error to set preset mode: %s (%s)", preset_mode, error)
 
@@ -574,7 +574,7 @@ class Bloomv1Thermostat(HeatzyPiloteV2Thermostat):
             self._attr[CONF_CFT_TEMP] = int(temp_cft)
 
             try:
-                await self.coordinator.api.async_control_event(
+                await self.coordinator.api.websocket.async_control(
                     self.unique_id,
                     {
                         CONF_ATTRS: {
