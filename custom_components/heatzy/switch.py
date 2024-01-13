@@ -13,7 +13,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from . import HeatzyDataUpdateCoordinator
-from .const import CONF_ATTRS, CONF_LOCK, DOMAIN
+from .const import CONF_ATTRS, CONF_LOCK, CONF_WEBSOCKET, DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -46,6 +46,12 @@ class LockSwitchEntity(CoordinatorEntity[HeatzyDataUpdateCoordinator], SwitchEnt
         self._attr_device_info = DeviceInfo(identifiers={(DOMAIN, unique_id)})
         self._attr = coordinator.data[unique_id].get(CONF_ATTRS, {})
 
+        # Interim code to ensure the transition
+        self._ws_mode = coordinator.config_entry.options.get(CONF_WEBSOCKET)
+        if self._ws_mode:
+            self.coordinator.api = self.coordinator.api.websocket
+        # End
+
     @property
     def is_on(self) -> bool:
         """Return true if switch is on."""
@@ -61,17 +67,29 @@ class LockSwitchEntity(CoordinatorEntity[HeatzyDataUpdateCoordinator], SwitchEnt
     async def async_turn_on(self) -> None:
         """Turn the entity on."""
         try:
-            await self.coordinator.api.websocket.async_control(
+            await self.coordinator.api.websocket.async_control_device(
                 self.unique_id, {CONF_ATTRS: {CONF_LOCK: 1}}
             )
+
+            # Interim code to ensure the transition
+            if not self._ws_mode:
+                await self.coordinator.async_request_refresh()
+            # End
+
         except HeatzyException as error:
             _LOGGER.error("Error to lock pilot : %s", error)
 
     async def async_turn_off(self) -> None:
         """Turn the entity off."""
         try:
-            await self.coordinator.api.websocket.async_control(
+            await self.coordinator.api.websocket.async_control_device(
                 self.unique_id, {CONF_ATTRS: {CONF_LOCK: 0}}
             )
+
+            # Interim code to ensure the transition
+            if not self._ws_mode:
+                await self.coordinator.async_request_refresh()
+            # End
+
         except HeatzyException as error:
             _LOGGER.error("Error to lock pilot : %s", error)

@@ -2,20 +2,21 @@
 from __future__ import annotations
 
 import asyncio
-from datetime import timedelta
 import logging
+from datetime import timedelta
 from typing import Any
-
-from wsheatzypy import HeatzyClient
-from wsheatzypy.exception import ConnectionClosed, HeatzyException
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_PASSWORD, CONF_USERNAME, EVENT_HOMEASSISTANT_STOP
 from homeassistant.core import CALLBACK_TYPE, Event, HomeAssistant, callback
+from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers.aiohttp_client import async_create_clientsession
+from homeassistant.helpers.debounce import Debouncer
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
+from wsheatzypy import HeatzyClient
+from wsheatzypy.exception import AuthenticationFailed, ConnectionClosed, HeatzyException
 
-from .const import DOMAIN
+from .const import API_TIMEOUT, CONF_WEBSOCKET, DEBOUNCE_COOLDOWN, DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -26,13 +27,27 @@ class HeatzyDataUpdateCoordinator(DataUpdateCoordinator):
     def __init__(self, hass: HomeAssistant, entry: ConfigEntry) -> None:
         """Class to manage fetching Heatzy data API."""
         self.unsub: CALLBACK_TYPE | None = None
+        self.ws_mode = entry.options.get(CONF_WEBSOCKET)
         self.api = HeatzyClient(
             entry.data[CONF_USERNAME],
             entry.data[CONF_PASSWORD],
             async_create_clientsession(hass),
         )
+        # Interim code to ensure the transition
+        if self.ws_mode:
+            request_refresh_debouncer = Debouncer(
+                hass, _LOGGER, cooldown=DEBOUNCE_COOLDOWN, immediate=False
+            )
+        else:
+            request_refresh_debouncer = None
+        # End
+
         super().__init__(
-            hass, _LOGGER, name=DOMAIN, update_interval=timedelta(seconds=60)
+            hass,
+            _LOGGER,
+            name=DOMAIN,
+            update_interval=timedelta(seconds=60),
+            request_refresh_debouncer=request_refresh_debouncer,  # Interim code to ensure the transition
         )
 
     @callback
@@ -84,15 +99,25 @@ class HeatzyDataUpdateCoordinator(DataUpdateCoordinator):
 
     async def _async_update_data(self) -> dict[str, Any]:
         """Fetch data."""
-        if not self.api.is_connected and not self.unsub:
-            event = asyncio.Event()
-            self._use_websocket(event)
-            await event.wait()
+        if self.ws_mode:  # Interim code to ensure the transition
+            if not self.api.is_connected and not self.unsub:
+                event = asyncio.Event()
+                self._use_websocket(event)
+                await event.wait()
 
-        try:
-            devices = await self.api.websocket.async_get_devices()
-        except HeatzyException as error:
-            raise UpdateFailed(f"Invalid response from API: {error}") from error
+            try:
+                devices = await self.api.websocket.async_get_devices()
+            except HeatzyException as error:
+                raise UpdateFailed(f"Invalid response from API: {error}") from error
 
-        _LOGGER.debug(devices)
-        return devices
+            _LOGGER.debug(devices)
+            return devices
+        else:  # Interim code to ensure the transition
+            try:
+                async with asyncio.timeout(API_TIMEOUT):
+                    return await self.api.async_get_devices()
+            except AuthenticationFailed as error:
+                raise ConfigEntryAuthFailed from error
+            except HeatzyException as error:
+                raise UpdateFailed(error) from error
+        # End
