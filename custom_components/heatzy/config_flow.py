@@ -78,7 +78,7 @@ class HeatzyOptionsFlowHandler(config_entries.OptionsFlow):
             {
                 vol.Required(
                     CONF_WEBSOCKET,
-                    default=self.config_entry.options.get(CONF_WEBSOCKET, True),
+                    default=self.config_entry.options.get(CONF_WEBSOCKET),
                 ): bool
             },
         )
