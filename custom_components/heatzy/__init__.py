@@ -6,7 +6,7 @@ import logging
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 
-from .const import DOMAIN, PLATFORMS
+from .const import CONF_WEBSOCKET, DOMAIN, PLATFORMS
 from .coordinator import HeatzyDataUpdateCoordinator
 
 _LOGGER = logging.getLogger(__name__)
@@ -15,6 +15,11 @@ _LOGGER = logging.getLogger(__name__)
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Heatzy as config entry."""
     hass.data.setdefault(DOMAIN, {})
+
+    # Interim code to ensure the transition
+    if entry.options.get(CONF_WEBSOCKET) is None:
+        hass.config_entries.async_update_entry(entry, options={CONF_WEBSOCKET: True})
+    # End
 
     coordinator = HeatzyDataUpdateCoordinator(hass, entry)
     await coordinator.async_config_entry_first_refresh()
