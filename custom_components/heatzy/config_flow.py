@@ -34,7 +34,7 @@ class HeatzyFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
     @callback
     def async_get_options_flow(config_entry):
         """Get option flow."""
-        return OptionsFlowHandler(config_entry)
+        return HeatzyOptionsFlowHandler(config_entry)
 
     async def async_step_user(self, user_input=None):
         """Handle a flow initialized by the user."""
@@ -65,7 +65,7 @@ class HeatzyFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         )
 
 
-class OptionsFlowHandler(config_entries.OptionsFlow):
+class HeatzyOptionsFlowHandler(config_entries.OptionsFlow):
     """Handle option."""
 
     def __init__(self, config_entry):

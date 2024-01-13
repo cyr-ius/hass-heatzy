@@ -2,9 +2,12 @@
 from __future__ import annotations
 
 import asyncio
-import logging
 from datetime import timedelta
+import logging
 from typing import Any
+
+from wsheatzypy import HeatzyClient
+from wsheatzypy.exception import AuthenticationFailed, ConnectionClosed, HeatzyException
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_PASSWORD, CONF_USERNAME, EVENT_HOMEASSISTANT_STOP
@@ -13,8 +16,6 @@ from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers.aiohttp_client import async_create_clientsession
 from homeassistant.helpers.debounce import Debouncer
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
-from wsheatzypy import HeatzyClient
-from wsheatzypy.exception import AuthenticationFailed, ConnectionClosed, HeatzyException
 
 from .const import API_TIMEOUT, CONF_WEBSOCKET, DEBOUNCE_COOLDOWN, DOMAIN
 
@@ -34,7 +35,7 @@ class HeatzyDataUpdateCoordinator(DataUpdateCoordinator):
             async_create_clientsession(hass),
         )
         # Interim code to ensure the transition
-        if self.ws_mode:
+        if not self.ws_mode:
             request_refresh_debouncer = Debouncer(
                 hass, _LOGGER, cooldown=DEBOUNCE_COOLDOWN, immediate=False
             )

@@ -130,7 +130,9 @@ class HeatzyThermostat(CoordinatorEntity[HeatzyDataUpdateCoordinator], ClimateEn
         # Interim code to ensure the transition
         self._ws_mode = coordinator.config_entry.options.get(CONF_WEBSOCKET)
         if self._ws_mode:
-            self.coordinator.api = self.coordinator.api.websocket
+            self.coordinator.api.async_control_device = (
+                self.coordinator.api.websocket.async_control_device
+            )
         # End
 
     @property
