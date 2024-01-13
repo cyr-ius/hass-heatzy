@@ -34,3 +34,8 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             coordinator.unsub()
 
     return unload_ok
+
+
+async def _async_update_listener(hass: HomeAssistant, entry: ConfigEntry):
+    """Reload if change option."""
+    await hass.config_entries.async_reload(entry.entry_id)

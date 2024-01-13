@@ -23,6 +23,7 @@ CONF_TIMER_SWITCH = "timer_switch"
 CONF_VERSION = "wifi_soft_version"
 CUR_TEMP_H = "cur_tempH"
 CUR_TEMP_L = "cur_tempL"
+CONF_WEBSOCKET = "websocket_feature"
 DEBOUNCE_COOLDOWN = 10
 DOMAIN = "heatzy"
 ECO_TEMP_H = "eco_tempH"

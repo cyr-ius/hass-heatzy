@@ -18,5 +18,14 @@
     "abort": {
       "already_configured": "[%key:common::config_flow::abort::already_configured_service%]"
     }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "data": {
+          "websocket_feature": "Enable websocket feature"
+        }
+      }
+    }
   }
 }

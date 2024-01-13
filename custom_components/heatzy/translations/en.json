@@ -18,5 +18,14 @@
     "abort": {
       "already_configured": "Your account is already configured."
     }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "data": {
+          "websocket_feature": "Enable websocket feature"
+        }
+      }
+    }
   }
 }
