@@ -124,5 +124,4 @@ async def test_diag_v1(coordinator, devices, entry, hass):
 
     await ws.async_disconnect()
     task.cancel()
-    await api.async_close()
     return diag_v1
