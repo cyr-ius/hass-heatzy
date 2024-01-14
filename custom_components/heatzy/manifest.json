@@ -8,6 +8,6 @@
   "iot_class": "cloud_polling",
   "issue_tracker": "https://github.com/cyr-ius/hass-heatzy/issues",
   "loggers": ["wsheatzypy"],
-  "requirements": ["wsheatzypy==1.2.1"],
-  "version": "6.1.4"
+  "requirements": ["wsheatzypy==1.2.3"],
+  "version": "6.1.5"
 }
