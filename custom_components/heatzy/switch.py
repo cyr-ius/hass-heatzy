@@ -12,7 +12,7 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from wsheatzypy.exception import HeatzyException
 
 from . import HeatzyDataUpdateCoordinator
-from .const import ATTR_LOCK_SWITCH, CONF_ATTRS, CONF_LOCK, CONF_WEBSOCKET, DOMAIN
+from .const import CONF_ATTRS, CONF_LOCK, CONF_WEBSOCKET, DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -24,8 +24,8 @@ async def async_setup_entry(
     coordinator = hass.data[DOMAIN][entry.entry_id]
     entities: list[LockSwitchEntity] = []
     for unique_id, device in coordinator.data.items():
-        if device.get(CONF_ATTRS, {}).get(ATTR_LOCK_SWITCH) is not None:
-            entities.append(LockSwitchEntity(coordinator, unique_id))
+        # if device.get(CONF_ATTRS, {}).get(ATTR_LOCK_SWITCH) is not None:
+        entities.append(LockSwitchEntity(coordinator, unique_id))
     async_add_entities(entities)
 
 
