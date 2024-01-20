@@ -17,7 +17,7 @@ repos:
     hooks:
       - id: codespell
         args:
-          - --ignore-words-list=fro,hass
+          - --ignore-words-list=fro,hass,ony
           - --skip="./.*,*.csv,*.json,*.ambr"
           - --quiet-level=2
         exclude_types: [csv, json]
