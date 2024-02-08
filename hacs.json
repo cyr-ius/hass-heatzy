@@ -1,6 +1,6 @@
 {
   "name": "Heatzy",
   "country": "FR",
-  "homeassistant": "0.109",
+  "homeassistant": "2024.2.0",
   "render_readme": true
 }
