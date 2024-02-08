@@ -4,13 +4,12 @@ from __future__ import annotations
 import asyncio
 from typing import Any
 
-from wsheatzypy import HeatzyClient
-
 from homeassistant.components.diagnostics import async_redact_data
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.aiohttp_client import async_create_clientsession
+from wsheatzypy import HeatzyClient
 
 from .const import CONF_WEBSOCKET, DOMAIN
 
@@ -85,42 +84,20 @@ async def test_diag_v1(coordinator, devices, entry, hass):
 
     for did, device in devices.items():
         if device.get("product_key") == "9420ae048da545c88fc6274d204dd25f":
-            # if device.get("product_key") == "b8c6657b66c34148b4dee64d615cefc7":
             await ws.async_control_device(did, {"raw": [1, 1, 3]})
             await asyncio.sleep(2)
             device = await api.async_get_device(did)
             diag_v1.append([1, device.get("attrs", {}).get("mode")])
 
-            await ws.async_control_device(
-                did, {"raw": [0, 0, 0, 3, 11, 0, 0, 144, 1, 1, 3]}
-            )
+            await ws.async_control_device(did, {"raw": "\u505c\u6b62"})
             await asyncio.sleep(2)
             device = await api.async_get_device(did)
             diag_v1.append([2, device.get("attrs", {}).get("mode")])
 
-            await ws.async_control_device(
-                did, {"raw": [0, 0, 0, 3, 9, 0, 0, 113, 1, 0, 1, 2, 3, 4]}
-            )
+            await ws.async_control_device(did, "\u505c\u6b62")
             await asyncio.sleep(2)
             device = await api.async_get_device(did)
             diag_v1.append([3, device.get("attrs", {}).get("mode")])
-
-            await ws.async_control_device(
-                did, {"raw": [0, 0, 0, 3, 9, 0, 0, 144, 113, 0, 1, 2, 3, 4]}
-            )
-            await asyncio.sleep(2)
-            device = await api.async_get_device(did)
-            diag_v1.append([4, device.get("attrs", {}).get("mode")])
-
-            await ws.async_control_device(did, {"attrs": {"raw": [1, 1, 3]}})
-            await asyncio.sleep(2)
-            device = await api.async_get_device(did)
-            diag_v1.append([5, device.get("attrs", {}).get("mode")])
-
-            await ws.async_control_device(did, {"attrs": {"mode": "stop"}})
-            await asyncio.sleep(2)
-            device = await api.async_get_device(did)
-            diag_v1.append([6, device.get("attrs", {}).get("mode")])
 
     await ws.async_disconnect()
     task.cancel()
