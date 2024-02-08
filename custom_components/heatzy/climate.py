@@ -5,8 +5,6 @@ import logging
 from typing import Any
 
 import voluptuous as vol
-from wsheatzypy.exception import HeatzyException
-
 from homeassistant.components.climate import (
     ATTR_TARGET_TEMP_HIGH,
     ATTR_TARGET_TEMP_LOW,
@@ -23,10 +21,12 @@ from homeassistant.components.climate import (
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_DELAY, UnitOfTemperature
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers import config_validation as cv, entity_platform
+from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers import entity_platform
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
+from wsheatzypy.exception import HeatzyException
 
 from . import HeatzyDataUpdateCoordinator
 from .const import (
@@ -106,7 +106,11 @@ class HeatzyThermostat(CoordinatorEntity[HeatzyDataUpdateCoordinator], ClimateEn
 
     _attr_hvac_modes = [HVACMode.HEAT, HVACMode.OFF, HVACMode.AUTO]
     _attr_preset_modes = [PRESET_COMFORT, PRESET_ECO, PRESET_AWAY]
-    _attr_supported_features = ClimateEntityFeature.PRESET_MODE
+    _attr_supported_features = (
+        ClimateEntityFeature.PRESET_MODE
+        | ClimateEntityFeature.TURN_ON
+        | ClimateEntityFeature.TURN_OFF
+    )
     _attr_temperature_unit = UnitOfTemperature.CELSIUS
     _attr_has_entity_name = True
     _attr_name = None
@@ -431,7 +435,10 @@ class Glowv1Thermostat(HeatzyPiloteV2Thermostat):
     HA_TO_HEATZY_STATE = {PRESET_COMFORT: "cft", PRESET_ECO: "eco", PRESET_AWAY: "fro"}
     _attr_preset_modes = [PRESET_COMFORT, PRESET_ECO, PRESET_AWAY]
     _attr_supported_features = (
-        ClimateEntityFeature.PRESET_MODE | ClimateEntityFeature.TARGET_TEMPERATURE_RANGE
+        ClimateEntityFeature.PRESET_MODE
+        | ClimateEntityFeature.TARGET_TEMPERATURE_RANGE
+        | ClimateEntityFeature.TURN_ON
+        | ClimateEntityFeature.TURN_OFF
     )
 
     @property
@@ -610,7 +617,10 @@ class Bloomv1Thermostat(HeatzyPiloteV2Thermostat):
 
     _attr_preset_modes = [PRESET_COMFORT, PRESET_ECO, PRESET_AWAY]
     _attr_supported_features = (
-        ClimateEntityFeature.PRESET_MODE | ClimateEntityFeature.TARGET_TEMPERATURE_RANGE
+        ClimateEntityFeature.PRESET_MODE
+        | ClimateEntityFeature.TARGET_TEMPERATURE_RANGE
+        | ClimateEntityFeature.TURN_ON
+        | ClimateEntityFeature.TURN_OFF
     )
     _attr_target_temperature_step = 1
 
