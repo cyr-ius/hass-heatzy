@@ -9,5 +9,5 @@
   "issue_tracker": "https://github.com/cyr-ius/hass-heatzy/issues",
   "loggers": ["wsheatzypy"],
   "requirements": ["wsheatzypy==1.2.3"],
-  "version": "6.1.9"
+  "version": "6.2.0"
 }
