@@ -89,6 +89,13 @@ async def test_diag_v1(coordinator, devices, entry, hass):
             device = await api.async_get_device(did)
             diag_v1.append([1, device.get("attrs", {}).get("mode")])
 
+            await ws.async_control_device(
+                did, {"raw": [0, 0, 0, 3, 6, 0, 0, 144, 1, 1, 3]}
+            )
+            await asyncio.sleep(2)
+            device = await api.async_get_device(did)
+            diag_v1.append([1, device.get("attrs", {}).get("mode")])
+
             await ws.async_control_device(did, {"raw": "\u505c\u6b62"})
             await asyncio.sleep(2)
             device = await api.async_get_device(did)
