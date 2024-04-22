@@ -521,7 +521,7 @@ class Glowv1Thermostat(HeatzyPiloteV2Thermostat):
         # When turning ON ensure PROGRAM and VACATION mode are OFF
         try:
             await self.coordinator.api.async_control_device(
-                self.unique_id, {CONF_ATTRS: {CONF_ON_OFF: 1, CONF_DEROG_MODE: 0}}
+                self.unique_id, {CONF_ATTRS: {CONF_ON_OFF: True, CONF_DEROG_MODE: 0}}
             )
 
             # Interim code to ensure the transition
@@ -536,7 +536,7 @@ class Glowv1Thermostat(HeatzyPiloteV2Thermostat):
         """Turn device off."""
         try:
             await self.coordinator.api.async_control_device(
-                self.unique_id, {CONF_ATTRS: {CONF_ON_OFF: 0, CONF_DEROG_MODE: 0}}
+                self.unique_id, {CONF_ATTRS: {CONF_ON_OFF: False, CONF_DEROG_MODE: 0}}
             )
 
             # Interim code to ensure the transition
@@ -552,7 +552,7 @@ class Glowv1Thermostat(HeatzyPiloteV2Thermostat):
         # When setting to PROGRAM Mode we also ensure it's turned ON
         try:
             await self.coordinator.api.async_control_device(
-                self.unique_id, {CONF_ATTRS: {CONF_ON_OFF: 1, CONF_DEROG_MODE: 1}}
+                self.unique_id, {CONF_ATTRS: {CONF_ON_OFF: True, CONF_DEROG_MODE: 1}}
             )
 
             # Interim code to ensure the transition
@@ -595,7 +595,7 @@ class Glowv1Thermostat(HeatzyPiloteV2Thermostat):
         config = {
             CONF_ATTRS: {
                 CONF_MODE: self.HA_TO_HEATZY_STATE.get(preset_mode),
-                CONF_ON_OFF: 1,
+                CONF_ON_OFF: True,
             }
         }
         # If in VACATION mode then as well as setting preset mode we also stop the VACATION mode
