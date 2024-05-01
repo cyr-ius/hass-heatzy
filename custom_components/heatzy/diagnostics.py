@@ -1,15 +1,16 @@
 """Diagnostics support for Heatzy."""
+
 from __future__ import annotations
 
 import asyncio
 from typing import Any
 
+from heatzypy import HeatzyClient
 from homeassistant.components.diagnostics import async_redact_data
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.aiohttp_client import async_create_clientsession
-from wsheatzypy import HeatzyClient
 
 from .const import CONF_WEBSOCKET, DOMAIN
 
@@ -46,7 +47,7 @@ async def async_get_config_entry_diagnostics(
     ws_mode = entry.options.get(CONF_WEBSOCKET)
     if ws_mode:
         devices = await coordinator.api.websocket.async_get_devices()
-        diag_v1 = await test_diag_v1(coordinator, devices, entry, hass)
+        # diag_v1 = await test_diag_v1(coordinator, devices, entry, hass)
 
     else:
         devices = await coordinator.api.async_get_devices()

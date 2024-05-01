@@ -5,8 +5,8 @@ from __future__ import annotations
 import logging
 from typing import Any
 
+from heatzypy.exception import HeatzyException
 import voluptuous as vol
-from wsheatzypy.exception import HeatzyException
 
 from homeassistant.components.climate import (
     ATTR_TARGET_TEMP_HIGH,

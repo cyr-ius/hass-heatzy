@@ -3,13 +3,12 @@
 from __future__ import annotations
 
 import asyncio
-from datetime import timedelta
 import logging
+from datetime import timedelta
 from typing import Any
 
-from wsheatzypy import HeatzyClient
-from wsheatzypy.exception import ConnectionClosed, HeatzyException
-
+from heatzypy import HeatzyClient
+from heatzypy.exception import ConnectionClosed, HeatzyException
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_PASSWORD, CONF_USERNAME, EVENT_HOMEASSISTANT_STOP
 from homeassistant.core import CALLBACK_TYPE, Event, HomeAssistant, callback
