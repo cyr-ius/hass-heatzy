@@ -1,12 +1,37 @@
-# WEBSSOCKET HEATZY
+# Heatzy
 
-Pour les testeurs , une version entièrement basé sur le Websocket de Gizwits.
-Nettement plus performant que l' API HTTPS.
+This a _custom component_ for [Home Assistant](https://www.home-assistant.io/).
 
-Le Websocket permet de pousser les informations des modules en temps réél dans les deux sens sans latence.
-Pour se faire, le module HA execute le module wsheatzy qui effectue une boucle continue sur le websocket.
+With Heatzy, control all your heating systems from anywhere, via your smartphone
 
-Port de communication: non chiffré
-Evolution prévu sur cet aspect.
+There is currently support for the following device types within Home Assistant:
 
-Pour les beta-testeurs , merci de faire vos retours uniquement dans l'issue #52
+- Climate sensor with preset mode and automatic mode
+- Switch sensor to lock your heatzy module
+
+![GitHub release](https://img.shields.io/github/release/Cyr-ius/hass-heatzy)
+[![hacs_badge](https://img.shields.io/badge/HACS-Default-orange.svg)](https://github.com/hacs/integration)
+
+## Supported Devices
+
+- Heatzy Pilot 1 & 2
+- Acova Heatzy Elec'Pro
+- Glow by Heatzy
+- Onyx by Heatzy
+- Bloom by Heatzy
+- Sauter Orosi
+
+## Services
+
+- Boost Service with set duration
+- Vacation Service with set duration
+
+## Configuration
+
+Add Heatzy module via HACS
+
+[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=cyr-ius&repository=hass-heatzy&category=integration)
+
+Add your equipment via the Integration menu
+
+[![Open your Home Assistant instance and start setting up a new integration.](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=heatzy)
