@@ -1,4 +1,5 @@
 """Coordinator Heatzy platform."""
+
 from __future__ import annotations
 
 import asyncio
@@ -7,19 +8,18 @@ import logging
 from typing import Any
 
 from wsheatzypy import HeatzyClient
-from wsheatzypy.exception import AuthenticationFailed, ConnectionClosed, HeatzyException
+from wsheatzypy.exception import ConnectionClosed, HeatzyException
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_PASSWORD, CONF_USERNAME, EVENT_HOMEASSISTANT_STOP
 from homeassistant.core import CALLBACK_TYPE, Event, HomeAssistant, callback
-from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers.aiohttp_client import async_create_clientsession
-from homeassistant.helpers.debounce import Debouncer
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
-from .const import API_TIMEOUT, CONF_WEBSOCKET, DEBOUNCE_COOLDOWN, DOMAIN
+from .const import CONF_WEBSOCKET, DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
+SCAN_INTERVAL = 60
 
 
 class HeatzyDataUpdateCoordinator(DataUpdateCoordinator):
@@ -34,28 +34,16 @@ class HeatzyDataUpdateCoordinator(DataUpdateCoordinator):
             entry.data[CONF_PASSWORD],
             async_create_clientsession(hass),
         )
-        # Interim code to ensure the transition
-        if not self.ws_mode:
-            request_refresh_debouncer = Debouncer(
-                hass, _LOGGER, cooldown=DEBOUNCE_COOLDOWN, immediate=False
-            )
-        else:
-            request_refresh_debouncer = None
-        # End
-
         super().__init__(
-            hass,
-            _LOGGER,
-            name=DOMAIN,
-            update_interval=timedelta(seconds=60),
-            request_refresh_debouncer=request_refresh_debouncer,  # Interim code to ensure the transition
+            hass, _LOGGER, name=DOMAIN, update_interval=timedelta(seconds=SCAN_INTERVAL)
         )
 
     @callback
-    def _use_websocket(self, event) -> None:
+    def _init_websocket(self, event: Event | None = None) -> None:
         """Use WebSocket for updates, instead of polling."""
 
-        async def listen() -> None:
+        async def async_listener() -> None:
+            """Create the connection and listen to the websocket."""
             try:
                 await self.api.websocket.async_connect()
             except HeatzyException as err:
@@ -95,30 +83,17 @@ class HeatzyDataUpdateCoordinator(DataUpdateCoordinator):
 
         # Start listening
         self.config_entry.async_create_background_task(
-            self.hass, listen(), "heatzy-listen"
+            self.hass, async_listener(), "heatzy-listen"
         )
 
     async def _async_update_data(self) -> dict[str, Any]:
         """Fetch data."""
-        if self.ws_mode:  # Interim code to ensure the transition
-            if not self.api.is_connected and not self.unsub:
-                event = asyncio.Event()
-                self._use_websocket(event)
-                await event.wait()
+        if not self.api.is_connected and not self.unsub:
+            event = asyncio.Event()
+            self._init_websocket(event)
+            await event.wait()
 
-            try:
-                devices = await self.api.websocket.async_get_devices()
-            except HeatzyException as error:
-                raise UpdateFailed(f"Invalid response from API: {error}") from error
-
-            _LOGGER.debug(devices)
-            return devices
-        else:  # Interim code to ensure the transition
-            try:
-                async with asyncio.timeout(API_TIMEOUT):
-                    return await self.api.async_get_devices()
-            except AuthenticationFailed as error:
-                raise ConfigEntryAuthFailed from error
-            except HeatzyException as error:
-                raise UpdateFailed(error) from error
-        # End
+        try:
+            return await self.api.websocket.async_get_devices()
+        except HeatzyException as error:
+            raise UpdateFailed(f"Invalid response from API: {error}") from error

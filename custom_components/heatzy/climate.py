@@ -1,10 +1,13 @@
 """Climate sensors for Heatzy."""
+
 from __future__ import annotations
 
 import logging
 from typing import Any
 
 import voluptuous as vol
+from wsheatzypy.exception import HeatzyException
+
 from homeassistant.components.climate import (
     ATTR_TARGET_TEMP_HIGH,
     ATTR_TARGET_TEMP_LOW,
@@ -21,12 +24,10 @@ from homeassistant.components.climate import (
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_DELAY, UnitOfTemperature
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers import config_validation as cv
-from homeassistant.helpers import entity_platform
+from homeassistant.helpers import config_validation as cv, entity_platform
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
-from wsheatzypy.exception import HeatzyException
 
 from . import HeatzyDataUpdateCoordinator
 from .const import (
@@ -48,7 +49,6 @@ from .const import (
     CONF_PRODUCT_KEY,
     CONF_TIMER_SWITCH,
     CONF_VERSION,
-    CONF_WEBSOCKET,
     CUR_TEMP_H,
     CUR_TEMP_L,
     DOMAIN,
@@ -132,23 +132,18 @@ class HeatzyThermostat(CoordinatorEntity[HeatzyDataUpdateCoordinator], ClimateEn
         self._attr = coordinator.data[unique_id].get(CONF_ATTRS, {})
         self._attr_available = coordinator.data[unique_id].get(CONF_IS_ONLINE, True)
 
-        # Interim code to ensure the transition
-        self._ws_mode = coordinator.config_entry.options.get(CONF_WEBSOCKET)
-        if self._ws_mode:
-            self.coordinator.api.async_control_device = (
-                self.coordinator.api.websocket.async_control_device
-            )
-        # End
+        self.coordinator.api.async_control_device = (
+            self.coordinator.api.websocket.async_control_device
+        )
 
     @property
     def hvac_action(self) -> HVACAction:
         """Return hvac action ie. heat, cool mode."""
-        action = (
+        return (
             HVACAction.OFF
             if self._attr.get(CONF_MODE) == self.HEATZY_STOP
             else HVACAction.HEATING
         )
-        return action
 
     @property
     def hvac_mode(self) -> HVACMode:
@@ -177,7 +172,7 @@ class HeatzyThermostat(CoordinatorEntity[HeatzyDataUpdateCoordinator], ClimateEn
 
     async def async_turn_auto(self) -> None:
         """Turn device to Program mode."""
-        raise NotImplementedError()
+        raise NotImplementedError
 
     async def async_set_hvac_mode(self, hvac_mode: HVACMode) -> None:
         """Set new hvac mode."""
@@ -190,16 +185,15 @@ class HeatzyThermostat(CoordinatorEntity[HeatzyDataUpdateCoordinator], ClimateEn
 
     async def async_vacation_mode(self, delay: int) -> None:
         """Service Vacation Mode."""
-        raise NotImplementedError()
+        raise NotImplementedError
 
     async def async_boost_mode(self, delay: int) -> None:
         """Service Boost Mode."""
-        raise NotImplementedError()
+        raise NotImplementedError
 
     @callback
     def _handle_coordinator_update(self) -> None:
         """Handle updated data from the coordinator."""
-        _LOGGER.debug("------- UPDATE CLIMATE %s ------- ", self.unique_id)
         self._attr = self.coordinator.data[self.unique_id].get(CONF_ATTRS, {})
         self._attr_available = self.coordinator.data[self.unique_id].get(
             CONF_IS_ONLINE, True
@@ -239,12 +233,6 @@ class HeatzyPiloteV1Thermostat(HeatzyThermostat):
                     }
                 },
             )
-
-            # Interim code to ensure the transition
-            if not self._ws_mode:
-                await self.coordinator.async_request_refresh()
-            # End
-
         except HeatzyException as error:
             _LOGGER.error("Error while turn off (%s)", error)
 
@@ -255,11 +243,6 @@ class HeatzyPiloteV1Thermostat(HeatzyThermostat):
                 self.unique_id,
                 {"raw": self.HA_TO_HEATZY_STATE.get(preset_mode)},
             )
-
-            # Interim code to ensure the transition
-            if not self._ws_mode:
-                await self.coordinator.async_request_refresh()
-            # End
 
         except HeatzyException as error:
             _LOGGER.error("Error while preset mode: %s (%s)", preset_mode, error)
@@ -286,7 +269,7 @@ class HeatzyPiloteV2Thermostat(HeatzyThermostat):
     async def async_turn_on(self) -> None:
         """Turn device on."""
         try:
-            if (  # DEROG MODE - 1: VACATION , 2: BOOST
+            if (
                 self._attr.get(CONF_DEROG_MODE) > 0
                 or self._attr.get(CONF_TIMER_SWITCH) == 1
             ):
@@ -301,21 +284,10 @@ class HeatzyPiloteV2Thermostat(HeatzyThermostat):
                     },
                 )
 
-                # Interim code to ensure the transition
-                if not self._ws_mode:
-                    await self.coordinator.async_request_refresh()
-                # End
-
             await self.coordinator.api.async_control_device(
                 self.unique_id,
                 {CONF_ATTRS: {CONF_MODE: self.HA_TO_HEATZY_STATE[PRESET_COMFORT]}},
             )
-
-            # Interim code to ensure the transition
-            if not self._ws_mode:
-                await self.coordinator.async_request_refresh()
-            # End
-
         except HeatzyException as error:
             _LOGGER.error("Error to turn on (%s)", error)
 
@@ -337,21 +309,10 @@ class HeatzyPiloteV2Thermostat(HeatzyThermostat):
                     },
                 )
 
-                # Interim code to ensure the transition
-                if not self._ws_mode:
-                    await self.coordinator.async_request_refresh()
-                # End
-
             await self.coordinator.api.async_control_device(
                 self.unique_id,
                 {CONF_ATTRS: {CONF_MODE: self.HEATZY_STOP}},
             )
-
-            # Interim code to ensure the transition
-            if not self._ws_mode:
-                await self.coordinator.async_request_refresh()
-            # End
-
         except HeatzyException as error:
             _LOGGER.error("Error to turn off (%s)", error)
 
@@ -368,12 +329,6 @@ class HeatzyPiloteV2Thermostat(HeatzyThermostat):
                     }
                 },
             )
-
-            # Interim code to ensure the transition
-            if not self._ws_mode:
-                await self.coordinator.async_request_refresh()
-            # End
-
         except HeatzyException as error:
             _LOGGER.error("Error to turn auto (%s)", error)
 
@@ -390,12 +345,6 @@ class HeatzyPiloteV2Thermostat(HeatzyThermostat):
             config[CONF_ATTRS].update({CONF_DEROG_MODE: 0, CONF_DEROG_TIME: 0})
         try:
             await self.coordinator.api.async_control_device(self.unique_id, config)
-
-            # Interim code to ensure the transition
-            if not self._ws_mode:
-                await self.coordinator.async_request_refresh()
-            # End
-
         except HeatzyException as error:
             _LOGGER.error("Error to set preset mode: %s (%s)", preset_mode, error)
 
@@ -417,12 +366,6 @@ class HeatzyPiloteV2Thermostat(HeatzyThermostat):
 
         try:
             await self.coordinator.api.async_control_device(self.unique_id, config)
-
-            # Interim code to ensure the transition
-            if not self._ws_mode:
-                await self.coordinator.async_request_refresh()
-            # End
-
         except HeatzyException as error:
             _LOGGER.error("Error to set derog mode: %s (%s)", mode, error)
 
@@ -523,12 +466,6 @@ class Glowv1Thermostat(HeatzyPiloteV2Thermostat):
             await self.coordinator.api.async_control_device(
                 self.unique_id, {CONF_ATTRS: {CONF_ON_OFF: 1, CONF_DEROG_MODE: 0}}
             )
-
-            # Interim code to ensure the transition
-            if not self._ws_mode:
-                await self.coordinator.async_request_refresh()
-            # End
-
         except HeatzyException as error:
             _LOGGER.error("Error to turn on : %s", error)
 
@@ -538,12 +475,6 @@ class Glowv1Thermostat(HeatzyPiloteV2Thermostat):
             await self.coordinator.api.async_control_device(
                 self.unique_id, {CONF_ATTRS: {CONF_ON_OFF: 0, CONF_DEROG_MODE: 0}}
             )
-
-            # Interim code to ensure the transition
-            if not self._ws_mode:
-                await self.coordinator.async_request_refresh()
-            # End
-
         except HeatzyException as error:
             _LOGGER.error("Error to turn off : %s", error)
 
@@ -554,12 +485,6 @@ class Glowv1Thermostat(HeatzyPiloteV2Thermostat):
             await self.coordinator.api.async_control_device(
                 self.unique_id, {CONF_ATTRS: {CONF_ON_OFF: 1, CONF_DEROG_MODE: 1}}
             )
-
-            # Interim code to ensure the transition
-            if not self._ws_mode:
-                await self.coordinator.async_request_refresh()
-            # End
-
         except HeatzyException as error:
             _LOGGER.error("Error to turn auto : %s", error)
 
@@ -581,12 +506,6 @@ class Glowv1Thermostat(HeatzyPiloteV2Thermostat):
                         }
                     },
                 )
-
-                # Interim code to ensure the transition
-                if not self._ws_mode:
-                    await self.coordinator.async_request_refresh()
-                # End
-
             except HeatzyException as error:
                 _LOGGER.error("Error to set temperature (%s)", error)
 
@@ -603,12 +522,6 @@ class Glowv1Thermostat(HeatzyPiloteV2Thermostat):
             config[CONF_ATTRS].update({CONF_DEROG_MODE: 0})
         try:
             await self.coordinator.api.async_control_device(self.unique_id, config)
-
-            # Interim code to ensure the transition
-            if not self._ws_mode:
-                await self.coordinator.async_request_refresh()
-            # End
-
         except HeatzyException as error:
             _LOGGER.error("Error to set preset mode: %s (%s)", preset_mode, error)
 
@@ -687,12 +600,6 @@ class Bloomv1Thermostat(HeatzyPiloteV2Thermostat):
                         }
                     },
                 )
-
-                # Interim code to ensure the transition
-                if not self._ws_mode:
-                    await self.coordinator.async_request_refresh()
-                # End
-
             except HeatzyException as error:
                 _LOGGER.error("Error to set temperature (%s)", error)
 
