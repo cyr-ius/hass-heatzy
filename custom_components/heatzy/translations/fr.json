@@ -18,5 +18,14 @@
     "abort": {
       "already_configured": "Votre compte est déjà enregistré."
     }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "data": {
+          "websocket_feature": "Activer le mode websocket"
+        }
+      }
+    }
   }
 }

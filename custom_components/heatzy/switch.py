@@ -3,17 +3,16 @@ from __future__ import annotations
 
 import logging
 
-from heatzypy.exception import HeatzyException
-
 from homeassistant.components.switch import SwitchEntity
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity import DeviceInfo, EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
+from wsheatzypy.exception import HeatzyException
 
 from . import HeatzyDataUpdateCoordinator
-from .const import ATTR_LOCK_SWITCH, CONF_ATTR, CONF_ATTRS, CONF_LOCK, DOMAIN
+from .const import CONF_ATTRS, CONF_LOCK, CONF_WEBSOCKET, DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -25,8 +24,8 @@ async def async_setup_entry(
     coordinator = hass.data[DOMAIN][entry.entry_id]
     entities: list[LockSwitchEntity] = []
     for unique_id, device in coordinator.data.items():
-        if device.get(CONF_ATTR, {}).get(ATTR_LOCK_SWITCH) is not None:
-            entities.append(LockSwitchEntity(coordinator, unique_id))
+        # if device.get(CONF_ATTRS, {}).get(ATTR_LOCK_SWITCH) is not None:
+        entities.append(LockSwitchEntity(coordinator, unique_id))
     async_add_entities(entities)
 
 
@@ -44,15 +43,27 @@ class LockSwitchEntity(CoordinatorEntity[HeatzyDataUpdateCoordinator], SwitchEnt
         super().__init__(coordinator)
         self._attr_unique_id = unique_id
         self._attr_device_info = DeviceInfo(identifiers={(DOMAIN, unique_id)})
+        self._attr = coordinator.data[unique_id].get(CONF_ATTRS, {})
+
+        # Interim code to ensure the transition
+        self._ws_mode = coordinator.config_entry.options.get(CONF_WEBSOCKET)
+        if self._ws_mode:
+            self.coordinator.api.async_control_device = (
+                self.coordinator.api.websocket.async_control_device
+            )
+        # End
 
     @property
     def is_on(self) -> bool:
         """Return true if switch is on."""
-        return (
-            self.coordinator.data.get(self.unique_id, {})
-            .get(CONF_ATTR, {})
-            .get(CONF_LOCK)
-        )
+        return self._attr.get(CONF_LOCK)
+
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        """Handle updated data from the coordinator."""
+        _LOGGER.debug("------- UPDATE SWITCH %s ------- ", self.unique_id)
+        self._attr = self.coordinator.data[self.unique_id].get(CONF_ATTRS, {})
+        self.async_write_ha_state()
 
     async def async_turn_on(self) -> None:
         """Turn the entity on."""
@@ -60,10 +71,14 @@ class LockSwitchEntity(CoordinatorEntity[HeatzyDataUpdateCoordinator], SwitchEnt
             await self.coordinator.api.async_control_device(
                 self.unique_id, {CONF_ATTRS: {CONF_LOCK: 1}}
             )
+
+            # Interim code to ensure the transition
+            if not self._ws_mode:
+                await self.coordinator.async_request_refresh()
+            # End
+
         except HeatzyException as error:
             _LOGGER.error("Error to lock pilot : %s", error)
-
-        await self.coordinator.async_request_refresh()
 
     async def async_turn_off(self) -> None:
         """Turn the entity off."""
@@ -71,7 +86,11 @@ class LockSwitchEntity(CoordinatorEntity[HeatzyDataUpdateCoordinator], SwitchEnt
             await self.coordinator.api.async_control_device(
                 self.unique_id, {CONF_ATTRS: {CONF_LOCK: 0}}
             )
+
+            # Interim code to ensure the transition
+            if not self._ws_mode:
+                await self.coordinator.async_request_refresh()
+            # End
+
         except HeatzyException as error:
             _LOGGER.error("Error to lock pilot : %s", error)
-
-        await self.coordinator.async_request_refresh()
