@@ -2,13 +2,12 @@
 
 from __future__ import annotations
 
-import asyncio
 import logging
 from datetime import timedelta
 from typing import Any
 
 from heatzypy import HeatzyClient
-from heatzypy.exception import ConnectionFailed, HeatzyException
+from heatzypy.exception import AuthenticationFailed, ConnectionFailed, HeatzyException
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_PASSWORD, CONF_USERNAME, EVENT_HOMEASSISTANT_STOP
 from homeassistant.core import CALLBACK_TYPE, Event, HomeAssistant, callback
@@ -47,23 +46,21 @@ class HeatzyDataUpdateCoordinator(DataUpdateCoordinator):
                 self.api.websocket.register_callback(
                     callback=self.async_set_updated_data
                 )
-                await self.api.websocket.async_connect(all_devices=True, event=event)
-            except HeatzyException as err:
-                self.logger.info(err)
-                if self.unsub:
-                    self.unsub()
-                    self.unsub = None
-                return
-
-            try:
+                await self.api.websocket.async_connect(
+                    auto_subscribe=True, all_devices=True
+                )
                 await self.api.websocket.async_listen()
-            except ConnectionFailed as err:
+            except AuthenticationFailed as error:
+                self.logger.error("Authentication failed (%s)", error)
                 self.last_update_success = False
-                self.logger.info(err)
+            except ConnectionFailed as error:
+                self.logger.error("Connection failed (%s)", error)
+                self.last_update_success = False
             except HeatzyException as error:
-                self.last_update_success = False
-                self.async_update_listeners()
                 self.logger.error(error)
+                self.last_update_success = False
+            finally:
+                self.async_update_listeners()
 
             # Ensure we are disconnected
             await self.api.websocket.async_disconnect()
@@ -89,13 +86,11 @@ class HeatzyDataUpdateCoordinator(DataUpdateCoordinator):
     async def _async_update_data(self) -> dict[str, Any]:
         """Fetch data."""
         if not self.api.websocket.is_connected and not self.unsub:
-            event = asyncio.Event()
-            self._init_websocket(event)
-            await event.wait()
+            self._init_websocket()
 
         try:
-            await self.api.websocket.async_get_devices()
-            await event.wait()
+            if not self.api.websocket.is_updated:
+                return await self.api.async_get_devices()
         except HeatzyException as error:
             raise UpdateFailed(f"Invalid response from API: {error}") from error
         else:
