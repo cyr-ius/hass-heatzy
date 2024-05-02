@@ -8,7 +8,7 @@ from datetime import timedelta
 from typing import Any
 
 from heatzypy import HeatzyClient
-from heatzypy.exception import ConnectionClosed, HeatzyException
+from heatzypy.exception import ConnectionFailed, HeatzyException
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_PASSWORD, CONF_USERNAME, EVENT_HOMEASSISTANT_STOP
 from homeassistant.core import CALLBACK_TYPE, Event, HomeAssistant, callback
@@ -44,7 +44,10 @@ class HeatzyDataUpdateCoordinator(DataUpdateCoordinator):
         async def async_listener() -> None:
             """Create the connection and listen to the websocket."""
             try:
-                await self.api.websocket.async_connect()
+                self.api.websocket.register_callback(
+                    callback=self.async_set_updated_data
+                )
+                await self.api.websocket.async_connect(all_devices=True, event=event)
             except HeatzyException as err:
                 self.logger.info(err)
                 if self.unsub:
@@ -53,10 +56,8 @@ class HeatzyDataUpdateCoordinator(DataUpdateCoordinator):
                 return
 
             try:
-                await self.api.websocket.async_listen(
-                    callback=self.async_set_updated_data, all_devices=True, event=event
-                )
-            except ConnectionClosed as err:
+                await self.api.websocket.async_listen()
+            except ConnectionFailed as err:
                 self.last_update_success = False
                 self.logger.info(err)
             except HeatzyException as error:
@@ -87,12 +88,15 @@ class HeatzyDataUpdateCoordinator(DataUpdateCoordinator):
 
     async def _async_update_data(self) -> dict[str, Any]:
         """Fetch data."""
-        if not self.api.is_connected and not self.unsub:
+        if not self.api.websocket.is_connected and not self.unsub:
             event = asyncio.Event()
             self._init_websocket(event)
             await event.wait()
 
         try:
-            return await self.api.websocket.async_get_devices()
+            await self.api.websocket.async_get_devices()
+            await event.wait()
         except HeatzyException as error:
             raise UpdateFailed(f"Invalid response from API: {error}") from error
+        else:
+            return self.data
