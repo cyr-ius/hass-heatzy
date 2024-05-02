@@ -456,8 +456,12 @@ class Glowv1Thermostat(HeatzyPiloteV2Thermostat):
         """Return the current preset mode, e.g., home, away, temp."""
         if self._attr.get(CONF_ON_OFF) == 0 and self._attr.get(CONF_DEROG_MODE) == 2:
             return PRESET_AWAY
-        # Use CUR_MODE for mapping to preset mode as this works in PROGRAM mode as well manual mode
-        return self.HEATZY_TO_HA_STATE.get(self._attr.get(CONF_CUR_MODE))
+
+        if cur_mode := self._attr.get(CONF_CUR_MODE):
+            # Use CUR_MODE for mapping to preset mode as this works in PROGRAM mode as well manual mode
+            return self.HEATZY_TO_HA_STATE.get(cur_mode)
+
+        return self.HEATZY_TO_HA_STATE.get(self._attr.get(CONF_MODE))
 
     async def async_turn_on(self) -> None:
         """Turn device on."""
