@@ -21,7 +21,6 @@ from homeassistant.components.climate import (
     HVACAction,
     HVACMode,
 )
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_DELAY, UnitOfTemperature
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import config_validation as cv, entity_platform
@@ -29,7 +28,7 @@ from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from . import HeatzyDataUpdateCoordinator
+from . import HeatzyConfigEntry, HeatzyDataUpdateCoordinator
 from .const import (
     BLOOM,
     CFT_TEMP_H,
@@ -72,10 +71,12 @@ _LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(
-    hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
+    hass: HomeAssistant,
+    entry: HeatzyConfigEntry,
+    async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Load all Heatzy devices."""
-    coordinator = hass.data[DOMAIN][entry.entry_id]
+    coordinator = entry.runtime_data
 
     platform = entity_platform.async_get_current_platform()
     for service in SERVICES:

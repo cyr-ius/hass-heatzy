@@ -5,24 +5,26 @@ from __future__ import annotations
 import logging
 
 from heatzypy.exception import HeatzyException
+
 from homeassistant.components.switch import SwitchEntity
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity import DeviceInfo, EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from . import HeatzyDataUpdateCoordinator
+from . import HeatzyConfigEntry, HeatzyDataUpdateCoordinator
 from .const import ATTR_LOCK_SWITCH, CONF_ATTRS, CONF_LOCK, DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(
-    hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
+    hass: HomeAssistant,
+    entry: HeatzyConfigEntry,
+    async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set the sensor platform."""
-    coordinator = hass.data[DOMAIN][entry.entry_id]
+    coordinator = entry.runtime_data
     entities: list[LockSwitchEntity] = []
     for unique_id, device in coordinator.data.items():
         if device.get(CONF_ATTRS, {}).get(ATTR_LOCK_SWITCH) is not None:
