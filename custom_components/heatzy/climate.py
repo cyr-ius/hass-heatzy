@@ -259,9 +259,11 @@ class HeatzyPiloteV2Thermostat(HeatzyThermostat):
     @property
     def preset_mode(self) -> str | None:
         """Return the current preset mode, e.g., home, away, temp."""
-        if self._attr.get(CONF_DEROG_MODE) == 2:
-            return PRESET_BOOST
-        return self.HEATZY_TO_HA_STATE.get(self._attr.get(CONF_MODE))
+        return (
+            PRESET_BOOST
+            if self._attr.get(CONF_DEROG_MODE) == 2
+            else self.HEATZY_TO_HA_STATE.get(self._attr.get(CONF_MODE))
+        )
 
     async def async_turn_on(self) -> None:
         """Turn device on."""
@@ -444,9 +446,8 @@ class Glowv1Thermostat(HeatzyPiloteV2Thermostat):
         if self.hvac_mode == HVACMode.OFF:
             return HVACAction.OFF
         # If Target temp is higher than current temp then set HVAC Action to HEATING
-        if (
-            self.target_temperature
-            and self.target_temperature > self.current_temperature
+        if self.target_temperature and (
+            self.target_temperature > self.current_temperature
         ):
             return HVACAction.HEATING
         # Otherwise set to IDLE
@@ -455,14 +456,11 @@ class Glowv1Thermostat(HeatzyPiloteV2Thermostat):
     @property
     def preset_mode(self) -> str | None:
         """Return the current preset mode, e.g., home, away, temp."""
-        if self._attr.get(CONF_ON_OFF) == 0 and self._attr.get(CONF_DEROG_MODE) == 2:
-            return PRESET_AWAY
-
-        if cur_mode := self._attr.get(CONF_CUR_MODE):
-            # Use CUR_MODE for mapping to preset mode as this works in PROGRAM mode as well manual mode
-            return self.HEATZY_TO_HA_STATE.get(cur_mode)
-
-        return self.HEATZY_TO_HA_STATE.get(self._attr.get(CONF_MODE))
+        return (
+            PRESET_AWAY
+            if self._attr.get(CONF_ON_OFF) == 0 and self._attr.get(CONF_DEROG_MODE) == 2
+            else self.HEATZY_TO_HA_STATE.get(self._attr.get(CONF_CUR_MODE))
+        )
 
     async def async_turn_on(self) -> None:
         """Turn device on."""
@@ -581,9 +579,8 @@ class Bloomv1Thermostat(HeatzyPiloteV2Thermostat):
         if self.hvac_mode == HVACMode.OFF:
             return HVACAction.OFF
         # If Target temp is higher than current temp then set HVAC Action to HEATING
-        if (
-            self.target_temperature
-            and self.target_temperature > self.current_temperature
+        if self.target_temperature and (
+            self.target_temperature > self.current_temperature
         ):
             return HVACAction.HEATING
         # Otherwise set to IDLE
