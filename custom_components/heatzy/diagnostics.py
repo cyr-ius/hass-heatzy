@@ -6,13 +6,14 @@ import asyncio
 from typing import Any
 
 from heatzypy import HeatzyClient
+
 from homeassistant.components.diagnostics import async_redact_data
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.aiohttp_client import async_create_clientsession
 
-from .const import CONF_WEBSOCKET, DOMAIN
+from .const import CONF_WEBSOCKET
 
 TO_REDACT = {
     "address",
@@ -41,7 +42,7 @@ async def async_get_config_entry_diagnostics(
     hass: HomeAssistant, entry: ConfigEntry
 ) -> dict[str, Any]:
     """Return diagnostics for a config entry."""
-    coordinator = hass.data[DOMAIN][entry.entry_id]
+    coordinator = entry.runtime_data
     bindings = await coordinator.api.async_bindings()
     diag_v1 = None
     ws_mode = entry.options.get(CONF_WEBSOCKET)
