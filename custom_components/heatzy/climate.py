@@ -220,7 +220,7 @@ class HeatzyPiloteV1Thermostat(HeatzyThermostat):
         """Turn device to Program mode."""
         # For PROGRAM Mode we have to set TIMER_SWITCH = 1, but we also ensure VACATION Mode is OFF
         try:
-            await self.coordinator.api.async_control_device(
+            await self.coordinator.async_control_device(
                 self.unique_id,
                 {
                     "raw": {
@@ -230,17 +230,19 @@ class HeatzyPiloteV1Thermostat(HeatzyThermostat):
                     }
                 },
             )
+            await self.coordinator.async_request_refresh()
+
         except HeatzyException as error:
             _LOGGER.error("Error while turn off (%s)", error)
 
     async def async_set_preset_mode(self, preset_mode: str) -> None:
         """Set new preset mode."""
         try:
-            await self.coordinator.api.async_control_device(
+            await self.coordinator.async_control_device(
                 self.unique_id,
                 {"raw": self.HA_TO_HEATZY_STATE.get(preset_mode)},
             )
-
+            await self.coordinator.async_request_refresh()
         except HeatzyException as error:
             _LOGGER.error("Error while preset mode: %s (%s)", preset_mode, error)
 

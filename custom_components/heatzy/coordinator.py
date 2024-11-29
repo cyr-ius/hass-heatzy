@@ -36,6 +36,7 @@ class HeatzyDataUpdateCoordinator(DataUpdateCoordinator):
         super().__init__(
             hass, _LOGGER, name=DOMAIN, update_interval=timedelta(seconds=SCAN_INTERVAL)
         )
+        self.async_control_device = self.api.async_control_device
 
     @callback
     def _init_websocket(self, event: Event | None = None) -> None:
