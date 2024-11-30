@@ -1,6 +1,5 @@
 """Constants for the Heatzy component."""
 
-ATTR_LOCK_SWITCH = "lock_switch"
 API_TIMEOUT = 30
 CFT_TEMP_H = "cft_tempH"
 CFT_TEMP_L = "cft_tempL"
@@ -16,6 +15,7 @@ CONF_DEROG_TIME = "derog_time"
 CONF_ECO_TEMP = "eco_temp"
 CONF_IS_ONLINE = "is_online"
 CONF_LOCK = "lock_switch"
+CONF_WINDOW = "window_switch"
 CONF_MODE = "mode"
 CONF_MODEL = "product_name"
 CONF_ON_OFF = "on_off"
@@ -25,12 +25,13 @@ CONF_VERSION = "wifi_soft_version"
 CUR_TEMP_H = "cur_tempH"
 CUR_TEMP_L = "cur_tempL"
 CONF_WEBSOCKET = "websocket_feature"
+CONF_HUMIDITY = "cur_humi"
 DEBOUNCE_COOLDOWN = 10
 DOMAIN = "heatzy"
 ECO_TEMP_H = "eco_tempH"
 ECO_TEMP_L = "eco_tempL"
 FROST_TEMP = 7
-PLATFORMS = ["climate", "switch"]
+PLATFORMS = ["climate", "switch", "sensor"]
 PRESET_COMFORT_1 = "Comfort 1"
 PRESET_COMFORT_2 = "Comfort 2"
 
