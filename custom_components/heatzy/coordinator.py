@@ -16,7 +16,6 @@ from homeassistant.helpers.aiohttp_client import async_create_clientsession
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .const import CONF_WEBSOCKET, DOMAIN
-from .fakedevices import FAKE_DEVICES
 
 _LOGGER = logging.getLogger(__name__)
 SCAN_INTERVAL = 60
@@ -92,8 +91,7 @@ class HeatzyDataUpdateCoordinator(DataUpdateCoordinator):
 
         try:
             if not self.api.websocket.is_updated:
-                # return await self.api.async_get_devices()
-                return FAKE_DEVICES
+                return await self.api.async_get_devices()
         except HeatzyException as error:
             raise UpdateFailed(f"Invalid response from API: {error}") from error
         else:
