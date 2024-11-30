@@ -55,11 +55,12 @@ from .const import (
     ECO_TEMP_L,
     FROST_TEMP,
     GLOW,
+    PILOTE_PRO_V1,
     PILOTE_V1,
     PILOTE_V2,
+    PILOTE_V3,
     PRESET_COMFORT_1,
     PRESET_COMFORT_2,
-    SAUTER,
 )
 
 SERVICES = [
@@ -89,12 +90,15 @@ async def async_setup_entry(
             entities.append(HeatzyPiloteV1Thermostat(coordinator, unique_id))
         elif product_key in PILOTE_V2:
             entities.append(HeatzyPiloteV2Thermostat(coordinator, unique_id))
+        elif product_key in PILOTE_V3:
+            entities.append(HeatzyPiloteV3Thermostat(coordinator, unique_id))
         elif product_key in GLOW:
             entities.append(Glowv1Thermostat(coordinator, unique_id))
         elif product_key in BLOOM:
             entities.append(Bloomv1Thermostat(coordinator, unique_id))
-        elif product_key in SAUTER:
-            entities.append(SauterThermostat(coordinator, unique_id))
+        elif product_key in PILOTE_PRO_V1:
+            entities.append(HeatzyPiloteProV1(coordinator, unique_id))
+
     async_add_entities(entities)
 
 
@@ -375,6 +379,33 @@ class HeatzyPiloteV2Thermostat(HeatzyThermostat):
             _LOGGER.error("Error to set derog mode: %s (%s)", mode, error)
 
 
+class HeatzyPiloteV3Thermostat(HeatzyPiloteV2Thermostat):
+    """Pilote_Soc_C3, Elec_Pro_Ble, Sauter."""
+
+    _attr_preset_modes = [
+        PRESET_COMFORT,
+        PRESET_ECO,
+        PRESET_AWAY,
+        PRESET_COMFORT_1,
+        PRESET_COMFORT_2,
+    ]
+
+    HEATZY_TO_HA_STATE = {
+        "cft": PRESET_COMFORT,
+        "eco": PRESET_ECO,
+        "fro": PRESET_AWAY,
+        "cft1": PRESET_COMFORT_1,
+        "cft2": PRESET_COMFORT_2,
+    }
+    HA_TO_HEATZY_STATE = {
+        PRESET_COMFORT: "cft",
+        PRESET_ECO: "eco",
+        PRESET_AWAY: "fro",
+        PRESET_COMFORT_1: "cft1",
+        PRESET_COMFORT_2: "cft2",
+    }
+
+
 class Glowv1Thermostat(HeatzyPiloteV2Thermostat):
     """Glow."""
 
@@ -610,10 +641,18 @@ class Bloomv1Thermostat(HeatzyPiloteV2Thermostat):
                 _LOGGER.error("Error to set temperature (%s)", error)
 
 
-class SauterThermostat(HeatzyPiloteV2Thermostat):
-    """Sauter."""
+class HeatzyPiloteProV1(HeatzyPiloteV2Thermostat):
+    """Heatzy Pilote Pro."""
 
+    _attr_target_temperature_step = 1
+    _attr_supported_features = (
+        ClimateEntityFeature.PRESET_MODE
+        | ClimateEntityFeature.TARGET_TEMPERATURE_RANGE
+        | ClimateEntityFeature.TURN_ON
+        | ClimateEntityFeature.TURN_OFF
+    )
     _attr_preset_modes = [
+        PRESET_BOOST,
         PRESET_COMFORT,
         PRESET_ECO,
         PRESET_AWAY,
@@ -621,17 +660,72 @@ class SauterThermostat(HeatzyPiloteV2Thermostat):
         PRESET_COMFORT_2,
     ]
 
-    HEATZY_TO_HA_STATE = {
-        "cft": PRESET_COMFORT,
-        "eco": PRESET_ECO,
-        "fro": PRESET_AWAY,
-        "cft1": PRESET_COMFORT_1,
-        "cft2": PRESET_COMFORT_2,
-    }
-    HA_TO_HEATZY_STATE = {
-        PRESET_COMFORT: "cft",
-        PRESET_ECO: "eco",
-        PRESET_AWAY: "fro",
-        PRESET_COMFORT_1: "cft1",
-        PRESET_COMFORT_2: "cft2",
-    }
+    @property
+    def current_temperature(self) -> float:
+        """Return current temperature."""
+        return self._attr.get(CONF_CUR_TEMP) / 10
+
+    @property
+    def target_temperature_high(self) -> float:
+        """Return comfort temperature."""
+        return self._attr.get(CONF_CFT_TEMP) / 10
+
+    @property
+    def target_temperature_low(self) -> float:
+        """Return echo temperature."""
+        return self._attr.get(CONF_ECO_TEMP) / 10
+
+    @property
+    def target_temperature(self) -> float | None:
+        """Return target temperature for mode."""
+        # Target temp is set to Low/High/Away value according to the current [preset] mode
+        if self.hvac_mode == HVACMode.OFF:
+            return None
+        if self.preset_mode == PRESET_ECO:
+            return self.target_temperature_low
+        if self.preset_mode == PRESET_COMFORT:
+            return self.target_temperature_high
+        if self.preset_mode == PRESET_AWAY:
+            return FROST_TEMP
+        return None
+
+    async def async_presence_detection_mode(self, delay: int) -> None:
+        """Service Boost Mode."""
+        await self._async_derog_mode(3, delay)
+
+    async def async_set_temperature(self, **kwargs: Any) -> None:
+        """Set new target temperature."""
+        if (temp_eco := kwargs.get(ATTR_TARGET_TEMP_LOW)) and (
+            temp_cft := kwargs.get(ATTR_TARGET_TEMP_HIGH)
+        ):
+            self._attr[CONF_ECO_TEMP] = int(temp_eco) * 10
+            self._attr[CONF_CFT_TEMP] = int(temp_cft) * 10
+
+            try:
+                await self.coordinator.api.websocket.async_control_device(
+                    self.unique_id,
+                    {
+                        CONF_ATTRS: {
+                            CONF_CFT_TEMP: self._attr[CONF_CFT_TEMP],
+                            CONF_ECO_TEMP: self._attr[CONF_ECO_TEMP],
+                        }
+                    },
+                )
+            except HeatzyException as error:
+                _LOGGER.error("Error to set temperature (%s)", error)
+
+    @property
+    def hvac_action(self) -> HVACAction:
+        """Return hvac action ie. heat, cool mode."""
+        if self._attr.get(CONF_TIMER_SWITCH) == 1:
+            return HVACMode.AUTO
+        # If OFF then set HVAC Action to OFF
+        if self.hvac_mode == HVACMode.OFF:
+            return HVACAction.OFF
+        # If Target temp is higher than current temp then set HVAC Action to HEATING
+        if self.target_temperature and (
+            self.target_temperature > self.current_temperature
+        ):
+            return HVACAction.HEATING
+        # Otherwise set to IDLE
+        return HVACAction.IDLE
