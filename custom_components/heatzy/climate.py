@@ -2,14 +2,13 @@
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Callable
 from dataclasses import dataclass
-import logging
 from typing import Any, Final
 
-from heatzypy.exception import HeatzyException
 import voluptuous as vol
-
+from heatzypy.exception import HeatzyException
 from homeassistant.components.climate import (
     ATTR_TARGET_TEMP_HIGH,
     ATTR_TARGET_TEMP_LOW,
@@ -25,8 +24,9 @@ from homeassistant.components.climate import (
     HVACMode,
 )
 from homeassistant.const import CONF_DELAY, UnitOfTemperature
-from homeassistant.core import HomeAssistant
-from homeassistant.helpers import config_validation as cv, entity_platform
+from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers import entity_platform
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from . import HeatzyConfigEntry, HeatzyDataUpdateCoordinator
@@ -42,6 +42,7 @@ from .const import (
     CONF_DEROG_TIME,
     CONF_ECO_TEMP,
     CONF_HEATING_STATE,
+    CONF_HUMIDITY,
     CONF_IS_ONLINE,
     CONF_MODE,
     CONF_ON_OFF,
@@ -223,7 +224,7 @@ CLIMATE_TYPES: Final[tuple[HeatzyClimateEntityDescription, ...]] = (
         temperature_low=CFT_TEMP_L,
         eco_temperature_high=ECO_TEMP_H,
         eco_temperature_low=ECO_TEMP_L,
-        target_temperature_step=1,
+        target_temperature_step=0.1,
     ),
     HeatzyClimateEntityDescription(
         key="bloom",
@@ -261,6 +262,7 @@ CLIMATE_TYPES: Final[tuple[HeatzyClimateEntityDescription, ...]] = (
         current_temperature=CONF_CUR_TEMP,
         temperature_high=CONF_CFT_TEMP,
         temperature_low=CONF_ECO_TEMP,
+        target_temperature_step=0.1,
     ),
     HeatzyClimateEntityDescription(
         key="pilotepro_v1",
@@ -301,7 +303,7 @@ CLIMATE_TYPES: Final[tuple[HeatzyClimateEntityDescription, ...]] = (
         current_temperature=CONF_CUR_TEMP,
         temperature_high=CONF_CFT_TEMP,
         temperature_low=CONF_ECO_TEMP,
-        target_temperature_step=1,
+        target_temperature_step=0.1,
     ),
 )
 
@@ -351,21 +353,19 @@ class HeatzyThermostat(HeatzyEntity, ClimateEntity):
 
     @property
     def hvac_action(self) -> HVACAction:
-        """Return hvac action ie. heat, cool mode."""
-        mode = self._attrs.get(CONF_MODE)
-        return (
-            HVACAction.OFF
-            if mode == self.entity_description.stop
-            else HVACAction.HEATING
-        )
+        """Return hvac action ie. heating, off mode."""
+        if self._attrs.get(CONF_TIMER_SWITCH) == 1:
+            return HVACMode.AUTO
+        if self._attrs.get(CONF_MODE) == self.entity_description.stop:
+            return HVACAction.OFF
+
+        return HVACAction.HEATING
 
     @property
     def hvac_mode(self) -> HVACMode:
-        """Return hvac operation ie. heat, cool mode."""
+        """Return hvac mode ie. heat, auto, off."""
         if self._attrs.get(CONF_TIMER_SWITCH) == 1:
             return HVACMode.AUTO
-
-        # If preset mode is NONE set HVAC Mode to OFF
         if self._attrs.get(CONF_MODE) == self.entity_description.stop:
             return HVACMode.OFF
         # otherwise set HVAC Mode to HEAT
@@ -418,7 +418,7 @@ class HeatzyThermostat(HeatzyEntity, ClimateEntity):
         """Presence detection derog."""
         raise NotImplementedError
 
-    # @callback
+    @callback
     def _handle_coordinator_update(self) -> None:
         """Handle updated data from the coordinator."""
         self._attrs = self.coordinator.data.get(self.unique_id, {}).get(CONF_ATTRS, {})
@@ -622,7 +622,7 @@ class HeatzyPiloteV3Thermostat(HeatzyPiloteV2Thermostat):
     """Pilote_Soc_C3, Elec_Pro_Ble, Sauter."""
 
 
-class Glowv1Thermostat(HeatzyPiloteV2Thermostat):
+class Glowv1Thermostat(HeatzyPiloteV3Thermostat):
     """Glow."""
 
     @property
@@ -648,14 +648,25 @@ class Glowv1Thermostat(HeatzyPiloteV2Thermostat):
         return (eco_tempL + (eco_tempH * 256)) / 10
 
     @property
+    def hvac_action(self) -> HVACAction:
+        """Return hvac action ie. heating, off mode."""
+        if self._attrs.get(CONF_TIMER_SWITCH) == 1:
+            return HVACMode.AUTO
+        if self.hvac_mode == HVACMode.OFF:
+            return HVACAction.OFF
+        if self.target_temperature and (
+            self.current_temperature > self.target_temperature
+        ):
+            return HVACAction.OFF
+        return HVACAction.HEATING
+
+    @property
     def hvac_mode(self) -> HVACMode:
         """Return hvac operation ie. heat, cool mode."""
         if self._attrs.get(CONF_TIMER_SWITCH) == 1:
             return HVACMode.AUTO
-
         if self._attrs.get(CONF_ON_OFF) == 0:
             return HVACMode.OFF
-        # Otherwise set HVAC Mode to HEAT
         return HVACMode.HEAT
 
     @property
@@ -671,22 +682,6 @@ class Glowv1Thermostat(HeatzyPiloteV2Thermostat):
         if self.preset_mode == PRESET_AWAY:
             return FROST_TEMP
         return None
-
-    @property
-    def hvac_action(self) -> HVACAction:
-        """Return hvac action ie. heat, cool mode."""
-        if self._attrs.get(CONF_TIMER_SWITCH) == 1:
-            return HVACMode.AUTO
-        if self.hvac_mode == HVACMode.OFF:
-            return HVACAction.OFF
-
-        # If Target temp is higher than current temp then set HVAC Action to HEATING
-        if self.target_temperature and (
-            self.current_temperature < self.target_temperature
-        ):
-            return HVACAction.HEATING
-        # Otherwise set to IDLE
-        return HVACAction.IDLE
 
     @property
     def preset_mode(self) -> str | None:
@@ -819,14 +814,11 @@ class Bloomv1Thermostat(HeatzyPiloteV2Thermostat):
             return HVACMode.AUTO
         if self.hvac_mode == HVACMode.OFF:
             return HVACAction.OFF
-
-        # If Target temp is higher than current temp then set HVAC Action to HEATING
         if self.target_temperature and (
-            self.current_temperature < self.target_temperature
+            self.current_temperature > self.target_temperature
         ):
-            return HVACAction.HEATING
-        # Otherwise set to IDLE
-        return HVACAction.IDLE
+            return HVACAction.OFF
+        return HVACAction.HEATING
 
     async def async_set_temperature(self, **kwargs: Any) -> None:
         """Set new target temperature."""
@@ -852,6 +844,11 @@ class Bloomv1Thermostat(HeatzyPiloteV2Thermostat):
 
 class HeatzyPiloteProV1(HeatzyPiloteV3Thermostat):
     """Heatzy Pilote Pro."""
+
+    @property
+    def current_humidity(self) -> float:
+        """Return current humidity."""
+        return self._attrs.get(CONF_HUMIDITY)
 
     @property
     def current_temperature(self) -> float:
@@ -883,22 +880,18 @@ class HeatzyPiloteProV1(HeatzyPiloteV3Thermostat):
 
     @property
     def hvac_action(self) -> HVACAction:
-        """Return hvac action ie. heat, cool mode."""
+        """Return hvac action ie. heating, off mode."""
         if self._attrs.get(CONF_TIMER_SWITCH) == 1:
             return HVACMode.AUTO
         if self.hvac_mode == HVACMode.OFF:
             return HVACAction.OFF
-
-        # if Target tem is reached
         if self._attrs.get(CONF_HEATING_STATE) == 1:
-            return HVACAction.IDLE
-        # If Target temp is higher than current temp then set HVAC Action to HEATING
+            return HVACAction.OFF
         if self.target_temperature and (
-            self.current_temperature < self.target_temperature
+            self.current_temperature > self.target_temperature
         ):
-            return HVACAction.HEATING
-        # Otherwise set to IDLE
-        return HVACAction.IDLE
+            return HVACAction.OFF
+        return HVACAction.HEATING
 
     async def async_set_preset_mode(self, preset_mode: str) -> None:
         """Set new preset mode."""
