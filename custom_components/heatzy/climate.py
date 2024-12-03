@@ -47,6 +47,8 @@ from .const import (
     CONF_ON_OFF,
     CONF_PRODUCT_KEY,
     CONF_TIMER_SWITCH,
+    DEFAULT_BOOT,
+    DEFAULT_VACATION,
     ECO_TEMP_H,
     ECO_TEMP_L,
     FROST_TEMP,
@@ -450,10 +452,10 @@ class HeatzyPiloteV1Thermostat(HeatzyThermostat):
     async def async_set_preset_mode(self, preset_mode: str) -> None:
         """Set new preset mode."""
         if preset_mode == PRESET_BOOST:
-            minutes = self.coordinator.data[self.did].get("boost", 60)
+            minutes = self.coordinator.data[self.did].get("boost", DEFAULT_BOOT)
             return await self.async_boost_mode(minutes)
         if preset_mode == PRESET_VACATION:
-            days = self.coordinator.data[self.did].get("vacation", 30)
+            days = self.coordinator.data[self.did].get("vacation", DEFAULT_VACATION)
             return await self.async_vacation_mode(days)
 
         try:
@@ -563,10 +565,10 @@ class HeatzyPiloteV2Thermostat(HeatzyThermostat):
     async def async_set_preset_mode(self, preset_mode: str) -> None:
         """Set new preset mode."""
         if preset_mode == PRESET_BOOST:
-            minutes = self.coordinator.data[self.did].get("boost", 60)
+            minutes = self.coordinator.data[self.did].get("boost", DEFAULT_BOOT)
             return await self.async_boost_mode(minutes)
         if preset_mode == PRESET_VACATION:
-            days = self.coordinator.data[self.did].get("vacation", 30)
+            days = self.coordinator.data[self.did].get("vacation", DEFAULT_VACATION)
             return await self.async_vacation_mode(days)
 
         config: dict[str, Any] = {
@@ -755,10 +757,10 @@ class Glowv1Thermostat(HeatzyPiloteV2Thermostat):
     async def async_set_preset_mode(self, preset_mode: str) -> None:
         """Set new preset mode."""
         if preset_mode == PRESET_BOOST:
-            minutes = self.coordinator.data[self.did].get("boost", 60)
+            minutes = self.coordinator.data[self.did].get("boost", DEFAULT_BOOT)
             return await self.async_boost_mode(minutes)
         if preset_mode == PRESET_VACATION:
-            days = self.coordinator.data[self.did].get("vacation", 30)
+            days = self.coordinator.data[self.did].get("vacation", DEFAULT_VACATION)
             return await self.async_vacation_mode(days)
 
         config = {
@@ -901,10 +903,10 @@ class HeatzyPiloteProV1(HeatzyPiloteV3Thermostat):
     async def async_set_preset_mode(self, preset_mode: str) -> None:
         """Set new preset mode."""
         if preset_mode == PRESET_BOOST:
-            minutes = self.coordinator.data[self.did].get("boost", 60)
+            minutes = self.coordinator.data[self.did].get("boost", DEFAULT_BOOT)
             return await self.async_boost_mode(minutes)
         if preset_mode == PRESET_VACATION:
-            days = self.coordinator.data[self.did].get("vacation", 30)
+            days = self.coordinator.data[self.did].get("vacation", DEFAULT_VACATION)
             return await self.async_vacation_mode(days)
         if preset_mode == PRESET_PRESENCE_DETECT:
             return await self.async_presence_detection()
