@@ -14,17 +14,24 @@ There is currently support for the following device types within Home Assistant:
 
 ## Supported Devices
 
-- Heatzy Pilot 1 & 2
+- Heatzy Pilot 1 & 2 & 3
 - Acova Heatzy Elec'Pro
 - Glow by Heatzy
 - Onyx by Heatzy
 - Bloom by Heatzy
 - Sauter Orosi
+- Pilote Pro
+
+## Switch
+
+- Lock mode
+- Window mode
 
 ## Services
 
 - Boost Service with set duration
 - Vacation Service with set duration
+- Presence detection
 
 ## Configuration
 
