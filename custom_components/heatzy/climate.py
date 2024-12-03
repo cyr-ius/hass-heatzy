@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
-import logging
 from collections.abc import Callable
 from dataclasses import dataclass
+import logging
 from typing import Any, Final
 
-import voluptuous as vol
 from heatzypy.exception import HeatzyException
+import voluptuous as vol
+
 from homeassistant.components.climate import (
     ATTR_TARGET_TEMP_HIGH,
     ATTR_TARGET_TEMP_LOW,
@@ -25,8 +26,7 @@ from homeassistant.components.climate import (
 )
 from homeassistant.const import CONF_DELAY, UnitOfTemperature
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers import config_validation as cv
-from homeassistant.helpers import entity_platform
+from homeassistant.helpers import config_validation as cv, entity_platform
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from . import HeatzyConfigEntry, HeatzyDataUpdateCoordinator
@@ -340,6 +340,7 @@ class HeatzyThermostat(HeatzyEntity, ClimateEntity):
     ) -> None:
         """Init."""
         super().__init__(coordinator, entity_description, did)
+        self._attr_unique_id = did
         self._attr_temperature_unit = entity_description.temperature_unit
         self._attr_supported_features = entity_description.supported_features
         self._attr_preset_modes = entity_description.preset_modes
@@ -449,10 +450,10 @@ class HeatzyPiloteV1Thermostat(HeatzyThermostat):
     async def async_set_preset_mode(self, preset_mode: str) -> None:
         """Set new preset mode."""
         if preset_mode == PRESET_BOOST:
-            minutes = self.coordinator.data[self.did].get(f"boost_{self.did}", 60)
+            minutes = self.coordinator.data[self.did].get("boost", 60)
             return await self.async_boost_mode(minutes)
         if preset_mode == PRESET_VACATION:
-            days = self.coordinator.data[self.did].get(f"vacation_{self.did}", 30)
+            days = self.coordinator.data[self.did].get("vacation", 30)
             return await self.async_vacation_mode(days)
 
         try:
@@ -562,10 +563,10 @@ class HeatzyPiloteV2Thermostat(HeatzyThermostat):
     async def async_set_preset_mode(self, preset_mode: str) -> None:
         """Set new preset mode."""
         if preset_mode == PRESET_BOOST:
-            minutes = self.coordinator.data[self.did].get(f"boost_{self.did}", 60)
+            minutes = self.coordinator.data[self.did].get("boost", 60)
             return await self.async_boost_mode(minutes)
         if preset_mode == PRESET_VACATION:
-            days = self.coordinator.data[self.did].get(f"vacation_{self.did}", 30)
+            days = self.coordinator.data[self.did].get("vacation", 30)
             return await self.async_vacation_mode(days)
 
         config: dict[str, Any] = {
@@ -754,10 +755,10 @@ class Glowv1Thermostat(HeatzyPiloteV2Thermostat):
     async def async_set_preset_mode(self, preset_mode: str) -> None:
         """Set new preset mode."""
         if preset_mode == PRESET_BOOST:
-            minutes = self.coordinator.data[self.did].get(f"boost_{self.did}", 60)
+            minutes = self.coordinator.data[self.did].get("boost", 60)
             return await self.async_boost_mode(minutes)
         if preset_mode == PRESET_VACATION:
-            days = self.coordinator.data[self.did].get(f"vacation_{self.did}", 30)
+            days = self.coordinator.data[self.did].get("vacation", 30)
             return await self.async_vacation_mode(days)
 
         config = {
@@ -900,10 +901,10 @@ class HeatzyPiloteProV1(HeatzyPiloteV3Thermostat):
     async def async_set_preset_mode(self, preset_mode: str) -> None:
         """Set new preset mode."""
         if preset_mode == PRESET_BOOST:
-            minutes = self.coordinator.data[self.did].get(f"boost_{self.did}", 60)
+            minutes = self.coordinator.data[self.did].get("boost", 60)
             return await self.async_boost_mode(minutes)
         if preset_mode == PRESET_VACATION:
-            days = self.coordinator.data[self.did].get(f"vacation_{self.did}", 30)
+            days = self.coordinator.data[self.did].get("vacation", 30)
             return await self.async_vacation_mode(days)
         if preset_mode == PRESET_PRESENCE_DETECT:
             return await self.async_presence_detection()
