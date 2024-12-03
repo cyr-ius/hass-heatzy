@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import logging
 from typing import Final
 
 from homeassistant.components.number import (
@@ -35,7 +36,7 @@ NUMBER_TYPES: Final[tuple[HeatzyNumberEntityDescription, ...]] = (
         device_class=NumberDeviceClass.DURATION,
         native_step=1,
         native_unit_of_measurement=UnitOfTime.DAYS,
-        native_min_value=0,
+        native_min_value=1,
         native_max_value=255,
     ),
     HeatzyNumberEntityDescription(
@@ -46,10 +47,11 @@ NUMBER_TYPES: Final[tuple[HeatzyNumberEntityDescription, ...]] = (
         device_class=NumberDeviceClass.DURATION,
         native_step=1,
         native_unit_of_measurement=UnitOfTime.MINUTES,
-        native_min_value=0,
+        native_min_value=1,
         native_max_value=255,
     ),
 )
+_LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(
@@ -80,7 +82,7 @@ class Number(HeatzyEntity, RestoreNumber):
     ) -> None:
         """Initialize."""
         super().__init__(coordinator, description, did)
-        self._resolve_state = None
+        self._resolve_state = 1
 
     @property
     def native_value(self) -> int:
@@ -97,6 +99,6 @@ class Number(HeatzyEntity, RestoreNumber):
 
     async def async_set_native_value(self, value: int) -> None:
         """Set new value."""
-        self.coordinator.data[self.did][self.unique_id] = value
+        self.coordinator.data[self.did][self.entity_description.key] = value
         self._resolve_state = value
         self.async_write_ha_state()
