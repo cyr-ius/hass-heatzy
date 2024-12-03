@@ -2,19 +2,44 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from datetime import date, datetime
 from decimal import Decimal
+from typing import Final
 
-from homeassistant.components.sensor import SensorEntity, SensorStateClass
+from homeassistant.components.sensor import (
+    SensorEntity,
+    SensorEntityDescription,
+    SensorStateClass,
+)
 from homeassistant.const import PERCENTAGE
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import StateType
-from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from . import HeatzyConfigEntry, HeatzyDataUpdateCoordinator
-from .const import CONF_ATTRS, CONF_HUMIDITY, DOMAIN
+from .const import CONF_ATTRS, CONF_HUMIDITY
+from .entity import HeatzyEntity
+
+
+@dataclass(frozen=True)
+class HeatzySensorEntityDescription(SensorEntityDescription):
+    """Represents an Flow Sensor."""
+
+    attr: str | None = None
+
+
+SENSOR_TYPES: Final[tuple[HeatzySensorEntityDescription, ...]] = (
+    HeatzySensorEntityDescription(
+        key="humidity",
+        name="Humidity",
+        icon="mdi:water-percent",
+        translation_key="humidity",
+        native_unit_of_measurement=PERCENTAGE,
+        state_class=SensorStateClass.MEASUREMENT,
+        attr=CONF_HUMIDITY,
+    ),
+)
 
 
 async def async_setup_entry(
@@ -26,37 +51,35 @@ async def async_setup_entry(
     coordinator = entry.runtime_data
     entities = []
     for unique_id, device in coordinator.data.items():
-        if device.get(CONF_ATTRS, {}).get(CONF_HUMIDITY) is not None:
-            entities.append(HumiditySensor(coordinator, unique_id))
+        for description in SENSOR_TYPES:
+            if device.get(CONF_ATTRS, {}).get(description.attr) is not None:
+                entities.extend([Sensor(coordinator, description, unique_id)])
 
     async_add_entities(entities)
 
 
-class HumiditySensor(CoordinatorEntity[HeatzyDataUpdateCoordinator], SensorEntity):
-    """Humidity sensor."""
+class Sensor(HeatzyEntity, SensorEntity):
+    """Sensor."""
 
     _attr_has_entity_name = True
-    _attr_name = "Humidity"
-    _attr_native_unit_of_measurement = PERCENTAGE
-    _attr_state_class = SensorStateClass.MEASUREMENT
-    _attr_icon = "mdi:water-percent"
+    entity_description: HeatzySensorEntityDescription
 
     def __init__(
-        self, coordinator: HeatzyDataUpdateCoordinator, unique_id: str
+        self,
+        coordinator: HeatzyDataUpdateCoordinator,
+        description: HeatzySensorEntityDescription,
+        did: str,
     ) -> None:
         """Initialize switch."""
-        super().__init__(coordinator)
-        self._attr_unique_id = f"humidity_{unique_id}"
-        self._attr_device_info = DeviceInfo(identifiers={(DOMAIN, unique_id)})
-        self._attr = coordinator.data[unique_id].get(CONF_ATTRS, {})
+        super().__init__(coordinator, description, did)
 
     @property
     def native_value(self) -> StateType | date | datetime | Decimal:
         """Return the value reported by the sensor."""
-        return self._attr.get(CONF_HUMIDITY)
+        return self._attrs.get(self.entity_description.attr)
 
     @callback
     def _handle_coordinator_update(self) -> None:
         """Handle updated data from the coordinator."""
-        self._attr = self.coordinator.data[self.unique_id].get(CONF_ATTRS, {})
+        self._attrs = self.coordinator.data.get(self.unique_id, {}).get(CONF_ATTRS, {})
         self.async_write_ha_state()
