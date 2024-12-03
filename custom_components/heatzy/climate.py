@@ -2,14 +2,13 @@
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Callable
 from dataclasses import dataclass
-import logging
 from typing import Any, Final
 
-from heatzypy.exception import HeatzyException
 import voluptuous as vol
-
+from heatzypy.exception import HeatzyException
 from homeassistant.components.climate import (
     ATTR_TARGET_TEMP_HIGH,
     ATTR_TARGET_TEMP_LOW,
@@ -26,7 +25,8 @@ from homeassistant.components.climate import (
 )
 from homeassistant.const import CONF_DELAY, UnitOfTemperature
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers import config_validation as cv, entity_platform
+from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers import entity_platform
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from . import HeatzyConfigEntry, HeatzyDataUpdateCoordinator
@@ -449,9 +449,11 @@ class HeatzyPiloteV1Thermostat(HeatzyThermostat):
     async def async_set_preset_mode(self, preset_mode: str) -> None:
         """Set new preset mode."""
         if preset_mode == PRESET_BOOST:
-            return await self.async_boost_mode(60)  # minutes
+            minutes = self.coordinator.data[self.did].get(f"boost_{self.did}", 60)
+            return await self.async_boost_mode(minutes)
         if preset_mode == PRESET_VACATION:
-            return await self.async_vacation_mode(60)  # days
+            days = self.coordinator.data[self.did].get(f"vacation_{self.did}", 30)
+            return await self.async_vacation_mode(days)
 
         try:
             await self.coordinator.api.async_control_device(
@@ -560,9 +562,11 @@ class HeatzyPiloteV2Thermostat(HeatzyThermostat):
     async def async_set_preset_mode(self, preset_mode: str) -> None:
         """Set new preset mode."""
         if preset_mode == PRESET_BOOST:
-            return await self.async_boost_mode(60)  # minutes
+            minutes = self.coordinator.data[self.did].get(f"boost_{self.did}", 60)
+            return await self.async_boost_mode(minutes)
         if preset_mode == PRESET_VACATION:
-            return await self.async_vacation_mode(60)  # days
+            days = self.coordinator.data[self.did].get(f"vacation_{self.did}", 30)
+            return await self.async_vacation_mode(days)
 
         config: dict[str, Any] = {
             CONF_ATTRS: {
@@ -750,9 +754,11 @@ class Glowv1Thermostat(HeatzyPiloteV2Thermostat):
     async def async_set_preset_mode(self, preset_mode: str) -> None:
         """Set new preset mode."""
         if preset_mode == PRESET_BOOST:
-            return await self.async_boost_mode(60)  # minutes
+            minutes = self.coordinator.data[self.did].get(f"boost_{self.did}", 60)
+            return await self.async_boost_mode(minutes)
         if preset_mode == PRESET_VACATION:
-            return await self.async_vacation_mode(60)  # days
+            days = self.coordinator.data[self.did].get(f"vacation_{self.did}", 30)
+            return await self.async_vacation_mode(days)
 
         config = {
             CONF_ATTRS: {
@@ -894,11 +900,13 @@ class HeatzyPiloteProV1(HeatzyPiloteV3Thermostat):
     async def async_set_preset_mode(self, preset_mode: str) -> None:
         """Set new preset mode."""
         if preset_mode == PRESET_BOOST:
-            return await self.async_boost_mode(60)  # minutes
+            minutes = self.coordinator.data[self.did].get(f"boost_{self.did}", 60)
+            return await self.async_boost_mode(minutes)
         if preset_mode == PRESET_VACATION:
-            return await self.async_vacation_mode(60)  # days
+            days = self.coordinator.data[self.did].get(f"vacation_{self.did}", 30)
+            return await self.async_vacation_mode(days)
         if preset_mode == PRESET_PRESENCE_DETECT:
-            return await self.async_presence_detection()  # days
+            return await self.async_presence_detection()
 
         config: dict[str, Any] = {
             CONF_ATTRS: {
@@ -914,10 +922,6 @@ class HeatzyPiloteProV1(HeatzyPiloteV3Thermostat):
             )
         except HeatzyException as error:
             _LOGGER.error("Error to set preset mode: %s (%s)", preset_mode, error)
-
-    async def async_presence_detection(self) -> None:
-        """Service Window Detection Mode."""
-        await self.async_derog_mode(3)
 
     async def async_set_temperature(self, **kwargs: Any) -> None:
         """Set new target temperature."""
@@ -939,3 +943,7 @@ class HeatzyPiloteProV1(HeatzyPiloteV3Thermostat):
                 )
             except HeatzyException as error:
                 _LOGGER.error("Error to set temperature (%s)", error)
+
+    async def async_presence_detection(self) -> None:
+        """Presence detection derog."""
+        return await self.async_derog_mode(3)
