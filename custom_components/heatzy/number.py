@@ -99,6 +99,6 @@ class Number(HeatzyEntity, RestoreNumber):
 
     async def async_set_native_value(self, value: int) -> None:
         """Set new value."""
-        self.coordinator.data[self.did][self.entity_description.key] = value
+        self._device[self.entity_description.key] = value
         self._resolve_state = value
         self.async_write_ha_state()
