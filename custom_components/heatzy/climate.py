@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
-import logging
 from collections.abc import Callable
 from dataclasses import dataclass
+import logging
 from typing import Any, Final
 
-import voluptuous as vol
 from heatzypy.exception import HeatzyException
+import voluptuous as vol
+
 from homeassistant.components.climate import (
     ATTR_TARGET_TEMP_HIGH,
     ATTR_TARGET_TEMP_LOW,
@@ -23,10 +24,9 @@ from homeassistant.components.climate import (
     HVACAction,
     HVACMode,
 )
-from homeassistant.const import CONF_DELAY, UnitOfTemperature
-from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers import config_validation as cv
-from homeassistant.helpers import entity_platform
+from homeassistant.const import CONF_DELAY, CONF_DELAY_TIME, UnitOfTemperature
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers import config_validation as cv, entity_platform
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from . import HeatzyConfigEntry, HeatzyDataUpdateCoordinator
@@ -406,26 +406,29 @@ class HeatzyThermostat(HeatzyEntity, ClimateEntity):
         elif hvac_mode == HVACMode.HEAT:
             await self.async_turn_on()
 
+    async def async_derog_mode(self, mode: int, delay: int) -> None:
+        """Derogation mode."""
+        config: dict[str, Any] = {
+            CONF_ATTRS: {CONF_DEROG_TIME: delay, CONF_DEROG_MODE: mode}
+        }
+        if delay:
+            config[CONF_ATTRS][CONF_DELAY_TIME] = delay
+        try:
+            await self.async_control_device(self.unique_id, config)
+        except HeatzyException as error:
+            _LOGGER.error("Error to set derog mode: %s (%s)", mode, error)
+
     async def async_vacation_mode(self, delay: int) -> None:
-        """Vacation derog."""
-        raise NotImplementedError
+        """Service Vacation Mode."""
+        await self.async_derog_mode(1, delay)
 
     async def async_boost_mode(self, delay: int) -> None:
-        """Boost derog."""
-        raise NotImplementedError
+        """Service Boost Mode."""
+        await self.async_derog_mode(2, delay)
 
     async def async_presence_detection(self) -> None:
         """Presence detection derog."""
         raise NotImplementedError
-
-    @callback
-    def _handle_coordinator_update(self) -> None:
-        """Handle updated data from the coordinator."""
-        self._attrs = self.coordinator.data.get(self.unique_id, {}).get(CONF_ATTRS, {})
-        self._attr_available = self.coordinator.data.get(self.unique_id, {}).get(
-            CONF_IS_ONLINE, True
-        )
-        self.async_write_ha_state()
 
 
 class HeatzyPiloteV1Thermostat(HeatzyThermostat):
@@ -434,15 +437,9 @@ class HeatzyPiloteV1Thermostat(HeatzyThermostat):
     async def async_turn_auto(self) -> None:
         """Turn device to Program mode."""
         try:
-            await self.coordinator.api.async_control_device(
+            await self.async_control_device(
                 self.unique_id,
-                {
-                    "raw": {
-                        CONF_TIMER_SWITCH: 1,
-                        CONF_DEROG_MODE: 0,
-                        CONF_DEROG_TIME: 0,
-                    }
-                },
+                {"raw": {CONF_TIMER_SWITCH: 1, CONF_DEROG_MODE: 0, CONF_DEROG_TIME: 0}},
             )
             await self.coordinator.async_request_refresh()
 
@@ -452,39 +449,20 @@ class HeatzyPiloteV1Thermostat(HeatzyThermostat):
     async def async_set_preset_mode(self, preset_mode: str) -> None:
         """Set new preset mode."""
         if preset_mode == PRESET_BOOST:
-            minutes = self.coordinator.data[self.did].get("boost", DEFAULT_BOOST)
+            minutes = self._device.get("boost", DEFAULT_BOOST)
             return await self.async_boost_mode(minutes)
         if preset_mode == PRESET_VACATION:
-            days = self.coordinator.data[self.did].get("vacation", DEFAULT_VACATION)
+            days = self._device.get("vacation", DEFAULT_VACATION)
             return await self.async_vacation_mode(days)
 
         try:
-            await self.coordinator.api.async_control_device(
+            await self.async_control_device(
                 self.unique_id,
                 {"raw": self.entity_description.ha_to_heatzy_state[preset_mode]},
             )
             await self.coordinator.async_request_refresh()
         except HeatzyException as error:
             _LOGGER.error("Error while preset mode: %s (%s)", preset_mode, error)
-
-    async def async_derog_mode(self, mode: int, delay: int) -> None:
-        """Derogation mode."""
-        config: dict[str, Any] = {
-            CONF_ATTRS: {CONF_DEROG_TIME: delay, CONF_DEROG_MODE: mode}
-        }
-        if mode == 1:
-            config[CONF_ATTRS][CONF_MODE] = self.entity_description.ha_to_heatzy_state[
-                PRESET_AWAY
-            ]
-        if mode == 2:
-            config[CONF_ATTRS][CONF_MODE] = self.entity_description.ha_to_heatzy_state[
-                PRESET_COMFORT
-            ]
-
-        try:
-            await self.coordinator.api.async_control_device(self.unique_id, config)
-        except HeatzyException as error:
-            _LOGGER.error("Error to set derog mode: %s (%s)", mode, error)
 
 
 class HeatzyPiloteV2Thermostat(HeatzyThermostat):
@@ -497,7 +475,7 @@ class HeatzyPiloteV2Thermostat(HeatzyThermostat):
                 self._attrs.get(CONF_DEROG_MODE) > 0
                 or self._attrs.get(CONF_TIMER_SWITCH) == 1
             ):
-                await self.coordinator.api.websocket.async_control_device(
+                await self.async_control_device(
                     self.unique_id,
                     {
                         CONF_ATTRS: {
@@ -508,7 +486,7 @@ class HeatzyPiloteV2Thermostat(HeatzyThermostat):
                     },
                 )
 
-            await self.coordinator.api.websocket.async_control_device(
+            await self.async_control_device(
                 self.unique_id,
                 {
                     CONF_ATTRS: {
@@ -528,7 +506,7 @@ class HeatzyPiloteV2Thermostat(HeatzyThermostat):
                 self._attrs.get(CONF_DEROG_MODE) > 0
                 or self._attrs.get(CONF_TIMER_SWITCH) == 1
             ):
-                await self.coordinator.api.websocket.async_control_device(
+                await self.async_control_device(
                     self.unique_id,
                     {
                         CONF_ATTRS: {
@@ -539,7 +517,7 @@ class HeatzyPiloteV2Thermostat(HeatzyThermostat):
                     },
                 )
 
-            await self.coordinator.api.websocket.async_control_device(
+            await self.async_control_device(
                 self.unique_id,
                 {CONF_ATTRS: {CONF_MODE: self.entity_description.stop}},
             )
@@ -549,7 +527,7 @@ class HeatzyPiloteV2Thermostat(HeatzyThermostat):
     async def async_turn_auto(self) -> None:
         """Turn device to Program mode."""
         try:
-            await self.coordinator.api.websocket.async_control_device(
+            await self.async_control_device(
                 self.unique_id,
                 {
                     CONF_ATTRS: {
@@ -565,10 +543,10 @@ class HeatzyPiloteV2Thermostat(HeatzyThermostat):
     async def async_set_preset_mode(self, preset_mode: str) -> None:
         """Set new preset mode."""
         if preset_mode == PRESET_BOOST:
-            minutes = self.coordinator.data[self.did].get("boost", DEFAULT_BOOST)
+            minutes = self._device.get("boost", DEFAULT_BOOST)
             return await self.async_boost_mode(minutes)
         if preset_mode == PRESET_VACATION:
-            days = self.coordinator.data[self.did].get("vacation", DEFAULT_VACATION)
+            days = self._device.get("vacation", DEFAULT_VACATION)
             return await self.async_vacation_mode(days)
 
         config: dict[str, Any] = {
@@ -577,23 +555,13 @@ class HeatzyPiloteV2Thermostat(HeatzyThermostat):
             }
         }
         # If in VACATION mode then as well as setting preset mode we also stop the VACATION mode
-        if self._attrs.get(CONF_DEROG_MODE) > 0:
+        if self._attrs.get(CONF_DEROG_MODE, 0) > 0:
             config[CONF_ATTRS].update({CONF_DEROG_MODE: 0, CONF_DEROG_TIME: 0})
 
         try:
-            await self.coordinator.api.websocket.async_control_device(
-                self.unique_id, config
-            )
+            await self.async_control_device(self.unique_id, config)
         except HeatzyException as error:
             _LOGGER.error("Error to set preset mode: %s (%s)", preset_mode, error)
-
-    async def async_vacation_mode(self, delay: int) -> None:
-        """Service Vacation Mode."""
-        await self.async_derog_mode(1, delay)
-
-    async def async_boost_mode(self, delay: int) -> None:
-        """Service Boost Mode."""
-        await self.async_derog_mode(2, delay)
 
     async def async_derog_mode(self, mode: int, delay: int | None = None) -> None:
         """Derogation mode."""
@@ -611,9 +579,7 @@ class HeatzyPiloteV2Thermostat(HeatzyThermostat):
             config[CONF_ATTRS][CONF_DEROG_TIME] = delay
 
         try:
-            await self.coordinator.api.websocket.async_control_device(
-                self.unique_id, config
-            )
+            await self.async_control_device(self.unique_id, config)
         except HeatzyException as error:
             _LOGGER.error("Error to set derog mode: %s (%s)", mode, error)
 
@@ -698,7 +664,7 @@ class Glowv1Thermostat(HeatzyPiloteV3Thermostat):
         """Turn device on."""
         # When turning ON ensure PROGRAM and VACATION mode are OFF
         try:
-            await self.coordinator.api.websocket.async_control_device(
+            await self.async_control_device(
                 self.unique_id, {CONF_ATTRS: {CONF_ON_OFF: True, CONF_DEROG_MODE: 0}}
             )
         except HeatzyException as error:
@@ -707,7 +673,7 @@ class Glowv1Thermostat(HeatzyPiloteV3Thermostat):
     async def async_turn_off(self) -> None:
         """Turn device off."""
         try:
-            await self.coordinator.api.websocket.async_control_device(
+            await self.async_control_device(
                 self.unique_id, {CONF_ATTRS: {CONF_ON_OFF: False, CONF_DEROG_MODE: 0}}
             )
         except HeatzyException as error:
@@ -717,7 +683,7 @@ class Glowv1Thermostat(HeatzyPiloteV3Thermostat):
         """Turn device off."""
         # When setting to PROGRAM Mode we also ensure it's turned ON
         try:
-            await self.coordinator.api.websocket.async_control_device(
+            await self.async_control_device(
                 self.unique_id, {CONF_ATTRS: {CONF_ON_OFF: True, CONF_DEROG_MODE: 1}}
             )
         except HeatzyException as error:
@@ -737,7 +703,7 @@ class Glowv1Thermostat(HeatzyPiloteV3Thermostat):
             self._attrs[temp_l] = int(temp_cft * 10)
 
             try:
-                await self.coordinator.api.websocket.async_control_device(
+                await self.async_control_device(
                     self.unique_id,
                     {
                         CONF_ATTRS: {
@@ -752,10 +718,10 @@ class Glowv1Thermostat(HeatzyPiloteV3Thermostat):
     async def async_set_preset_mode(self, preset_mode: str) -> None:
         """Set new preset mode."""
         if preset_mode == PRESET_BOOST:
-            minutes = self.coordinator.data[self.did].get("boost", DEFAULT_BOOST)
+            minutes = self._device.get("boost", DEFAULT_BOOST)
             return await self.async_boost_mode(minutes)
         if preset_mode == PRESET_VACATION:
-            days = self.coordinator.data[self.did].get("vacation", DEFAULT_VACATION)
+            days = self._device.get("vacation", DEFAULT_VACATION)
             return await self.async_vacation_mode(days)
 
         config = {
@@ -768,9 +734,7 @@ class Glowv1Thermostat(HeatzyPiloteV3Thermostat):
         if self._attrs.get(CONF_DEROG_MODE) == 2:
             config[CONF_ATTRS].update({CONF_DEROG_MODE: 0})
         try:
-            await self.coordinator.api.websocket.async_control_device(
-                self.unique_id, config
-            )
+            await self.async_control_device(self.unique_id, config)
         except HeatzyException as error:
             _LOGGER.error("Error to set preset mode: %s (%s)", preset_mode, error)
 
@@ -829,7 +793,7 @@ class Bloomv1Thermostat(HeatzyPiloteV2Thermostat):
             self._attrs[CONF_CFT_TEMP] = int(temp_cft)
 
             try:
-                await self.coordinator.api.websocket.async_control_device(
+                await self.async_control_device(
                     self.unique_id,
                     {
                         CONF_ATTRS: {
@@ -896,10 +860,10 @@ class HeatzyPiloteProV1(HeatzyPiloteV3Thermostat):
     async def async_set_preset_mode(self, preset_mode: str) -> None:
         """Set new preset mode."""
         if preset_mode == PRESET_BOOST:
-            minutes = self.coordinator.data[self.did].get("boost", DEFAULT_BOOST)
+            minutes = self._device.get("boost", DEFAULT_BOOST)
             return await self.async_boost_mode(minutes)
         if preset_mode == PRESET_VACATION:
-            days = self.coordinator.data[self.did].get("vacation", DEFAULT_VACATION)
+            days = self._device.get("vacation", DEFAULT_VACATION)
             return await self.async_vacation_mode(days)
         if preset_mode == PRESET_PRESENCE_DETECT:
             return await self.async_presence_detection()
@@ -913,9 +877,7 @@ class HeatzyPiloteProV1(HeatzyPiloteV3Thermostat):
             config[CONF_ATTRS].update({CONF_DEROG_MODE: 0, CONF_DEROG_TIME: 0})
 
         try:
-            await self.coordinator.api.websocket.async_control_device(
-                self.unique_id, config
-            )
+            await self.async_control_device(self.unique_id, config)
         except HeatzyException as error:
             _LOGGER.error("Error to set preset mode: %s (%s)", preset_mode, error)
 
@@ -928,7 +890,7 @@ class HeatzyPiloteProV1(HeatzyPiloteV3Thermostat):
             self._attrs[CONF_CFT_TEMP] = int(temp_cft) * 10
 
             try:
-                await self.coordinator.api.websocket.async_control_device(
+                await self.async_control_device(
                     self.unique_id,
                     {
                         CONF_ATTRS: {
