@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 
+from homeassistant.core import callback
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity import Entity, EntityDescription
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
@@ -29,7 +30,8 @@ class HeatzyEntity(CoordinatorEntity[HeatzyDataUpdateCoordinator], Entity):
         """Initialize the entity."""
         super().__init__(coordinator)
         self.entity_description = description
-        self.did = did
+        self.device_id = did
+        self.async_control_device = self.coordinator.api.websocket.async_control_device
         self._attr_unique_id = f"{did}_{description.key}"
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, did)},
@@ -38,4 +40,12 @@ class HeatzyEntity(CoordinatorEntity[HeatzyDataUpdateCoordinator], Entity):
             model=coordinator.data[did].get(CONF_MODEL),
             name=coordinator.data[did][CONF_ALIAS],
         )
-        self._attrs = coordinator.data[did].get(CONF_ATTRS, {})
+        self._device = coordinator.data.get(did, {})
+        self._attrs = self._device.get(CONF_ATTRS, {})
+
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        """Handle updated data from the coordinator."""
+        self._device = self.coordinator.data.get(self.device_id, {})
+        self._attrs = self._device.get(CONF_ATTRS, {})
+        super()._handle_coordinator_update()
