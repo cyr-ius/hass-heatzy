@@ -698,7 +698,7 @@ class Glowv1Thermostat(HeatzyPiloteV2Thermostat):
             self._attrs[temp_l] = int(temp_cft * 10)
 
             try:
-                await self.coordinator.async_control_device(
+                await self.async_control_device(
                     self.unique_id,
                     {
                         CONF_ATTRS: {
@@ -729,7 +729,7 @@ class Glowv1Thermostat(HeatzyPiloteV2Thermostat):
         if self._attrs.get(CONF_DEROG_MODE) == 2:
             config[CONF_ATTRS].update({CONF_DEROG_MODE: 0})
         try:
-            await self.coordinator.async_control_device(self.unique_id, config)
+            await self.async_control_device(self.unique_id, config)
         except HeatzyException as error:
             _LOGGER.error("Error to set preset mode: %s (%s)", preset_mode, error)
 
