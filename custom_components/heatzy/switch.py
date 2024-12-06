@@ -8,7 +8,7 @@ from typing import Final
 
 from heatzypy.exception import HeatzyException
 from homeassistant.components.switch import SwitchEntity, SwitchEntityDescription
-from homeassistant.core import HomeAssistant, callback
+from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
@@ -79,7 +79,7 @@ class SwitchEntity(HeatzyEntity, SwitchEntity):
     async def async_turn_on(self) -> None:
         """Turn the entity on."""
         try:
-            await self.coordinator.api.websocket.async_control_device(
+            await self.coordinator.async_control_device(
                 self.unique_id, {CONF_ATTRS: {self.entity_description.attr: 1}}
             )
         except HeatzyException as error:
@@ -88,14 +88,8 @@ class SwitchEntity(HeatzyEntity, SwitchEntity):
     async def async_turn_off(self) -> None:
         """Turn the entity off."""
         try:
-            await self.coordinator.api.websocket.async_control_device(
+            await self.coordinator.async_control_device(
                 self.unique_id, {CONF_ATTRS: {self.entity_description.attr: 0}}
             )
         except HeatzyException as error:
             _LOGGER.error("Error to action : %s", error)
-
-    @callback
-    def _handle_coordinator_update(self) -> None:
-        """Handle updated data from the coordinator."""
-        self._attrs = self.coordinator.data.get(self.unique_id, {}).get(CONF_ATTRS, {})
-        self.async_write_ha_state()
