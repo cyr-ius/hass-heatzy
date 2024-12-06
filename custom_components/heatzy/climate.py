@@ -24,7 +24,7 @@ from homeassistant.components.climate import (
     HVACAction,
     HVACMode,
 )
-from homeassistant.const import CONF_DELAY, CONF_DELAY_TIME, UnitOfTemperature
+from homeassistant.const import CONF_DELAY, UnitOfTemperature
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import config_validation as cv, entity_platform
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -406,25 +406,23 @@ class HeatzyThermostat(HeatzyEntity, ClimateEntity):
         elif hvac_mode == HVACMode.HEAT:
             await self.async_turn_on()
 
-    async def async_derog_mode(self, mode: int, delay: int) -> None:
+    async def async_derog_mode(self, mode: int, delay: int | None = None) -> None:
         """Derogation mode."""
-        config: dict[str, Any] = {
-            CONF_ATTRS: {CONF_DEROG_TIME: delay, CONF_DEROG_MODE: mode}
-        }
+        config: dict[str, Any] = {CONF_ATTRS: {CONF_DEROG_MODE: mode}}
         if delay:
-            config[CONF_ATTRS][CONF_DELAY_TIME] = delay
+            config[CONF_ATTRS][CONF_DEROG_TIME] = delay
         try:
             await self.async_control_device(self.unique_id, config)
         except HeatzyException as error:
             _LOGGER.error("Error to set derog mode: %s (%s)", mode, error)
 
     async def async_vacation_mode(self, delay: int) -> None:
-        """Service Vacation Mode."""
-        await self.async_derog_mode(1, delay)
+        """Vacation derog."""
+        raise NotImplementedError
 
     async def async_boost_mode(self, delay: int) -> None:
-        """Service Boost Mode."""
-        await self.async_derog_mode(2, delay)
+        """Boost derog."""
+        raise NotImplementedError
 
     async def async_presence_detection(self) -> None:
         """Presence detection derog."""
@@ -433,6 +431,16 @@ class HeatzyThermostat(HeatzyEntity, ClimateEntity):
 
 class HeatzyPiloteV1Thermostat(HeatzyThermostat):
     """Heaty Pilote v1."""
+
+    def __init__(
+        self,
+        coordinator: HeatzyDataUpdateCoordinator,
+        entity_description: HeatzyClimateEntityDescription,
+        did: str,
+    ) -> None:
+        """Init."""
+        self.async_control_device = self.coordinator.api.async_control_device
+        super().__init__(coordinator, entity_description, did)
 
     async def async_turn_auto(self) -> None:
         """Turn device to Program mode."""
@@ -518,8 +526,7 @@ class HeatzyPiloteV2Thermostat(HeatzyThermostat):
                 )
 
             await self.async_control_device(
-                self.unique_id,
-                {CONF_ATTRS: {CONF_MODE: self.entity_description.stop}},
+                self.unique_id, {CONF_ATTRS: {CONF_MODE: self.entity_description.stop}}
             )
         except HeatzyException as error:
             _LOGGER.error("Error to turn off (%s)", error)
@@ -555,7 +562,7 @@ class HeatzyPiloteV2Thermostat(HeatzyThermostat):
             }
         }
         # If in VACATION mode then as well as setting preset mode we also stop the VACATION mode
-        if self._attrs.get(CONF_DEROG_MODE, 0) > 0:
+        if self._attrs.get(CONF_DEROG_MODE) > 0:
             config[CONF_ATTRS].update({CONF_DEROG_MODE: 0, CONF_DEROG_TIME: 0})
 
         try:
@@ -563,32 +570,20 @@ class HeatzyPiloteV2Thermostat(HeatzyThermostat):
         except HeatzyException as error:
             _LOGGER.error("Error to set preset mode: %s (%s)", preset_mode, error)
 
-    async def async_derog_mode(self, mode: int, delay: int | None = None) -> None:
-        """Derogation mode."""
-        config: dict[str, Any] = {CONF_ATTRS: {CONF_DEROG_MODE: mode}}
-        if mode == 1:
-            config[CONF_ATTRS][CONF_MODE] = self.entity_description.ha_to_heatzy_state[
-                PRESET_AWAY
-            ]
-            config[CONF_ATTRS][CONF_DEROG_TIME] = delay
+    async def async_vacation_mode(self, delay: int) -> None:
+        """Service Vacation Mode."""
+        await self.async_derog_mode(1, delay)
 
-        if mode == 2:
-            config[CONF_ATTRS][CONF_MODE] = self.entity_description.ha_to_heatzy_state[
-                PRESET_COMFORT
-            ]
-            config[CONF_ATTRS][CONF_DEROG_TIME] = delay
-
-        try:
-            await self.async_control_device(self.unique_id, config)
-        except HeatzyException as error:
-            _LOGGER.error("Error to set derog mode: %s (%s)", mode, error)
+    async def async_boost_mode(self, delay: int) -> None:
+        """Service Boost Mode."""
+        await self.async_derog_mode(2, delay)
 
 
 class HeatzyPiloteV3Thermostat(HeatzyPiloteV2Thermostat):
     """Pilote_Soc_C3, Elec_Pro_Ble, Sauter."""
 
 
-class Glowv1Thermostat(HeatzyPiloteV3Thermostat):
+class Glowv1Thermostat(HeatzyPiloteV2Thermostat):
     """Glow."""
 
     @property
@@ -703,7 +698,7 @@ class Glowv1Thermostat(HeatzyPiloteV3Thermostat):
             self._attrs[temp_l] = int(temp_cft * 10)
 
             try:
-                await self.async_control_device(
+                await self.coordinator.async_control_device(
                     self.unique_id,
                     {
                         CONF_ATTRS: {
@@ -734,7 +729,7 @@ class Glowv1Thermostat(HeatzyPiloteV3Thermostat):
         if self._attrs.get(CONF_DEROG_MODE) == 2:
             config[CONF_ATTRS].update({CONF_DEROG_MODE: 0})
         try:
-            await self.async_control_device(self.unique_id, config)
+            await self.coordinator.async_control_device(self.unique_id, config)
         except HeatzyException as error:
             _LOGGER.error("Error to set preset mode: %s (%s)", preset_mode, error)
 
@@ -806,7 +801,7 @@ class Bloomv1Thermostat(HeatzyPiloteV2Thermostat):
                 _LOGGER.error("Error to set temperature (%s)", error)
 
 
-class HeatzyPiloteProV1(HeatzyPiloteV3Thermostat):
+class HeatzyPiloteProV1(HeatzyPiloteV2Thermostat):
     """Heatzy Pilote Pro."""
 
     @property
