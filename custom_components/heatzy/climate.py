@@ -494,12 +494,14 @@ class HeatzyPiloteV2Thermostat(HeatzyThermostat):
     async def async_turn_on(self) -> None:
         """Turn device on."""
         await self._derog_mode_off()
-        await self.async_set_preset_mode(PRESET_COMFORT)
+        config = {CONF_ATTRS: {CONF_MODE: PRESET_COMFORT}}
+        await self._handle_action(config, "Error while turn off")
 
     async def async_turn_off(self) -> None:
         """Turn device on."""
         await self._derog_mode_off()
-        await self.async_set_preset_mode(self.entity_description.stop)
+        config = {CONF_ATTRS: {CONF_MODE: self.entity_description.stop}}
+        await self._handle_action(config, "Error while turn off")
 
     async def async_turn_auto(self) -> None:
         """Turn device to Program mode."""
