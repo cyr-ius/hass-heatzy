@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import logging
 
+from heatzypy import HeatzyException
+
 from homeassistant.core import callback
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity import Entity, EntityDescription
@@ -31,7 +33,6 @@ class HeatzyEntity(CoordinatorEntity[HeatzyDataUpdateCoordinator], Entity):
         super().__init__(coordinator)
         self.entity_description = description
         self.device_id = did
-        self.async_control_device = self.coordinator.api.websocket.async_control_device
         self._attr_unique_id = f"{did}_{description.key}"
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, did)},
@@ -42,6 +43,15 @@ class HeatzyEntity(CoordinatorEntity[HeatzyDataUpdateCoordinator], Entity):
         )
         self._device = coordinator.data.get(did, {})
         self._attrs = self._device.get(CONF_ATTRS, {})
+        self.async_control_device = coordinator.api.websocket.async_control_device
+
+    async def _handle_action(self, config, error_msg: str = "Error unknown"):
+        """Execute action."""
+        try:
+            _LOGGER.debug("Handle action (%s): %s", self.device_id, config)
+            await self.async_control_device(self.device_id, config)
+        except HeatzyException as error:
+            _LOGGER.error("%s (%s)", error_msg, error)
 
     @callback
     def _handle_coordinator_update(self) -> None:
