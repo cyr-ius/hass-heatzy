@@ -1,6 +1,8 @@
 """Constants for the Heatzy component."""
 
 API_TIMEOUT = 30
+ATTR_BOOST = "boost"
+ATTR_VACATION = "vacation"
 CFT_TEMP_H = "cft_tempH"
 CFT_TEMP_L = "cft_tempL"
 CONF_ALIAS = "dev_alias"
