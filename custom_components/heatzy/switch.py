@@ -6,8 +6,6 @@ from dataclasses import dataclass
 import logging
 from typing import Final
 
-from heatzypy.exception import HeatzyException
-
 from homeassistant.components.switch import SwitchEntity, SwitchEntityDescription
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import EntityCategory
@@ -79,18 +77,14 @@ class SwitchEntity(HeatzyEntity, SwitchEntity):
 
     async def async_turn_on(self) -> None:
         """Turn the entity on."""
-        try:
-            await self.async_control_device(
-                self.unique_id, {CONF_ATTRS: {self.entity_description.attr: 1}}
-            )
-        except HeatzyException as error:
-            _LOGGER.error("Error to action : %s", error)
+        config = {CONF_ATTRS: {self.entity_description.attr: 1}}
+        await self._handle_action(
+            config, f"Error to turn on: {self.entity_description.key}"
+        )
 
     async def async_turn_off(self) -> None:
         """Turn the entity off."""
-        try:
-            await self.async_control_device(
-                self.unique_id, {CONF_ATTRS: {self.entity_description.attr: 0}}
-            )
-        except HeatzyException as error:
-            _LOGGER.error("Error to action : %s", error)
+        config = {CONF_ATTRS: {self.entity_description.attr: 0}}
+        await self._handle_action(
+            config, f"Error to turn off: {self.entity_description.key}"
+        )
