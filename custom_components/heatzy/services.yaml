@@ -37,3 +37,10 @@ vacation:
           unit_of_measurement: "days"
           min: 1
           max: 30
+
+presence:
+  description: Presence detection
+  target:
+    entity:
+      integration: heatzy
+      domain: climate
