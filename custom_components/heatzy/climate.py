@@ -7,7 +7,6 @@ from dataclasses import dataclass
 import logging
 from typing import Any, Final
 
-from heatzypy.exception import HeatzyException
 import voluptuous as vol
 
 from homeassistant.components.climate import (
@@ -66,8 +65,9 @@ from .const import (
 from .entity import HeatzyEntity
 
 SERVICES = [
-    ["boost", {vol.Required(CONF_DELAY): cv.positive_int}, "async_boost_mode"],
-    ["vacation", {vol.Required(CONF_DELAY): cv.positive_int}, "async_vacation_mode"],
+    ["boost", {vol.Required(CONF_DELAY): cv.positive_int}, "_async_boost_mode"],
+    ["vacation", {vol.Required(CONF_DELAY): cv.positive_int}, "_async_vacation_mode"],
+    ["presence", {}, "_async_presence_detection"],
 ]
 
 
@@ -406,27 +406,58 @@ class HeatzyThermostat(HeatzyEntity, ClimateEntity):
         elif hvac_mode == HVACMode.HEAT:
             await self.async_turn_on()
 
-    async def async_derog_mode(self, mode: int, delay: int | None = None) -> None:
+    async def _async_derog_mode(self, mode: int, delay: int | None = None) -> None:
         """Derogation mode."""
         config: dict[str, Any] = {CONF_ATTRS: {CONF_DEROG_MODE: mode}}
         if delay:
             config[CONF_ATTRS][CONF_DEROG_TIME] = delay
-        try:
-            await self.async_control_device(self.unique_id, config)
-        except HeatzyException as error:
-            _LOGGER.error("Error to set derog mode: %s (%s)", mode, error)
+        await self._handle_action(config, f"Error to set derog mode:{mode}")
 
-    async def async_vacation_mode(self, delay: int) -> None:
-        """Vacation derog."""
-        raise NotImplementedError
+    async def _async_vacation_mode(self, delay: int) -> None:
+        """Service Vacation Mode."""
+        await self._async_derog_mode(1, delay)
 
-    async def async_boost_mode(self, delay: int) -> None:
-        """Boost derog."""
-        raise NotImplementedError
+    async def _async_boost_mode(self, delay: int) -> None:
+        """Service Boost Mode."""
+        await self._async_derog_mode(2, delay)
 
-    async def async_presence_detection(self) -> None:
+    async def _async_presence_detection(self) -> None:
         """Presence detection derog."""
-        raise NotImplementedError
+        return await self._async_derog_mode(3)
+
+    async def _derog_mode_off(self) -> None:
+        """Disable derog mode."""
+        if (
+            self._attrs.get(CONF_DEROG_MODE, 0) > 0
+            or self._attrs.get(CONF_TIMER_SWITCH, 0) == 1
+        ):
+            await self._handle_action(
+                {
+                    CONF_ATTRS: {
+                        CONF_DEROG_MODE: 0,
+                        CONF_DEROG_TIME: 0,
+                        CONF_TIMER_SWITCH: 0,
+                    }
+                }
+            )
+
+    async def _handle_preset_mode(
+        self, preset_mode: str, config: dict[str, Any] | None = None
+    ):
+        """Handle preset mode."""
+        if preset_mode == PRESET_BOOST:
+            minutes = self._device.get("boost", DEFAULT_BOOST)
+            return await self._async_boost_mode(int(minutes))
+        if preset_mode == PRESET_VACATION:
+            days = self._device.get("vacation", DEFAULT_VACATION)
+            return await self._async_vacation_mode(int(days))
+        if preset_mode == PRESET_PRESENCE_DETECT:
+            return await self._async_presence_detection()
+
+        if self._attrs.get(CONF_DEROG_MODE, 0) > 0:
+            config[CONF_ATTRS].update({CONF_DEROG_MODE: 0, CONF_DEROG_TIME: 0})
+
+        return await self._handle_action(config, f"Error preset mode: {preset_mode}")
 
 
 class HeatzyPiloteV1Thermostat(HeatzyThermostat):
@@ -439,38 +470,22 @@ class HeatzyPiloteV1Thermostat(HeatzyThermostat):
         did: str,
     ) -> None:
         """Init."""
-        self.async_control_device = self.coordinator.api.async_control_device
         super().__init__(coordinator, entity_description, did)
+        self.async_control_device = coordinator.api.async_control_device
 
     async def async_turn_auto(self) -> None:
         """Turn device to Program mode."""
-        try:
-            await self.async_control_device(
-                self.unique_id,
-                {"raw": {CONF_TIMER_SWITCH: 1, CONF_DEROG_MODE: 0, CONF_DEROG_TIME: 0}},
-            )
-            await self.coordinator.async_request_refresh()
-
-        except HeatzyException as error:
-            _LOGGER.error("Error while turn auto (%s)", error)
+        config = {"raw": {CONF_TIMER_SWITCH: 1, CONF_DEROG_MODE: 0, CONF_DEROG_TIME: 0}}
+        await self._handle_action(config, "Error while turn auto")
+        await self.coordinator.async_request_refresh()
 
     async def async_set_preset_mode(self, preset_mode: str) -> None:
         """Set new preset mode."""
-        if preset_mode == PRESET_BOOST:
-            minutes = self._device.get("boost", DEFAULT_BOOST)
-            return await self.async_boost_mode(minutes)
-        if preset_mode == PRESET_VACATION:
-            days = self._device.get("vacation", DEFAULT_VACATION)
-            return await self.async_vacation_mode(days)
-
-        try:
-            await self.async_control_device(
-                self.unique_id,
-                {"raw": self.entity_description.ha_to_heatzy_state[preset_mode]},
-            )
-            await self.coordinator.async_request_refresh()
-        except HeatzyException as error:
-            _LOGGER.error("Error while preset mode: %s (%s)", preset_mode, error)
+        if preset_mode := self.entity_description.ha_to_heatzy_state.get(preset_mode):
+            await self._handle_preset_mode(preset_mode, {"raw": preset_mode})
+        else:
+            await self._handle_preset_mode(preset_mode)
+        await self.coordinator.async_request_refresh()
 
 
 class HeatzyPiloteV2Thermostat(HeatzyThermostat):
@@ -478,105 +493,27 @@ class HeatzyPiloteV2Thermostat(HeatzyThermostat):
 
     async def async_turn_on(self) -> None:
         """Turn device on."""
-        try:
-            if (
-                self._attrs.get(CONF_DEROG_MODE) > 0
-                or self._attrs.get(CONF_TIMER_SWITCH) == 1
-            ):
-                await self.async_control_device(
-                    self.unique_id,
-                    {
-                        CONF_ATTRS: {
-                            CONF_DEROG_MODE: 0,
-                            CONF_DEROG_TIME: 0,
-                            CONF_TIMER_SWITCH: 0,
-                        }
-                    },
-                )
-
-            await self.async_control_device(
-                self.unique_id,
-                {
-                    CONF_ATTRS: {
-                        CONF_MODE: self.entity_description.ha_to_heatzy_state[
-                            PRESET_COMFORT
-                        ]
-                    }
-                },
-            )
-        except HeatzyException as error:
-            _LOGGER.error("Error to turn on (%s)", error)
+        await self._derog_mode_off()
+        await self.set_preset_mode(PRESET_COMFORT)
 
     async def async_turn_off(self) -> None:
         """Turn device on."""
-        try:
-            if (
-                self._attrs.get(CONF_DEROG_MODE) > 0
-                or self._attrs.get(CONF_TIMER_SWITCH) == 1
-            ):
-                await self.async_control_device(
-                    self.unique_id,
-                    {
-                        CONF_ATTRS: {
-                            CONF_DEROG_MODE: 0,
-                            CONF_DEROG_TIME: 0,
-                            CONF_TIMER_SWITCH: 0,
-                        }
-                    },
-                )
-
-            await self.async_control_device(
-                self.unique_id, {CONF_ATTRS: {CONF_MODE: self.entity_description.stop}}
-            )
-        except HeatzyException as error:
-            _LOGGER.error("Error to turn off (%s)", error)
+        await self._derog_mode_off()
+        await self.set_preset_mode(self.entity_description.stop)
 
     async def async_turn_auto(self) -> None:
         """Turn device to Program mode."""
-        try:
-            await self.async_control_device(
-                self.unique_id,
-                {
-                    CONF_ATTRS: {
-                        CONF_TIMER_SWITCH: 1,
-                        CONF_DEROG_MODE: 0,
-                        CONF_DEROG_TIME: 0,
-                    }
-                },
-            )
-        except HeatzyException as error:
-            _LOGGER.error("Error to turn auto (%s)", error)
+        config = {
+            CONF_ATTRS: {CONF_TIMER_SWITCH: 1, CONF_DEROG_MODE: 0, CONF_DEROG_TIME: 0}
+        }
+        await self._handle_action(config, "Error while turn auto")
 
     async def async_set_preset_mode(self, preset_mode: str) -> None:
         """Set new preset mode."""
-        if preset_mode == PRESET_BOOST:
-            minutes = self._device.get("boost", DEFAULT_BOOST)
-            return await self.async_boost_mode(minutes)
-        if preset_mode == PRESET_VACATION:
-            days = self._device.get("vacation", DEFAULT_VACATION)
-            return await self.async_vacation_mode(days)
-
-        config: dict[str, Any] = {
-            CONF_ATTRS: {
-                CONF_MODE: self.entity_description.ha_to_heatzy_state[preset_mode]
-            }
-        }
-        # If in VACATION mode then as well as setting preset mode we also stop the VACATION mode
-        if self._attrs.get(CONF_DEROG_MODE) > 0:
-            config[CONF_ATTRS].update({CONF_DEROG_MODE: 0, CONF_DEROG_TIME: 0})
-
-        try:
-            await self.async_control_device(self.unique_id, config)
-        except HeatzyException as error:
-            _LOGGER.error("Error to set preset mode: %s (%s)", preset_mode, error)
-
-    async def async_vacation_mode(self, delay: int) -> None:
-        """Service Vacation Mode."""
-        await self.async_derog_mode(1, delay)
-
-    async def async_boost_mode(self, delay: int) -> None:
-        """Service Boost Mode."""
-        await self.async_derog_mode(2, delay)
+        if mode := self.entity_description.ha_to_heatzy_state.get(preset_mode):
+            await self._handle_preset_mode(preset_mode, {CONF_ATTRS: {CONF_MODE: mode}})
+        else:
+            await self._handle_preset_mode(preset_mode)
 
 
 class HeatzyPiloteV3Thermostat(HeatzyPiloteV2Thermostat):
@@ -647,91 +584,52 @@ class Glowv1Thermostat(HeatzyPiloteV2Thermostat):
     @property
     def preset_mode(self) -> str | None:
         """Return the current preset mode, e.g., home, away, temp."""
-        mode = self._attrs.get(CONF_CUR_MODE)
-        return (
-            PRESET_AWAY
-            if self._attrs.get(CONF_ON_OFF) == 0
-            and self._attrs.get(CONF_DEROG_MODE) == 2
-            else self.entity_description.heatzy_to_ha_state.get(mode)
+        if self._attrs.get(CONF_DEROG_MODE) == 1:
+            return PRESET_VACATION
+        if self._attrs.get(CONF_DEROG_MODE) == 2:
+            return PRESET_BOOST
+
+        return self.entity_description.heatzy_to_ha_state.get(
+            self._attrs.get(CONF_CUR_MODE)
         )
 
     async def async_turn_on(self) -> None:
         """Turn device on."""
-        # When turning ON ensure PROGRAM and VACATION mode are OFF
-        try:
-            await self.async_control_device(
-                self.unique_id, {CONF_ATTRS: {CONF_ON_OFF: True, CONF_DEROG_MODE: 0}}
-            )
-        except HeatzyException as error:
-            _LOGGER.error("Error to turn on : %s", error)
+        config = {CONF_ATTRS: {CONF_ON_OFF: 1, CONF_DEROG_MODE: 0}}
+        await self._handle_action(config, f"Error to turn on {self.unique_id}")
 
     async def async_turn_off(self) -> None:
         """Turn device off."""
-        try:
-            await self.async_control_device(
-                self.unique_id, {CONF_ATTRS: {CONF_ON_OFF: False, CONF_DEROG_MODE: 0}}
-            )
-        except HeatzyException as error:
-            _LOGGER.error("Error to turn off : %s", error)
+        config = {CONF_ATTRS: {CONF_ON_OFF: 0, CONF_DEROG_MODE: 0}}
+        await self._handle_action(config, f"Error to turn on {self.unique_id}")
 
     async def async_turn_auto(self) -> None:
         """Turn device off."""
-        # When setting to PROGRAM Mode we also ensure it's turned ON
-        try:
-            await self.async_control_device(
-                self.unique_id, {CONF_ATTRS: {CONF_ON_OFF: True, CONF_DEROG_MODE: 1}}
-            )
-        except HeatzyException as error:
-            _LOGGER.error("Error to turn auto : %s", error)
+        config = {CONF_ATTRS: {CONF_ON_OFF: 0, CONF_DEROG_MODE: 1}}
+        await self._handle_action(config, f"Error to turn auto {self.unique_id}")
 
     async def async_set_temperature(self, **kwargs: Any) -> None:
         """Set new target temperature."""
-        temp_h = self.entity_description.temperature_high
-        temp_l = self.entity_description.temperature_low
-        eco_temp_h = self.entity_description.eco_temperature_high
-        eco_temp_l = self.entity_description.eco_temperature_low
-
         if (temp_eco := kwargs.get(ATTR_TARGET_TEMP_LOW)) and (
             temp_cft := kwargs.get(ATTR_TARGET_TEMP_HIGH)
         ):
-            self._attrs[eco_temp_l] = int(temp_eco * 10)
-            self._attrs[temp_l] = int(temp_cft * 10)
+            config = {
+                CONF_ATTRS: {
+                    CFT_TEMP_L: int(temp_cft * 10),
+                    ECO_TEMP_L: int(temp_eco * 10),
+                }
+            }
 
-            try:
-                await self.async_control_device(
-                    self.unique_id,
-                    {
-                        CONF_ATTRS: {
-                            CFT_TEMP_L: self._attrs[temp_h],
-                            ECO_TEMP_L: self._attrs[eco_temp_h],
-                        }
-                    },
-                )
-            except HeatzyException as error:
-                _LOGGER.error("Error to set temperature (%s)", error)
+            await self._handle_action(config, "Error to set temperature")
 
     async def async_set_preset_mode(self, preset_mode: str) -> None:
         """Set new preset mode."""
-        if preset_mode == PRESET_BOOST:
-            minutes = self._device.get("boost", DEFAULT_BOOST)
-            return await self.async_boost_mode(minutes)
-        if preset_mode == PRESET_VACATION:
-            days = self._device.get("vacation", DEFAULT_VACATION)
-            return await self.async_vacation_mode(days)
-
-        config = {
-            CONF_ATTRS: {
-                CONF_MODE: self.entity_description.ha_to_heatzy_state[preset_mode],
-                CONF_ON_OFF: True,
-            }
-        }
-        # If in VACATION mode then as well as setting preset mode we also stop the VACATION mode
-        if self._attrs.get(CONF_DEROG_MODE) == 2:
-            config[CONF_ATTRS].update({CONF_DEROG_MODE: 0})
-        try:
-            await self.async_control_device(self.unique_id, config)
-        except HeatzyException as error:
-            _LOGGER.error("Error to set preset mode: %s (%s)", preset_mode, error)
+        if mode := self.entity_description.ha_to_heatzy_state.get(preset_mode):
+            await self._handle_preset_mode(
+                preset_mode, {CONF_ATTRS: {CONF_MODE: mode, CONF_ON_OFF: 1}}
+            )
+        else:
+            await self._handle_preset_mode(preset_mode)
 
 
 class Bloomv1Thermostat(HeatzyPiloteV2Thermostat):
@@ -784,21 +682,10 @@ class Bloomv1Thermostat(HeatzyPiloteV2Thermostat):
         if (temp_eco := kwargs.get(ATTR_TARGET_TEMP_LOW)) and (
             temp_cft := kwargs.get(ATTR_TARGET_TEMP_HIGH)
         ):
-            self._attrs[CONF_ECO_TEMP] = int(temp_eco)
-            self._attrs[CONF_CFT_TEMP] = int(temp_cft)
-
-            try:
-                await self.async_control_device(
-                    self.unique_id,
-                    {
-                        CONF_ATTRS: {
-                            CONF_CFT_TEMP: self._attrs[CONF_CFT_TEMP],
-                            CONF_ECO_TEMP: self._attrs[CONF_ECO_TEMP],
-                        }
-                    },
-                )
-            except HeatzyException as error:
-                _LOGGER.error("Error to set temperature (%s)", error)
+            config = {
+                CONF_ATTRS: {CONF_CFT_TEMP: int(temp_cft), CONF_ECO_TEMP: int(temp_eco)}
+            }
+            await self._handle_action(config, "Error to set temperature")
 
 
 class HeatzyPiloteProV1(HeatzyPiloteV2Thermostat):
@@ -854,49 +741,20 @@ class HeatzyPiloteProV1(HeatzyPiloteV2Thermostat):
 
     async def async_set_preset_mode(self, preset_mode: str) -> None:
         """Set new preset mode."""
-        if preset_mode == PRESET_BOOST:
-            minutes = self._device.get("boost", DEFAULT_BOOST)
-            return await self.async_boost_mode(minutes)
-        if preset_mode == PRESET_VACATION:
-            days = self._device.get("vacation", DEFAULT_VACATION)
-            return await self.async_vacation_mode(days)
-        if preset_mode == PRESET_PRESENCE_DETECT:
-            return await self.async_presence_detection()
-
-        config: dict[str, Any] = {
-            CONF_ATTRS: {
-                CONF_MODE: self.entity_description.ha_to_heatzy_state[preset_mode]
-            }
-        }
-        if self._attrs.get(CONF_DEROG_MODE) > 0:
-            config[CONF_ATTRS].update({CONF_DEROG_MODE: 0, CONF_DEROG_TIME: 0})
-
-        try:
-            await self.async_control_device(self.unique_id, config)
-        except HeatzyException as error:
-            _LOGGER.error("Error to set preset mode: %s (%s)", preset_mode, error)
+        if mode := self.entity_description.ha_to_heatzy_state.get(preset_mode):
+            await self._handle_preset_mode(preset_mode, {CONF_ATTRS: {CONF_MODE: mode}})
+        else:
+            await self._handle_preset_mode(preset_mode)
 
     async def async_set_temperature(self, **kwargs: Any) -> None:
         """Set new target temperature."""
         if (temp_eco := kwargs.get(ATTR_TARGET_TEMP_LOW)) and (
             temp_cft := kwargs.get(ATTR_TARGET_TEMP_HIGH)
         ):
-            self._attrs[CONF_ECO_TEMP] = int(temp_eco) * 10
-            self._attrs[CONF_CFT_TEMP] = int(temp_cft) * 10
-
-            try:
-                await self.async_control_device(
-                    self.unique_id,
-                    {
-                        CONF_ATTRS: {
-                            CONF_CFT_TEMP: self._attrs[CONF_CFT_TEMP],
-                            CONF_ECO_TEMP: self._attrs[CONF_ECO_TEMP],
-                        }
-                    },
-                )
-            except HeatzyException as error:
-                _LOGGER.error("Error to set temperature (%s)", error)
-
-    async def async_presence_detection(self) -> None:
-        """Presence detection derog."""
-        return await self.async_derog_mode(3)
+            config = {
+                CONF_ATTRS: {
+                    CONF_CFT_TEMP: int(temp_cft) * 10,
+                    CONF_ECO_TEMP: int(temp_eco) * 10,
+                }
+            }
+            await self._handle_action(config, "Error to set temperature")
