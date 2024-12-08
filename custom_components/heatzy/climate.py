@@ -205,7 +205,7 @@ CLIMATE_TYPES: Final[tuple[HeatzyClimateEntityDescription, ...]] = (
         heatzy_to_ha_state={
             0: PRESET_COMFORT,
             1: PRESET_ECO,
-            2: PRESET_AWAY
+            2: PRESET_AWAY,
             3: PRESET_COMFORT_1,
             4: PRESET_COMFORT_2,
             5: PRESET_NONE,
