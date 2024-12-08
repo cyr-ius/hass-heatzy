@@ -520,7 +520,7 @@ class Glowv1Thermostat(HeatzyPiloteV2Thermostat):
 
         if self.preset_mode == PRESET_AWAY:
             cft_tempH = 0
-            cft_tempL = 70
+            cft_tempL = FROST_TEMP * 10
 
         return (cft_tempL + (cft_tempH * 256)) / 10
 
@@ -532,15 +532,13 @@ class Glowv1Thermostat(HeatzyPiloteV2Thermostat):
 
         if self.preset_mode == PRESET_AWAY:
             eco_tempH = 0
-            eco_tempL = 70
+            eco_tempL = FROST_TEMP * 10
 
         return (eco_tempL + (eco_tempH * 256)) / 10
 
     @property
     def hvac_action(self) -> HVACAction:
         """Return hvac action ie. heating, off mode."""
-        if self._attrs.get(CONF_TIMER_SWITCH) == 1:
-            return HVACMode.AUTO
         if self.hvac_mode == HVACMode.OFF:
             return HVACAction.OFF
         if self.target_temperature and (
@@ -552,10 +550,11 @@ class Glowv1Thermostat(HeatzyPiloteV2Thermostat):
     @property
     def hvac_mode(self) -> HVACMode:
         """Return hvac operation ie. heat, cool mode."""
-        if self._attrs.get(CONF_TIMER_SWITCH) == 1:
+        if self._attrs.get(CONF_DEROG_MODE) == 1:
             return HVACMode.AUTO
         if self._attrs.get(CONF_ON_OFF) == 0:
             return HVACMode.OFF
+
         return HVACMode.HEAT
 
     @property
@@ -575,11 +574,6 @@ class Glowv1Thermostat(HeatzyPiloteV2Thermostat):
     @property
     def preset_mode(self) -> str | None:
         """Return the current preset mode, e.g., home, away, temp."""
-        if self._attrs.get(CONF_DEROG_MODE) == 1:
-            return PRESET_VACATION
-        if self._attrs.get(CONF_DEROG_MODE) == 2:
-            return PRESET_BOOST
-
         return self.entity_description.heatzy_to_ha_state.get(
             self._attrs.get(CONF_CUR_MODE)
         )
