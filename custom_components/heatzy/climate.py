@@ -33,6 +33,7 @@ from .const import (
     BLOOM,
     CFT_TEMP_H,
     CFT_TEMP_L,
+    CUR_TEMP_L,
     CONF_ATTRS,
     CONF_CFT_TEMP,
     CONF_CUR_MODE,
@@ -210,9 +211,9 @@ CLIMATE_TYPES: Final[tuple[HeatzyClimateEntityDescription, ...]] = (
             | ClimateEntityFeature.TURN_OFF
         ),
         heatzy_to_ha_state={
-            "cft": PRESET_COMFORT,
-            "eco": PRESET_ECO,
-            "fro": PRESET_AWAY,
+            0: PRESET_COMFORT,
+            1: PRESET_ECO,
+            2: PRESET_AWAY,
         },
         ha_to_heatzy_state={
             PRESET_COMFORT: "cft",
@@ -220,6 +221,7 @@ CLIMATE_TYPES: Final[tuple[HeatzyClimateEntityDescription, ...]] = (
             PRESET_AWAY: "fro",
         },
         stop="stop",
+        current_temperature=CUR_TEMP_L,
         temperature_high=CFT_TEMP_H,
         temperature_low=CFT_TEMP_L,
         eco_temperature_high=ECO_TEMP_H,
@@ -528,15 +530,17 @@ class Glowv1Thermostat(HeatzyPiloteV2Thermostat):
     @property
     def current_temperature(self) -> float:
         """Return current temperature."""
-        cur_tempH = self._attrs.get(self.entity_description.temperature_high, 0)
-        cur_tempL = self._attrs.get(self.entity_description.temperature_low, 0)
-        return (cur_tempL + (cur_tempH * 256)) / 10
+        return self._attrs.get(self.entity_description.current_temperature) / 10
 
     @property
     def target_temperature_high(self) -> float:
         """Return comfort temperature."""
-        cft_tempL = self._attrs.get(self.entity_description.temperature_high, 0)
-        cft_tempH = self._attrs.get(self.entity_description.temperature_low, 0)
+        cft_tempH = self._attrs.get(self.entity_description.temperature_high, 0)
+        cft_tempL = self._attrs.get(self.entity_description.temperature_low, 0)
+
+        if self.preset_mode == PRESET_AWAY:
+            cft_tempH = 0
+            cft_tempL = 70
 
         return (cft_tempL + (cft_tempH * 256)) / 10
 
@@ -545,6 +549,11 @@ class Glowv1Thermostat(HeatzyPiloteV2Thermostat):
         """Return comfort temperature."""
         eco_tempH = self._attrs.get(self.entity_description.eco_temperature_high, 0)
         eco_tempL = self._attrs.get(self.entity_description.eco_temperature_low, 0)
+
+        if self.preset_mode == PRESET_AWAY:
+            eco_tempH = 0
+            eco_tempL = 70
+
         return (eco_tempL + (eco_tempH * 256)) / 10
 
     @property
@@ -597,17 +606,17 @@ class Glowv1Thermostat(HeatzyPiloteV2Thermostat):
 
     async def async_turn_on(self) -> None:
         """Turn device on."""
-        config = {CONF_ATTRS: {CONF_ON_OFF: 1, CONF_DEROG_MODE: 0}}
+        config = {CONF_ATTRS: {CONF_ON_OFF: True, CONF_DEROG_MODE: 0}}
         await self._handle_action(config, f"Error to turn on {self.unique_id}")
 
     async def async_turn_off(self) -> None:
         """Turn device off."""
-        config = {CONF_ATTRS: {CONF_ON_OFF: 0, CONF_DEROG_MODE: 0}}
+        config = {CONF_ATTRS: {CONF_ON_OFF: False, CONF_DEROG_MODE: 0}}
         await self._handle_action(config, f"Error to turn on {self.unique_id}")
 
     async def async_turn_auto(self) -> None:
         """Turn device off."""
-        config = {CONF_ATTRS: {CONF_ON_OFF: 0, CONF_DEROG_MODE: 1}}
+        config = {CONF_ATTRS: {CONF_ON_OFF: True, CONF_DEROG_MODE: 1}}
         await self._handle_action(config, f"Error to turn auto {self.unique_id}")
 
     async def async_set_temperature(self, **kwargs: Any) -> None:
@@ -628,7 +637,7 @@ class Glowv1Thermostat(HeatzyPiloteV2Thermostat):
         """Set new preset mode."""
         if mode := self.entity_description.ha_to_heatzy_state.get(preset_mode):
             await self._handle_preset_mode(
-                preset_mode, {CONF_ATTRS: {CONF_MODE: mode, CONF_ON_OFF: 1}}
+                preset_mode, {CONF_ATTRS: {CONF_MODE: mode, CONF_ON_OFF: True}}
             )
         else:
             await self._handle_preset_mode(preset_mode)
