@@ -11,7 +11,6 @@ boost:
       name: Delay
       description: Boost delay (minutes)
       selector:
-        select:
           translation_key: "boost_delay"
           mode: dropdown
           options:
