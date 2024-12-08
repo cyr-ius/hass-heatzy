@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import logging
-from itertools import product
 from typing import Final
 
 from homeassistant.components.switch import SwitchEntity, SwitchEntityDescription
