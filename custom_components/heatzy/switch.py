@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 import logging
+from dataclasses import dataclass
 from typing import Final
 
 from homeassistant.components.switch import SwitchEntity, SwitchEntityDescription
@@ -31,6 +31,13 @@ SWITCH_TYPES: Final[tuple[HeatzySwitchEntityDescription, ...]] = (
         name="Lock",
         translation_key="lock",
         attr=CONF_LOCK,
+        entity_category=EntityCategory.CONFIG,
+    ),
+    HeatzySwitchEntityDescription(  # GLOW, SHINE, INEA, ONYX
+        key="lock_c",
+        name="Lock",
+        translation_key="lock_c",
+        attr="LOCK_C",
         entity_category=EntityCategory.CONFIG,
     ),
     HeatzySwitchEntityDescription(

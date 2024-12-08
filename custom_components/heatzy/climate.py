@@ -58,6 +58,7 @@ from .const import (
     PILOTE_V1,
     PILOTE_V2,
     PILOTE_V3,
+    PILOTE_V4,
     PRESET_COMFORT_1,
     PRESET_COMFORT_2,
     PRESET_PRESENCE_DETECT,
@@ -130,7 +131,7 @@ CLIMATE_TYPES: Final[tuple[HeatzyClimateEntityDescription, ...]] = (
     HeatzyClimateEntityDescription(
         key="pilote_v2",
         translation_key="pilote_v2",
-        products=PILOTE_V2,
+        products=PILOTE_V2 + PILOTE_V3,
         preset_modes=[
             PRESET_COMFORT,
             PRESET_ECO,
@@ -153,9 +154,9 @@ CLIMATE_TYPES: Final[tuple[HeatzyClimateEntityDescription, ...]] = (
         },
     ),
     HeatzyClimateEntityDescription(
-        key="pilote_v3",
-        translation_key="pilote_v3",
-        products=PILOTE_V3,
+        key="pilote_v4",
+        translation_key="pilote_v4",
+        products=PILOTE_V4,
         fn=lambda x, y, z: HeatzyPiloteV3Thermostat(x, y, z),
         preset_modes=[
             PRESET_COMFORT,
@@ -205,11 +206,16 @@ CLIMATE_TYPES: Final[tuple[HeatzyClimateEntityDescription, ...]] = (
             0: PRESET_COMFORT,
             1: PRESET_ECO,
             2: PRESET_AWAY
+            3: PRESET_COMFORT_1,
+            4: PRESET_COMFORT_2,
+            5: PRESET_NONE,
         },
         ha_to_heatzy_state={
             PRESET_COMFORT: "cft",
             PRESET_ECO: "eco",
             PRESET_AWAY: "fro",
+            PRESET_COMFORT_1: "cft1",
+            PRESET_COMFORT_2: "cft2",
             PRESET_NONE: "stop",
         },
         stop="stop",
