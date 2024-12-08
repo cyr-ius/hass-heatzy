@@ -11,13 +11,13 @@ boost:
       name: Delay
       description: Boost delay (minutes)
       selector:
-          translation_key: "boost_delay"
-          mode: dropdown
-          options:
-            - 30
-            - 60
-            - 90
-            - 120
+        translation_key: "boost_delay"
+        mode: dropdown
+        options:
+          - 30
+          - 60
+          - 90
+          - 120
 
 vacation:
   description: Start a vacation
