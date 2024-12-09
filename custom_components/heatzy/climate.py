@@ -33,7 +33,6 @@ from .const import (
     BLOOM,
     CFT_TEMP_H,
     CFT_TEMP_L,
-    CUR_TEMP_L,
     CONF_ATTRS,
     CONF_CFT_TEMP,
     CONF_CUR_MODE,
@@ -48,6 +47,7 @@ from .const import (
     CONF_ON_OFF,
     CONF_PRODUCT_KEY,
     CONF_TIMER_SWITCH,
+    CUR_TEMP_L,
     DEFAULT_BOOST,
     DEFAULT_VACATION,
     ECO_TEMP_H,
@@ -516,7 +516,7 @@ class Glowv1Thermostat(HeatzyPiloteV2Thermostat):
     @property
     def current_temperature(self) -> float:
         """Return current temperature."""
-        return self._attrs.get(self.entity_description.current_temperature) / 10
+        return self._attrs.get(self.entity_description.current_temperature, 0) / 10
 
     @property
     def target_temperature_high(self) -> float:
