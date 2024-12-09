@@ -209,17 +209,15 @@ CLIMATE_TYPES: Final[tuple[HeatzyClimateEntityDescription, ...]] = (
             0: PRESET_COMFORT,
             1: PRESET_ECO,
             2: PRESET_AWAY,
-            3: PRESET_COMFORT_1,
-            4: PRESET_COMFORT_2,
-            5: PRESET_NONE,
+            3: PRESET_NONE,
+            4: PRESET_COMFORT_1,
+            5: PRESET_COMFORT_2,
         },
         ha_to_heatzy_state={
-            PRESET_COMFORT: 0,
-            PRESET_ECO: 1,
-            PRESET_AWAY: 2,
-            PRESET_NONE: 3,
-            PRESET_COMFORT_1: 4,
-            PRESET_COMFORT_2: 5,
+            PRESET_COMFORT: "cft",
+            PRESET_ECO: "eco",
+            PRESET_AWAY: "fro",
+            PRESET_NONE: "stop",
         },
         attr_stop=CONF_ON_OFF,
         value_stop=0,
@@ -541,7 +539,7 @@ class Glowv1Thermostat(HeatzyPiloteV2Thermostat):
         cft_tempH = self._attrs.get(self.entity_description.temperature_high, 0)
         cft_tempL = self._attrs.get(self.entity_description.temperature_low, 0)
 
-        if self.preset_mode == PRESET_AWAY:
+        if self.preset_mode == PRESET_AWAY or self.preset_mode == PRESET_VACATION:
             cft_tempH = 0
             cft_tempL = FROST_TEMP * 10
 
@@ -553,11 +551,32 @@ class Glowv1Thermostat(HeatzyPiloteV2Thermostat):
         eco_tempH = self._attrs.get(self.entity_description.eco_temperature_high, 0)
         eco_tempL = self._attrs.get(self.entity_description.eco_temperature_low, 0)
 
-        if self.preset_mode == PRESET_AWAY:
+        if self.preset_mode == PRESET_AWAY or self.preset_mode == PRESET_VACATION:
             eco_tempH = 0
             eco_tempL = FROST_TEMP * 10
 
         return (eco_tempL + (eco_tempH * 256)) / 10
+
+    @property
+    def hvac_action(self) -> HVACAction:
+        """Return hvac action ie. heating, off mode."""
+        if self.hvac_mode == HVACMode.OFF:
+            return HVACAction.OFF
+        if self.target_temperature and (
+            self.current_temperature > self.target_temperature
+        ):
+            return HVACAction.OFF
+        return HVACAction.HEATING
+
+    @property
+    def hvac_mode(self) -> HVACMode:
+        """Return hvac operation ie. heat, cool mode."""
+        if self._attrs.get(CONF_ON_OFF) == 0:
+            return HVACMode.OFF
+        if self._attrs.get(CONF_DEROG_MODE) == 1:
+            return HVACMode.AUTO
+
+        return HVACMode.HEAT
 
     @property
     def target_temperature(self) -> float | None:
@@ -571,11 +590,17 @@ class Glowv1Thermostat(HeatzyPiloteV2Thermostat):
             return self.target_temperature_high
         if self.preset_mode == PRESET_AWAY:
             return FROST_TEMP
+        if self.preset_mode == PRESET_VACATION:
+            return FROST_TEMP
+
         return None
 
     @property
     def preset_mode(self) -> str | None:
         """Return the current preset mode, e.g., home, away, temp."""
+        if self._attrs.get(CONF_DEROG_MODE) == 2:
+            return PRESET_VACATION
+
         return self.entity_description.heatzy_to_ha_state.get(
             self._attrs.get(CONF_CUR_MODE)
         )
@@ -594,6 +619,10 @@ class Glowv1Thermostat(HeatzyPiloteV2Thermostat):
         """Turn device off."""
         config = {CONF_ATTRS: {CONF_ON_OFF: True, CONF_DEROG_MODE: 1}}
         await self._handle_action(config, f"Error to turn auto {self.unique_id}")
+
+    async def _async_vacation_mode(self, delay: int) -> None:
+        """Service Vacation Mode."""
+        await self._async_derog_mode(2, delay)
 
     async def async_set_temperature(self, **kwargs: Any) -> None:
         """Set new target temperature."""
@@ -614,7 +643,12 @@ class Glowv1Thermostat(HeatzyPiloteV2Thermostat):
         if await self._async_derog_mode_action(preset_mode) is False:
             mode = self.entity_description.ha_to_heatzy_state.get(preset_mode)
             config = {CONF_ATTRS: {CONF_MODE: mode, CONF_ON_OFF: True}}
-            if self._attrs.get(CONF_DEROG_MODE, 0) > 0:
+
+            if preset_mode == PRESET_AWAY:
+                config[CONF_ATTRS].update({CONF_DEROG_MODE: 0, CONF_DEROG_TIME: 0})
+            elif self.hvac_mode == HVACMode.AUTO:
+                config[CONF_ATTRS].update({CONF_DEROG_MODE: 1})
+            else:
                 config[CONF_ATTRS].update({CONF_DEROG_MODE: 0, CONF_DEROG_TIME: 0})
             await self._handle_action(config, f"Error preset mode: {preset_mode}")
 
