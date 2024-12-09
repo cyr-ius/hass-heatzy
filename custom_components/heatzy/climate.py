@@ -2,13 +2,12 @@
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Callable
 from dataclasses import dataclass, field
-import logging
 from typing import Any, Final
 
 import voluptuous as vol
-
 from homeassistant.components.climate import (
     ATTR_TARGET_TEMP_HIGH,
     ATTR_TARGET_TEMP_LOW,
@@ -25,7 +24,8 @@ from homeassistant.components.climate import (
 )
 from homeassistant.const import CONF_DELAY, UnitOfTemperature
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers import config_validation as cv, entity_platform
+from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers import entity_platform
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from . import HeatzyConfigEntry, HeatzyDataUpdateCoordinator
@@ -89,7 +89,8 @@ class HeatzyClimateEntityDescription(ClimateEntityDescription):
     hvac_modes = [HVACMode.HEAT, HVACMode.OFF, HVACMode.AUTO]
     preset_modes: list[str] = field(default_factory=list)
     products: list[str] | None = None
-    stop: str = "stop"
+    attr_stop: str = CONF_MODE
+    value_stop: str = "stop"
     supported_features: tuple[ClimateEntityFeature] = (
         ClimateEntityFeature.PRESET_MODE
         | ClimateEntityFeature.TURN_ON
@@ -126,7 +127,7 @@ CLIMATE_TYPES: Final[tuple[HeatzyClimateEntityDescription, ...]] = (
             PRESET_AWAY: [1, 1, 2],
             PRESET_NONE: [1, 1, 3],
         },
-        stop="\u505c\u6b62",
+        value_stop="\u505c\u6b62",
     ),
     HeatzyClimateEntityDescription(
         key="pilote_v2",
@@ -192,6 +193,8 @@ CLIMATE_TYPES: Final[tuple[HeatzyClimateEntityDescription, ...]] = (
             PRESET_COMFORT,
             PRESET_ECO,
             PRESET_AWAY,
+            PRESET_COMFORT_1,
+            PRESET_COMFORT_2,
             PRESET_BOOST,
             PRESET_VACATION,
         ],
@@ -211,14 +214,15 @@ CLIMATE_TYPES: Final[tuple[HeatzyClimateEntityDescription, ...]] = (
             5: PRESET_NONE,
         },
         ha_to_heatzy_state={
-            PRESET_COMFORT: "cft",
-            PRESET_ECO: "eco",
-            PRESET_AWAY: "fro",
-            PRESET_COMFORT_1: "cft1",
-            PRESET_COMFORT_2: "cft2",
-            PRESET_NONE: "stop",
+            PRESET_COMFORT: 0,
+            PRESET_ECO: 1,
+            PRESET_AWAY: 2,
+            PRESET_NONE: 3,
+            PRESET_COMFORT_1: 4,
+            PRESET_COMFORT_2: 5,
         },
-        stop="stop",
+        attr_stop=CONF_ON_OFF,
+        value_stop=0,
         current_temperature=CUR_TEMP_L,
         temperature_high=CFT_TEMP_H,
         temperature_low=CFT_TEMP_L,
@@ -354,23 +358,36 @@ class HeatzyThermostat(HeatzyEntity, ClimateEntity):
         self._attr_available = coordinator.data[did].get(CONF_IS_ONLINE, True)
 
     @property
+    def current_temperature(self) -> float:
+        """The current temperature."""
+
+    @property
+    def target_temperature(self) -> float:
+        """The temperature currently set to be reached."""
+
+    @property
     def hvac_action(self) -> HVACAction:
         """Return hvac action ie. heating, off mode."""
         if self._attrs.get(CONF_TIMER_SWITCH) == 1:
             return HVACMode.AUTO
-        if self._attrs.get(CONF_MODE) == self.entity_description.stop:
+        if self.hvac_mode == HVACMode.OFF:
             return HVACAction.OFF
-
+        if self.target_temperature and (
+            self.current_temperature > self.target_temperature
+        ):
+            return HVACAction.OFF
         return HVACAction.HEATING
 
     @property
     def hvac_mode(self) -> HVACMode:
         """Return hvac mode ie. heat, auto, off."""
+        _get_attr_stop = self._attrs.get(self.entity_description.attr_stop)
+        _value_stop = self.entity_description.value_stop
         if self._attrs.get(CONF_TIMER_SWITCH) == 1:
             return HVACMode.AUTO
-        if self._attrs.get(CONF_MODE) == self.entity_description.stop:
+        if _get_attr_stop == _value_stop:
             return HVACMode.OFF
-        # otherwise set HVAC Mode to HEAT
+
         return HVACMode.HEAT
 
     @property
@@ -543,27 +560,6 @@ class Glowv1Thermostat(HeatzyPiloteV2Thermostat):
         return (eco_tempL + (eco_tempH * 256)) / 10
 
     @property
-    def hvac_action(self) -> HVACAction:
-        """Return hvac action ie. heating, off mode."""
-        if self.hvac_mode == HVACMode.OFF:
-            return HVACAction.OFF
-        if self.target_temperature and (
-            self.current_temperature > self.target_temperature
-        ):
-            return HVACAction.OFF
-        return HVACAction.HEATING
-
-    @property
-    def hvac_mode(self) -> HVACMode:
-        """Return hvac operation ie. heat, cool mode."""
-        if self._attrs.get(CONF_DEROG_MODE) == 1:
-            return HVACMode.AUTO
-        if self._attrs.get(CONF_ON_OFF) == 0:
-            return HVACMode.OFF
-
-        return HVACMode.HEAT
-
-    @property
     def target_temperature(self) -> float | None:
         """Return target temperature for mode."""
         # Target temp is set to Low/High/Away value according to the current [preset] mode
@@ -654,19 +650,6 @@ class Bloomv1Thermostat(HeatzyPiloteV2Thermostat):
         if self.preset_mode == PRESET_AWAY:
             return FROST_TEMP
         return None
-
-    @property
-    def hvac_action(self) -> HVACAction:
-        """Return hvac action ie. heat, cool mode."""
-        if self._attrs.get(CONF_TIMER_SWITCH) == 1:
-            return HVACMode.AUTO
-        if self.hvac_mode == HVACMode.OFF:
-            return HVACAction.OFF
-        if self.target_temperature and (
-            self.current_temperature > self.target_temperature
-        ):
-            return HVACAction.OFF
-        return HVACAction.HEATING
 
     async def async_set_temperature(self, **kwargs: Any) -> None:
         """Set new target temperature."""
