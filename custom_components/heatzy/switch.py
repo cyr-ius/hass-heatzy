@@ -12,7 +12,7 @@ from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from . import HeatzyConfigEntry, HeatzyDataUpdateCoordinator
-from .const import CONF_ATTRS, CONF_LOCK, CONF_WINDOW
+from .const import CONF_ATTRS, CONF_LOCK, CONF_LOCK_OTHER, CONF_WINDOW, PILOTE_PRO_V1, PILOTE_V1, PILOTE_V2, PILOTE_V3, BLOOM, GLOW, CONF_PRODUCT_KEY
 from .entity import HeatzyEntity
 
 
@@ -20,11 +20,13 @@ from .entity import HeatzyEntity
 class HeatzySwitchEntityDescription(SwitchEntityDescription):
     """Represents an Flow Sensor."""
 
-    attr: str | None = None
+    attr: str | None = None,
+    products: list[str] | None = None
 
 
 SWITCH_TYPES: Final[tuple[HeatzySwitchEntityDescription, ...]] = (
     HeatzySwitchEntityDescription(
+        products=PILOTE_V1 + PILOTE_V2 + PILOTE_V3 + BLOOM + PILOTE_PRO_V1,
         key="lock",
         name="Lock",
         translation_key="lock",
@@ -39,6 +41,15 @@ SWITCH_TYPES: Final[tuple[HeatzySwitchEntityDescription, ...]] = (
         entity_category=EntityCategory.CONFIG,
     ),
     HeatzySwitchEntityDescription(
+        products=GLOW,
+        key="lock",
+        name="Lock",
+        translation_key="lock",
+        attr=CONF_LOCK_OTHER,
+        entity_category=EntityCategory.CONFIG,
+    ),
+    HeatzySwitchEntityDescription(
+        products=PILOTE_V1 + PILOTE_V2 + PILOTE_V3 + GLOW + BLOOM + PILOTE_PRO_V1,
         key="window",
         name="Window",
         icon="mdi:window-open-variant",
@@ -60,9 +71,11 @@ async def async_setup_entry(
     entities = []
 
     for unique_id, device in coordinator.data.items():
+        product_key = device.get(CONF_PRODUCT_KEY)
         for description in SWITCH_TYPES:
-            if device.get(CONF_ATTRS, {}).get(description.attr) is not None:
-                entities.extend([SwitchEntity(coordinator, description, unique_id)])
+            if product_key in description.products:
+                if device.get(CONF_ATTRS, {}).get(description.attr) is not None:
+                    entities.extend([SwitchEntity(coordinator, description, unique_id)])
     async_add_entities(entities)
 
 
