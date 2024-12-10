@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
-import logging
 from collections.abc import Callable
 from dataclasses import dataclass, field
+import logging
 from typing import Any, Final
 
 import voluptuous as vol
+
 from homeassistant.components.climate import (
     ATTR_TARGET_TEMP_HIGH,
     ATTR_TARGET_TEMP_LOW,
@@ -24,8 +25,7 @@ from homeassistant.components.climate import (
 )
 from homeassistant.const import CONF_DELAY, UnitOfTemperature
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers import config_validation as cv
-from homeassistant.helpers import entity_platform
+from homeassistant.helpers import config_validation as cv, entity_platform
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from . import HeatzyConfigEntry, HeatzyDataUpdateCoordinator
@@ -539,7 +539,7 @@ class Glowv1Thermostat(HeatzyPiloteV2Thermostat):
         cft_tempH = self._attrs.get(self.entity_description.temperature_high, 0)
         cft_tempL = self._attrs.get(self.entity_description.temperature_low, 0)
 
-        if self.preset_mode == PRESET_AWAY or self.preset_mode == PRESET_VACATION:
+        if self.preset_mode in [PRESET_AWAY, PRESET_VACATION]:
             cft_tempH = 0
             cft_tempL = FROST_TEMP * 10
 
@@ -551,7 +551,7 @@ class Glowv1Thermostat(HeatzyPiloteV2Thermostat):
         eco_tempH = self._attrs.get(self.entity_description.eco_temperature_high, 0)
         eco_tempL = self._attrs.get(self.entity_description.eco_temperature_low, 0)
 
-        if self.preset_mode == PRESET_AWAY or self.preset_mode == PRESET_VACATION:
+        if self.preset_mode in [PRESET_AWAY, PRESET_VACATION]:
             eco_tempH = 0
             eco_tempL = FROST_TEMP * 10
 
@@ -588,9 +588,7 @@ class Glowv1Thermostat(HeatzyPiloteV2Thermostat):
             return self.target_temperature_low
         if self.preset_mode == PRESET_COMFORT:
             return self.target_temperature_high
-        if self.preset_mode == PRESET_AWAY:
-            return FROST_TEMP
-        if self.preset_mode == PRESET_VACATION:
+        if self.preset_mode in [PRESET_AWAY, PRESET_VACATION]:
             return FROST_TEMP
 
         return None
