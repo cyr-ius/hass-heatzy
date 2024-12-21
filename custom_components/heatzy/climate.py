@@ -611,7 +611,7 @@ class Glowv1Thermostat(HeatzyPiloteV2Thermostat):
     async def async_turn_off(self) -> None:
         """Turn device off."""
         config = {CONF_ATTRS: {CONF_ON_OFF: False, CONF_DEROG_MODE: 0}}
-        await self._handle_action(config, f"Error to turn on {self.unique_id}")
+        await self._handle_action(config, f"Error to turn off {self.unique_id}")
 
     async def async_turn_auto(self) -> None:
         """Turn device off."""
