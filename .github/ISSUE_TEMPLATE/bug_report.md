@@ -26,8 +26,6 @@ Decrire le plus clairement votre pbl et si cela marchait avant sur une version p
 Ajouter le fichier de diagnostic (et c est pas optionnel)
 Activer au besoin le mode Debug ,faite quelques teste et soumette le fichier de debug. Ce fichier peut etre optionnel a l ouverture du pbl.-->
 
-![Screenshot](https://github.com/cyr-ius/hass-audiconnect/assets/1258123/28916bd3-66fd-4df5-bf3c-93012c555051)
-
 **Screenshots**
 
 <!--If applicable, add screenshots to help explain your problem.
