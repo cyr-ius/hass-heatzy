@@ -18,7 +18,7 @@ Model:
 
 <!--A clear and concise description of what the bug is.
 Decrire le plus clairement votre pbl et si cela marchait avant sur une version précédente ou si cela n a jamais marcher.
-(Issue du genre , j ai un soucis le truc marche pas, et cela marche dans le smartphone. Je droppe votre demande direction jupiter.Cela m aide en rien sans le fichier de diag)-->
+(Issue du genre , j ai un soucis le truc marche pas, et cela marche dans l appli Heatzy. Je droppe votre demande direction jupiter.Cela m aide en rien sans le fichier de diag et sans plus d explication.)-->
 
 **Diagnostics & Debug file**
 
