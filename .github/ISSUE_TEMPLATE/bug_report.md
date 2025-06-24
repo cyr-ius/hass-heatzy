@@ -36,6 +36,6 @@ Quelque capture d ecran si cela peut aider-->
 <!--Add any other context about the problem here.
 Tout ce que vous jugez utile.
 
-Ah autre chose, si cela marchait le lundi et que cela ne marche plus le mardi. Et que vous avez pas fait de mise a jour de mon addons. Mes pouvoirs de télépathie ou de telekinesie sont quasi nulle. j arrive pas a changer le code par la pensée sur votre Home Assistant.
+Ah autre chose, si cela marchait le lundi et que cela ne marche plus le mardi. Et que vous avez pas fait de mise a jour de mon addon dans l intervalle. Mes pouvoirs de télépathie ou de telekinesie sont quasi nulle. j arrive pas a changer le code par la pensée sur votre Home Assistant.
 Donc soit on a soucis chez Heatzy, soit vous avez modifier des choses de votre côté.
 N hésiter pas ouvrir un issue mais dans ce cas, une description précise est requise -->
