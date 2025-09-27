@@ -2,17 +2,14 @@
 
 from __future__ import annotations
 
-import logging
-
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import device_registry as dr
 
 from .const import PLATFORMS
 from .coordinator import HeatzyDataUpdateCoordinator
 
 type HeatzyConfigEntry = ConfigEntry[HeatzyDataUpdateCoordinator]
-
-_LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: HeatzyConfigEntry) -> bool:
@@ -39,3 +36,11 @@ async def async_unload_entry(hass: HomeAssistant, entry: HeatzyConfigEntry) -> b
 async def _async_update_listener(hass: HomeAssistant, entry: HeatzyConfigEntry):
     """Reload if change option."""
     await hass.config_entries.async_reload(entry.entry_id)
+
+async def async_remove_config_entry_device(
+    hass: HomeAssistant,  
+    config_entry: ConfigEntry,  
+    device_entry: dr.DeviceEntry, 
+) -> bool:
+    """Remove config entry from a device."""
+    return True
