@@ -564,7 +564,7 @@
     "is_disabled": false,
     "mcu_hard_version": "03000011",
     "wifi_soft_version": "04020A49",
-    "dev_alias": "TEST_ONIX",
+    "dev_alias": "TEST_ONYX",
     "mesh_id": null,
     "is_online": true,
     "dev_label": [],

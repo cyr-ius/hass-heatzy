@@ -1,4 +1,4 @@
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock
 
 from homeassistant.components.number import ATTR_VALUE, SERVICE_SET_VALUE
 from homeassistant.config_entries import ConfigEntry
@@ -14,9 +14,8 @@ async def test_number(
 ):
     """Test number"""
 
-    with patch("custom_components.heatzy.coordinator.HeatzyDataUpdateCoordinator","async_set_updated_data"):
-        await hass.config_entries.async_setup(config_entry.entry_id)
-        await hass.async_block_till_done()
+    await hass.config_entries.async_setup(config_entry.entry_id)
+    await hass.async_block_till_done()
 
     # --- Initial State Check ---
     state = hass.states.get("number.test_pilote_v2_vacation")

@@ -49,10 +49,10 @@ def mock_router(request) -> Generator[MagicMock | AsyncMock]:
     with patch("custom_components.heatzy.coordinator.HeatzyClient") as mock:
         instance = mock.return_value
 
-
-        callbacks = []
-        instance.websocket.register_callback = MagicMock(side_effect=lambda cb: callbacks.append(cb))
-
+        def _mock_register_callback(*args, **kwargs):
+            if cb := kwargs.get("callback"):
+                cb(api)
+        instance.websocket.register_callback = MagicMock(side_effect=_mock_register_callback)
 
         async def _mock_connect(*args, **kwargs):
             is_connected_prop.return_value = True
@@ -68,21 +68,20 @@ def mock_router(request) -> Generator[MagicMock | AsyncMock]:
             is_connected_prop.return_value = False
         instance.websocket.async_disconnect = AsyncMock(side_effect=_mock_disconnect)
 
-
         type(instance.websocket).is_updated = is_updated_prop
         type(instance.websocket).is_connected = is_connected_prop
 
         def _mock_contol(*args, **kwargs):
             device = api[args[0]]
-            if device["product_name"] == "onyx" and  (mode:= args[1].get('attrs', {}).get("mode")) :
+            if device["product_name"] == "onyx" and  (mode:= args[1].get('attrs', {}).get("mode")) is not None :
                 device['attrs']['cur_mode'] = mode             
             if value := args[1].get('attrs', {}):
                 device['attrs'].update(value)
+            print(device)
 
         instance.websocket.async_control_device = AsyncMock(side_effect=_mock_contol)
         instance.async_get_devices = AsyncMock(return_value=api)
-        
-        
+        instance.async_bindings = AsyncMock()
         type(instance).__devices = PropertyMock(return_value=api)
         yield instance
 
