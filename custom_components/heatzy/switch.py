@@ -1,8 +1,7 @@
-"""Sensors for Heatzy."""
+"""Switch for Heatzy."""
 
 from __future__ import annotations
 
-import logging
 from dataclasses import dataclass
 from typing import Final
 
@@ -48,7 +47,6 @@ SWITCH_TYPES: Final[tuple[HeatzySwitchEntityDescription, ...]] = (
         entity_category=EntityCategory.CONFIG,
     ),
 )
-_LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(

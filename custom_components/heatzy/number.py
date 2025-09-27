@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-import logging
 from typing import Final
 
 from homeassistant.components.number import (
@@ -51,7 +50,6 @@ NUMBER_TYPES: Final[tuple[HeatzyNumberEntityDescription, ...]] = (
         native_max_value=255,
     ),
 )
-_LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(

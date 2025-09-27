@@ -2,12 +2,9 @@
 
 from __future__ import annotations
 
-import logging
-
+import voluptuous as vol
 from heatzypy import HeatzyClient
 from heatzypy.exception import AuthenticationFailed, HeatzyException, HttpRequestFailed
-import voluptuous as vol
-
 from homeassistant import config_entries
 from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
 from homeassistant.helpers.aiohttp_client import async_create_clientsession
@@ -17,8 +14,6 @@ from .const import DOMAIN
 DATA_SCHEMA = vol.Schema(
     {vol.Required(CONF_USERNAME): str, vol.Required(CONF_PASSWORD): str}
 )
-
-_LOGGER = logging.getLogger(__name__)
 
 
 class HeatzyFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
