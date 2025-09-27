@@ -2,13 +2,12 @@
 
 from __future__ import annotations
 
-from datetime import timedelta
 import logging
+from datetime import timedelta
 from typing import Any
 
 from heatzypy import HeatzyClient
 from heatzypy.exception import AuthenticationFailed, ConnectionFailed, HeatzyException
-
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_PASSWORD, CONF_USERNAME, EVENT_HOMEASSISTANT_STOP
 from homeassistant.core import CALLBACK_TYPE, Event, HomeAssistant, callback
@@ -26,14 +25,18 @@ class HeatzyDataUpdateCoordinator(DataUpdateCoordinator):
 
     def __init__(self, hass: HomeAssistant, entry: ConfigEntry) -> None:
         """Class to manage fetching Heatzy data API."""
+        self.entry = entry
         self.unsub: CALLBACK_TYPE | None = None
-        self.api = HeatzyClient(
-            entry.data[CONF_USERNAME],
-            entry.data[CONF_PASSWORD],
-            async_create_clientsession(hass),
-        )
         super().__init__(
             hass, _LOGGER, name=DOMAIN, update_interval=timedelta(seconds=SCAN_INTERVAL)
+        )
+
+    async def _async_setup(self) -> None:
+        """Coordinator setup."""
+        self.api = HeatzyClient(
+            self.entry.data[CONF_USERNAME],
+            self.entry.data[CONF_PASSWORD],
+            async_create_clientsession(self.hass),
         )
 
     @callback
