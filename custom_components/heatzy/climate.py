@@ -2,13 +2,12 @@
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Callable
 from dataclasses import dataclass, field
-import logging
 from typing import Any, Final
 
 import voluptuous as vol
-
 from homeassistant.components.climate import (
     ATTR_TARGET_TEMP_HIGH,
     ATTR_TARGET_TEMP_LOW,
@@ -25,7 +24,8 @@ from homeassistant.components.climate import (
 )
 from homeassistant.const import CONF_DELAY, UnitOfTemperature
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers import config_validation as cv, entity_platform
+from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers import entity_platform
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from . import HeatzyConfigEntry, HeatzyDataUpdateCoordinator
@@ -90,6 +90,7 @@ class HeatzyClimateEntityDescription(ClimateEntityDescription):
     preset_modes: list[str] = field(default_factory=list)
     products: list[str] | None = None
     attr_stop: str = CONF_MODE
+    attr_preset: str = CONF_MODE
     value_stop: str = "stop"
     supported_features: tuple[ClimateEntityFeature] = (
         ClimateEntityFeature.PRESET_MODE
@@ -214,12 +215,15 @@ CLIMATE_TYPES: Final[tuple[HeatzyClimateEntityDescription, ...]] = (
             5: PRESET_COMFORT_2,
         },
         ha_to_heatzy_state={
-            PRESET_COMFORT: "cft",
-            PRESET_ECO: "eco",
-            PRESET_AWAY: "fro",
-            PRESET_NONE: "stop",
+            PRESET_COMFORT: 0,
+            PRESET_ECO: 1,
+            PRESET_AWAY: 2,
+            PRESET_NONE: 3,
+            PRESET_COMFORT_1: 4,
+            PRESET_COMFORT_2: 5,            
         },
         attr_stop=CONF_ON_OFF,
+        attr_preset=CONF_CUR_MODE,
         value_stop=0,
         current_temperature=CUR_TEMP_L,
         temperature_high=CFT_TEMP_H,
@@ -396,10 +400,10 @@ class HeatzyThermostat(HeatzyEntity, ClimateEntity):
         if self._attrs.get(CONF_DEROG_MODE) == 2:
             return PRESET_BOOST
         if self._attrs.get(CONF_DEROG_MODE) == 3:
-            return PRESET_PRESENCE_DETECT
+            return PRESET_PRESENCE_DETECT   
 
         return self.entity_description.heatzy_to_ha_state.get(
-            self._attrs.get(CONF_MODE)
+            self._attrs.get(self.entity_description.attr_preset)
         )
 
     async def async_turn_on(self) -> None:
@@ -465,12 +469,12 @@ class HeatzyThermostat(HeatzyEntity, ClimateEntity):
         if derog_mode not in [PRESET_BOOST, PRESET_VACATION, PRESET_PRESENCE_DETECT]:
             return False
 
-        if derog_mode == PRESET_BOOST:
-            minutes = self._device.get("boost", DEFAULT_BOOST)
-            await self._async_boost_mode(int(minutes))
         if derog_mode == PRESET_VACATION:
             days = self._device.get("vacation", DEFAULT_VACATION)
             await self._async_vacation_mode(int(days))
+        if derog_mode == PRESET_BOOST:
+            minutes = self._device.get("boost", DEFAULT_BOOST)
+            await self._async_boost_mode(int(minutes))
         if derog_mode == PRESET_PRESENCE_DETECT:
             await self._async_presence_detection()
 
@@ -593,16 +597,6 @@ class Glowv1Thermostat(HeatzyPiloteV2Thermostat):
 
         return None
 
-    @property
-    def preset_mode(self) -> str | None:
-        """Return the current preset mode, e.g., home, away, temp."""
-        if self._attrs.get(CONF_DEROG_MODE) == 2:
-            return PRESET_VACATION
-
-        return self.entity_description.heatzy_to_ha_state.get(
-            self._attrs.get(CONF_CUR_MODE)
-        )
-
     async def async_turn_on(self) -> None:
         """Turn device on."""
         config = {CONF_ATTRS: {CONF_ON_OFF: True, CONF_DEROG_MODE: 0}}
@@ -617,10 +611,6 @@ class Glowv1Thermostat(HeatzyPiloteV2Thermostat):
         """Turn device off."""
         config = {CONF_ATTRS: {CONF_ON_OFF: True, CONF_DEROG_MODE: 1}}
         await self._handle_action(config, f"Error to turn auto {self.unique_id}")
-
-    async def _async_vacation_mode(self, delay: int) -> None:
-        """Service Vacation Mode."""
-        await self._async_derog_mode(2, delay)
 
     async def async_set_temperature(self, **kwargs: Any) -> None:
         """Set new target temperature."""
