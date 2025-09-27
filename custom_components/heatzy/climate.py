@@ -238,6 +238,8 @@ CLIMATE_TYPES: Final[tuple[HeatzyClimateEntityDescription, ...]] = (
         products=BLOOM,
         preset_modes=[
             PRESET_COMFORT,
+            PRESET_COMFORT_1,
+            PRESET_COMFORT_2,
             PRESET_ECO,
             PRESET_AWAY,
             PRESET_BOOST,
@@ -530,7 +532,7 @@ class HeatzyPiloteV3Thermostat(HeatzyPiloteV2Thermostat):
 
 
 class Glowv1Thermostat(HeatzyPiloteV2Thermostat):
-    """Glow."""
+    """Glow, Onyx, Inea."""
 
     @property
     def current_temperature(self) -> float:
@@ -634,8 +636,6 @@ class Glowv1Thermostat(HeatzyPiloteV2Thermostat):
 
             if preset_mode == PRESET_AWAY:
                 config[CONF_ATTRS].update({CONF_DEROG_MODE: 0, CONF_DEROG_TIME: 0})
-            elif self.hvac_mode == HVACMode.AUTO:
-                config[CONF_ATTRS].update({CONF_DEROG_MODE: 1})
             else:
                 config[CONF_ATTRS].update({CONF_DEROG_MODE: 0, CONF_DEROG_TIME: 0})
             await self._handle_action(config, f"Error preset mode: {preset_mode}")
