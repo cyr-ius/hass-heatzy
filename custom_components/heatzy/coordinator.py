@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
-import logging
 from datetime import timedelta
+import logging
 from typing import Any
 
 from heatzypy import HeatzyClient
 from heatzypy.exception import AuthenticationFailed, ConnectionFailed, HeatzyException
+
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_PASSWORD, CONF_USERNAME, EVENT_HOMEASSISTANT_STOP
 from homeassistant.core import CALLBACK_TYPE, Event, HomeAssistant, callback
@@ -82,7 +83,7 @@ class HeatzyDataUpdateCoordinator(DataUpdateCoordinator):
         )
 
         # Start listening
-        self.config_entry.async_create_background_task(
+        self.entry.async_create_background_task(
             self.hass, async_listener(), "heatzy-listen"
         )
 
