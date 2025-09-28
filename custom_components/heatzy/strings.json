@@ -26,7 +26,7 @@
       "fields": {
         "delay": {
           "name": "Delay",
-          "description": "Boost delay (minutes), None for disabled"
+          "description": "Boost delay (minutes)"
         }
       }
     },
@@ -36,12 +36,16 @@
       "fields": {
         "delay": {
           "name": "Delay",
-          "description": "Vacation delay (days) , 0 for disabled"
+          "description": "Vacation delay (days)"
         }
       }
     },
     "presence": {
       "name": "Set Presence"
+    },
+    "window_switch": {
+      "name": "Set Window Switch",
+      "description": "Setting window switch mode"
     }
   }
 }
