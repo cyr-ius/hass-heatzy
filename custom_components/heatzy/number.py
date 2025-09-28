@@ -19,7 +19,7 @@ from .const import CONF_ATTRS, CONF_DEROG_MODE
 from .entity import HeatzyEntity
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, kw_only=True)
 class HeatzyNumberEntityDescription(NumberEntityDescription):
     """Represents an Flow Sensor."""
 
@@ -70,8 +70,6 @@ async def async_setup_entry(
 class Number(HeatzyEntity, RestoreNumber):
     """Number entity."""
 
-    _attr_has_entity_name = True
-
     def __init__(
         self,
         coordinator: HeatzyDataUpdateCoordinator,
@@ -83,7 +81,7 @@ class Number(HeatzyEntity, RestoreNumber):
         self._resolve_state = 1
 
     @property
-    def native_value(self) -> int:
+    def native_value(self) -> float | None:
         """Return the value reported by the sensor."""
         return self._resolve_state
 
@@ -91,11 +89,12 @@ class Number(HeatzyEntity, RestoreNumber):
         """Restore last state."""
         if (
             last_state := await self.async_get_last_state()
-        ) and last_state.state not in (STATE_UNKNOWN, STATE_UNAVAILABLE):
+        ) and last_state.state not in {STATE_UNKNOWN, STATE_UNAVAILABLE}:
             last_number_data = await self.async_get_last_number_data()
-            self._resolve_state = last_number_data.native_value
+            if last_number_data:
+                self._resolve_state = last_number_data.native_value
 
-    async def async_set_native_value(self, value: int) -> None:
+    async def async_set_native_value(self, value: float) -> None:
         """Set new value."""
         self._device[self.entity_description.key] = value
         self._resolve_state = value

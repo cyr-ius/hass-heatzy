@@ -8,7 +8,7 @@ from heatzypy import HeatzyException
 
 from homeassistant.core import callback
 from homeassistant.helpers.device_registry import DeviceInfo
-from homeassistant.helpers.entity import Entity, EntityDescription
+from homeassistant.helpers.entity import EntityDescription
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import CONF_ALIAS, CONF_ATTRS, CONF_MODEL, CONF_VERSION, DOMAIN
@@ -17,7 +17,7 @@ from .coordinator import HeatzyDataUpdateCoordinator
 _LOGGER = logging.getLogger(__name__)
 
 
-class HeatzyEntity(CoordinatorEntity[HeatzyDataUpdateCoordinator], Entity):
+class HeatzyEntity(CoordinatorEntity[HeatzyDataUpdateCoordinator]):
     """Base class for all entities."""
 
     entity_description: EntityDescription
