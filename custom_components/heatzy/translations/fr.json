@@ -18,5 +18,37 @@
     "abort": {
       "already_configured": "Votre compte est déjà enregistré."
     }
+  },
+  "services": {
+    "boost": {
+      "description": "Paramètre le mode boost",
+      "fields": {
+        "delay": {
+          "name": "Délais",
+          "description": "Choisir une valeur , Stop pour désactiver le mode"
+        }
+      }
+    },
+    "vacation": {
+      "description": "Paramètre le mode vacance",
+      "fields": {
+        "delay": {
+          "name": "Délais",
+          "description": "Choisir une valeur , 0 pour désactiver le mode"
+        }
+      }
+    },
+    "presence": {}
+  },
+  "selector": {
+    "boost_mode": {
+      "options": {
+        "None": "Stop",
+        "30": "30 minutes",
+        "60": "60 minutes",
+        "90": "90 minutes",
+        "120": "120 minutes"
+      }
+    }
   }
 }

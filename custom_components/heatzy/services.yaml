@@ -1,6 +1,5 @@
 ---
 boost:
-  description: Start a boost
   target:
     entity:
       integration: heatzy
@@ -8,19 +7,18 @@ boost:
   fields:
     delay:
       required: true
-      name: Delay
-      description: Boost delay (minutes)
       selector:
         select:
+          translation_key: "boost_mode"
           mode: dropdown
           options:
-            - 30
-            - 60
-            - 90
-            - 120
+            - None
+            - "30"
+            - "60"
+            - "90"
+            - "120"
 
 vacation:
-  description: Start a vacation
   target:
     entity:
       integration: heatzy
@@ -28,18 +26,21 @@ vacation:
   fields:
     delay:
       required: true
-      name: Vacation
-      description: Vacation delay (days)
       selector:
         number:
           mode: slider
           unit_of_measurement: "days"
-          min: 1
+          translation_key: delay
+          min: 0
           max: 30
 
 presence:
-  description: Presence detection
   target:
     entity:
       integration: heatzy
       domain: climate
+  fields:
+    enabled:
+      required: true
+      selector:
+        boolean:

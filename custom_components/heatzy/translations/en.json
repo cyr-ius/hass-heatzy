@@ -18,5 +18,30 @@
     "abort": {
       "already_configured": "Your account is already configured."
     }
+  },
+  "services": {
+    "boost": {
+      "name": "Set Boost",
+      "description": "Setting boost mode",
+      "fields": {
+        "delay": {
+          "name": "Delay",
+          "description": "Boost delay (minutes), None for disabled"
+        }
+      }
+    },
+    "vacation": {
+      "name": "Set Vacation",
+      "description": "Setting vacation mode",
+      "fields": {
+        "delay": {
+          "name": "Delay",
+          "description": "Vacation delay (days) , 0 for disabled"
+        }
+      }
+    },
+    "presence": {
+      "name": "Set Presence"
+    }
   }
 }
