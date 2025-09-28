@@ -340,6 +340,7 @@ class HeatzyThermostat(HeatzyEntity, ClimateEntity):
 
     _attr_name = None
     _enable_turn_on_off_backwards_compatibility = False
+    entity_description: HeatzyClimateEntityDescription
 
     def __init__(
         self,
@@ -349,7 +350,6 @@ class HeatzyThermostat(HeatzyEntity, ClimateEntity):
     ) -> None:
         """Init."""
         super().__init__(coordinator, description, did)
-        self.desc = description
         self._attr_unique_id = did
         self._attr_temperature_unit = description.temperature_unit
         self._attr_supported_features = description.supported_features
@@ -375,7 +375,10 @@ class HeatzyThermostat(HeatzyEntity, ClimateEntity):
         """Return hvac mode ie. heat, auto, off."""
         if self._attrs.get(CONF_TIMER_SWITCH) == 1:
             return HVACMode.AUTO
-        if self._attrs.get(self.desc.attr_stop) == self.desc.value_stop:
+        if (
+            self._attrs.get(self.entity_description.attr_stop)
+            == self.entity_description.value_stop
+        ):
             return HVACMode.OFF
 
         return HVACMode.HEAT
@@ -390,7 +393,9 @@ class HeatzyThermostat(HeatzyEntity, ClimateEntity):
         if self._attrs.get(CONF_DEROG_MODE) == 3:
             return PRESET_PRESENCE_DETECT
 
-        return self.desc.heatzy_to_ha_state.get(self._attrs.get(self.desc.attr_preset))
+        return self.entity_description.heatzy_to_ha_state.get(
+            self._attrs.get(self.entity_description.attr_preset)
+        )
 
     async def async_turn_on(self) -> None:
         """Turn device on."""
@@ -421,7 +426,7 @@ class HeatzyThermostat(HeatzyEntity, ClimateEntity):
     async def async_set_preset_mode(self, preset_mode: str) -> None:
         """Set new preset mode."""
         if await self._async_derog_mode_action(preset_mode) is False:
-            mode = self.desc.ha_to_heatzy_state.get(preset_mode)
+            mode = self.entity_description.ha_to_heatzy_state.get(preset_mode)
             config = {CONF_ATTRS: {CONF_MODE: mode}}
             if self._attrs.get(CONF_DEROG_MODE, 0) > 0:
                 config[CONF_ATTRS].update({CONF_DEROG_MODE: 0, CONF_DEROG_TIME: 0})
@@ -494,7 +499,7 @@ class HeatzyPiloteV1Thermostat(HeatzyThermostat):
 
     async def async_set_preset_mode(self, preset_mode: str) -> None:
         """Set new preset mode."""
-        mode = self.desc.ha_to_heatzy_state.get(preset_mode)
+        mode = self.entity_description.ha_to_heatzy_state.get(preset_mode)
         await self._handle_action({"raw": mode}, f"Error preset mode: {preset_mode}")
         await self.coordinator.async_request_refresh()
 
@@ -505,13 +510,13 @@ class Glowv1Thermostat(HeatzyThermostat):
     @property
     def current_temperature(self) -> float:
         """Return current temperature."""
-        return self._attrs.get(self.desc.attr_cur_temp, 0) / 10
+        return self._attrs.get(self.entity_description.attr_cur_temp, 0) / 10
 
     @property
     def target_temperature_high(self) -> float:
         """Return comfort temperature."""
-        cft_tempH = self._attrs.get(self.desc.attr_temp_high, 0)
-        cft_tempL = self._attrs.get(self.desc.attr_temp_low, 0)
+        cft_tempH = self._attrs.get(self.entity_description.attr_temp_high, 0)
+        cft_tempL = self._attrs.get(self.entity_description.attr_temp_low, 0)
 
         if self.preset_mode in {PRESET_AWAY, PRESET_VACATION}:
             cft_tempH = 0
@@ -522,8 +527,8 @@ class Glowv1Thermostat(HeatzyThermostat):
     @property
     def target_temperature_low(self) -> float:
         """Return comfort temperature."""
-        eco_tempH = self._attrs.get(self.desc.attr_eco_temp_high, 0)
-        eco_tempL = self._attrs.get(self.desc.attr_eco_temp_low, 0)
+        eco_tempH = self._attrs.get(self.entity_description.attr_eco_temp_high, 0)
+        eco_tempL = self._attrs.get(self.entity_description.attr_eco_temp_low, 0)
 
         if self.preset_mode in {PRESET_AWAY, PRESET_VACATION}:
             eco_tempH = 0
@@ -599,7 +604,7 @@ class Glowv1Thermostat(HeatzyThermostat):
     async def async_set_preset_mode(self, preset_mode: str) -> None:
         """Set new preset mode."""
         if await self._async_derog_mode_action(preset_mode) is False:
-            mode = self.desc.ha_to_heatzy_state.get(preset_mode)
+            mode = self.entity_description.ha_to_heatzy_state.get(preset_mode)
             config = {CONF_ATTRS: {CONF_MODE: mode, CONF_ON_OFF: True}}
 
             if preset_mode == PRESET_AWAY:
@@ -615,17 +620,17 @@ class Bloomv1Thermostat(HeatzyThermostat):
     @property
     def current_temperature(self) -> float:
         """Return current temperature."""
-        return self._attrs.get(self.desc.attr_cur_temp)
+        return self._attrs.get(self.entity_description.attr_cur_temp)
 
     @property
     def target_temperature_high(self) -> float:
         """Return comfort temperature."""
-        return self._attrs.get(self.desc.attr_temp_high)
+        return self._attrs.get(self.entity_description.attr_temp_high)
 
     @property
     def target_temperature_low(self) -> float:
         """Return echo temperature."""
-        return self._attrs.get(self.desc.attr_temp_low)
+        return self._attrs.get(self.entity_description.attr_temp_low)
 
     @property
     def target_temperature(self) -> float | None:
@@ -663,17 +668,17 @@ class HeatzyPiloteProV1(HeatzyThermostat):
     @property
     def current_temperature(self) -> float:
         """Return current temperature."""
-        return self._attrs.get(self.desc.attr_cur_temp, 0) / 10
+        return self._attrs.get(self.entity_description.attr_cur_temp, 0) / 10
 
     @property
     def target_temperature_high(self) -> float:
         """Return comfort temperature."""
-        return self._attrs.get(self.desc.attr_temp_high, 0) / 10
+        return self._attrs.get(self.entity_description.attr_temp_high, 0) / 10
 
     @property
     def target_temperature_low(self) -> float:
         """Return echo temperature."""
-        return self._attrs.get(self.desc.attr_temp_low, 0) / 10
+        return self._attrs.get(self.entity_description.attr_temp_low, 0) / 10
 
     @property
     def target_temperature(self) -> float | None:
