@@ -35,9 +35,3 @@ presence:
     entity:
       integration: heatzy
       domain: climate
-
-window_switch:
-  target:
-    entity:
-      integration: heatzy
-      domain: climate
