@@ -8,15 +8,11 @@ boost:
     delay:
       required: true
       selector:
-        select:
-          translation_key: "boost_mode"
-          mode: dropdown
-          options:
-            - None
-            - "30"
-            - "60"
-            - "90"
-            - "120"
+        number:
+          mode: slider
+          unit_of_measurement: "minutes"
+          min: 1
+          max: 255
 
 vacation:
   target:
@@ -30,17 +26,18 @@ vacation:
         number:
           mode: slider
           unit_of_measurement: "days"
-          translation_key: delay
-          min: 0
-          max: 30
+          min: 1
+          max: 255
+          translation_key: "vacation_mode"
 
 presence:
   target:
     entity:
       integration: heatzy
       domain: climate
-  fields:
-    enabled:
-      required: true
-      selector:
-        boolean:
+
+window_switch:
+  target:
+    entity:
+      integration: heatzy
+      domain: climate
