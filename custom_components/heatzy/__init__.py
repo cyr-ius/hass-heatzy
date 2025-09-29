@@ -37,10 +37,9 @@ async def _async_update_listener(hass: HomeAssistant, entry: HeatzyConfigEntry):
     """Reload if change option."""
     await hass.config_entries.async_reload(entry.entry_id)
 
+
 async def async_remove_config_entry_device(
-    hass: HomeAssistant,  
-    config_entry: ConfigEntry,  
-    device_entry: dr.DeviceEntry, 
+    hass: HomeAssistant, config_entry: ConfigEntry, device_entry: dr.DeviceEntry
 ) -> bool:
     """Remove config entry from a device."""
     return True

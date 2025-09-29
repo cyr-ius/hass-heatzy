@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Final
+from typing import Any, Final
 
 from homeassistant.components.switch import SwitchEntity, SwitchEntityDescription
 from homeassistant.core import HomeAssistant
@@ -15,7 +15,7 @@ from .const import CONF_ATTRS, CONF_LOCK, CONF_LOCK_OTHER, CONF_WINDOW
 from .entity import HeatzyEntity
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, kw_only=True)
 class HeatzySwitchEntityDescription(SwitchEntityDescription):
     """Represents an Flow Sensor."""
 
@@ -86,14 +86,14 @@ class HeatzySwitchEntity(HeatzyEntity, SwitchEntity):
         """Return true if switch is on."""
         return self._attrs.get(self.entity_description.attr) == 1
 
-    async def async_turn_on(self, **kwargs) -> None:
+    async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn the entity on."""
         config = {CONF_ATTRS: {self.entity_description.attr: 1}}
         await self._handle_action(
             config, f"Error to turn on: {self.entity_description.key}"
         )
 
-    async def async_turn_off(self, **kwargs) -> None:
+    async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn the entity off."""
         config = {CONF_ATTRS: {self.entity_description.attr: 0}}
         await self._handle_action(

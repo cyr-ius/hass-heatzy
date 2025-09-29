@@ -494,14 +494,16 @@ class HeatzyThermostat(HeatzyEntity, ClimateEntity):
     def _get_state_by_name(self, original_name: str) -> Any:
         """Get state for a entity."""
         entity_reg = er.async_get(self.hass)
+        if self.device_entry is None or self.device_entry.id is None:
+            return None
         entities = er.async_entries_for_device(entity_reg, self.device_entry.id)
         try:
             entity = next(
                 entity for entity in entities if entity.original_name == original_name
             )
             states = self.hass.states.get(entity.entity_id)
-            if states and hasattr(states, "state"):
-                return self.hass.states.get(entity.entity_id).state
+            if states is not None and hasattr(states, "state"):
+                return states.state
         except StopIteration:
             return None
 
