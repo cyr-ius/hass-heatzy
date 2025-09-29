@@ -25,7 +25,11 @@ from homeassistant.components.climate import (
 )
 from homeassistant.const import CONF_DELAY, UnitOfTemperature
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers import config_validation as cv, entity_platform
+from homeassistant.helpers import (
+    config_validation as cv,
+    entity_platform,
+    entity_registry as er,
+)
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from . import HeatzyConfigEntry, HeatzyDataUpdateCoordinator
@@ -473,15 +477,33 @@ class HeatzyThermostat(HeatzyEntity, ClimateEntity):
 
     async def _async_vacation_mode(self, delay: int) -> None:
         """Service Vacation Mode."""
+        if value := self._get_state_by_name("Vacationnn"):
+            delay = int(float(value))
         await self._async_derog_mode(1, delay)
 
     async def _async_boost_mode(self, delay: int) -> None:
         """Service Boost Mode."""
+        if value := self._get_state_by_name("Boost"):
+            delay = int(float(value))
         await self._async_derog_mode(2, delay)
 
     async def _async_presence_detection(self) -> None:
         """Presence detection derog."""
         return await self._async_derog_mode(3)
+
+    def _get_state_by_name(self, original_name: str) -> Any:
+        """Get state for a entity."""
+        entity_reg = er.async_get(self.hass)
+        entities = er.async_entries_for_device(entity_reg, self.device_entry.id)
+        try:
+            entity = next(
+                entity for entity in entities if entity.original_name == original_name
+            )
+            states = self.hass.states.get(entity.entity_id)
+            if states and hasattr(states, "state"):
+                return self.hass.states.get(entity.entity_id).state
+        except StopIteration:
+            return None
 
 
 class HeatzyPiloteV1Thermostat(HeatzyThermostat):
