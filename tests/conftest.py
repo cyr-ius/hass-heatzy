@@ -73,8 +73,10 @@ def mock_router(request) -> Generator[MagicMock | AsyncMock]:
 
         def _mock_contol(*args, **kwargs):
             device = api[args[0]]
-            if device["product_name"] == "onyx" and  (mode:= args[1].get('attrs', {}).get("mode")) is not None :
+            mode= args[1].get('attrs', {}).get("mode")
+            if device['attrs'].get('cur_mode') and mode is not None :
                 device['attrs']['cur_mode'] = mode             
+                device['attrs']['cur_signal'] = mode             
             if value := args[1].get('attrs', {}):
                 device['attrs'].update(value)
             print(device)

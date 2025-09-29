@@ -67,7 +67,7 @@ async def test_climate(
         SERVICE_SET_HVAC_MODE,
         {ATTR_ENTITY_ID: entity_id, ATTR_HVAC_MODE: HVACMode.AUTO},
     )
-    # assert len(service_calls) == 3
+    assert len(service_calls) == 3
     await coordinator.async_refresh()
     await hass.async_block_till_done()    
     assert hass.states.get(entity_id).state == HVACMode.AUTO    
