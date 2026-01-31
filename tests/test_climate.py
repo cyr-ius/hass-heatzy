@@ -29,7 +29,7 @@ from custom_components.heatzy.const import (
 )
 
 
-@pytest.mark.parametrize("entity_id", [ "climate.test_pilote_v2", "climate.test_pilote_v4", "climate.test_bloom", "climate.test_pilote_pro",  "climate.test_onyx"])
+@pytest.mark.parametrize("entity_id", [ "climate.test_pilote_v2", "climate.test_pilote_v4", "climate.test_bloom", "climate.test_pilote_pro",  "climate.test_onyx", "climate.test_glow"])
 async def test_climate(
     hass: HomeAssistant,
     config_entry: ConfigEntry,
@@ -120,7 +120,7 @@ async def test_derogation_vacation(
     await hass.async_block_till_done()    
     assert hass.states.get(entity_id).attributes[ATTR_PRESET_MODE] == PRESET_VACATION  
 
-@pytest.mark.parametrize("entity_id", [ "climate.test_bloom", "climate.test_pilote_pro",  "climate.test_onyx"])
+@pytest.mark.parametrize("entity_id", [ "climate.test_bloom", "climate.test_pilote_pro",  "climate.test_onyx", "climate.test_glow"])
 async def test_derogation_vacation_temp(
     hass: HomeAssistant,
     config_entry: ConfigEntry,
@@ -147,7 +147,7 @@ async def test_derogation_vacation_temp(
     assert hass.states.get(entity_id).attributes[ATTR_TARGET_TEMP_LOW] is not None
 
 
-@pytest.mark.parametrize("entity_id", [ "climate.test_pilote_v2", "climate.test_pilote_v4", "climate.test_bloom", "climate.test_pilote_pro",  "climate.test_onyx"])
+@pytest.mark.parametrize("entity_id", [ "climate.test_pilote_v2", "climate.test_pilote_v4", "climate.test_bloom", "climate.test_pilote_pro",  "climate.test_onyx", "climate.test_glow"])
 async def test_derogation_boost(
     hass: HomeAssistant,
     config_entry: ConfigEntry,
@@ -172,7 +172,7 @@ async def test_derogation_boost(
     await hass.async_block_till_done()    
     assert hass.states.get(entity_id).attributes[ATTR_PRESET_MODE] == PRESET_BOOST       
 
-@pytest.mark.parametrize("entity_id", [ "climate.test_onyx", "climate.test_bloom", "climate.test_pilote_v4", "climate.test_pilote_pro"])
+@pytest.mark.parametrize("entity_id", [ "climate.test_onyx", "climate.test_bloom", "climate.test_pilote_v4", "climate.test_pilote_pro","climate.test_glow"])
 async def test_comfort1_2(
     hass: HomeAssistant,
     config_entry: ConfigEntry,
@@ -207,7 +207,7 @@ async def test_comfort1_2(
     await hass.async_block_till_done()    
     assert hass.states.get(entity_id).attributes[ATTR_PRESET_MODE] == PRESET_COMFORT_2
 
-@pytest.mark.parametrize("entity_id", ["climate.test_onyx", "climate.test_bloom"])
+@pytest.mark.parametrize("entity_id", ["climate.test_onyx", "climate.test_bloom","climate.test_glow"])
 async def test_set_temperature(
     hass: HomeAssistant,
     config_entry: ConfigEntry,
@@ -257,7 +257,7 @@ async def test_derogation_presence_detect(
     await hass.async_block_till_done()    
     assert hass.states.get(entity_id).attributes[ATTR_PRESET_MODE] == PRESET_PRESENCE_DETECT  
 
-@pytest.mark.parametrize("entity_id", ["climate.test_bloom", "climate.test_pilote_pro",  "climate.test_onyx"])
+@pytest.mark.parametrize("entity_id", ["climate.test_bloom", "climate.test_pilote_pro",  "climate.test_onyx","climate.test_glow"])
 async def test_current_temp(
     hass: HomeAssistant,
     config_entry: ConfigEntry,
