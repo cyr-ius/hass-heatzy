@@ -33,11 +33,11 @@ PRESENCE_TYPES: Final[tuple[HeatzyBinarySensorEntityDescription, ...]] = (
         name="Presence mode",
         translation_key="presence_enabled",
         cls=lambda *args: PresenceActivate(*args),
-        icon="mdi:motion-sensor",
+        icon="mdi:cog",
     ),
     HeatzyBinarySensorEntityDescription(
         key="presence_detected",
-        name="Presence",
+        name="Presence detection",
         translation_key="presence_detected",
         cls=lambda *args: PresenceDetect(*args),
         device_class=BinarySensorDeviceClass.OCCUPANCY,
