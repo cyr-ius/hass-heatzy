@@ -50,13 +50,6 @@ PRESENCE_TYPES: Final[tuple[HeatzyBinarySensorEntityDescription, ...]] = (
         device_class=BinarySensorDeviceClass.OCCUPANCY,
         icon="mdi:location-exit",
     ),
-    HeatzyBinarySensorEntityDescription(
-        key="absence_detected",
-        name="Absence",
-        translation_key="absence_detected",
-        cls=lambda *args: AbsenceDetect(*args),
-        icon="mdi:location-enter",
-    ),
 )
 
 
@@ -120,37 +113,15 @@ class PresenceDetect(HeatzyEntity, BinarySensorEntity):
             self._attrs.get(CONF_DEROG_MODE) == 3
             and self._attrs.get(CONF_CUR_MODE) == PRESET_COMFORT
         )
-
-
-class AbsenceDetect(HeatzyEntity, BinarySensorEntity):
-    """Heatzy presence."""
-
-    entity_description: HeatzyBinarySensorEntityDescription
-
-    def __init__(
-        self,
-        coordinator: HeatzyDataUpdateCoordinator,
-        description: HeatzyBinarySensorEntityDescription,
-        did: str,
-    ) -> None:
-        """Initialize."""
-        super().__init__(coordinator, description, did)
-
-    @property
-    def is_on(self) -> bool:
-        """Absence status."""
-        return self._attrs.get(CONF_DEROG_MODE) == 3 and self._attrs.get(
-            CONF_CUR_MODE
-        ) in (PRESET_ECO, PRESET_COMFORT_1, PRESET_COMFORT_2)
-
+    
     @property
     def extra_state_attributes(self) -> dict[str, Any] | None:
         """Return device state attributes."""
         if self._attrs.get(CONF_DEROG_MODE) == 3:
             if self._attrs.get(CONF_CUR_MODE) == PRESET_COMFORT_1:
-                return {"delay": 30}
-            if self._attrs.get(CONF_CUR_MODE) == PRESET_COMFORT_1:
-                return {"delay": 60}
+                return {"mode":"absence", "delay": 30}
+            if self._attrs.get(CONF_CUR_MODE) == PRESET_COMFORT_2:
+                return {"mode":"absence", "delay": 60}
             if self._attrs.get(CONF_CUR_MODE) == PRESET_ECO:
-                return {"delay": 90}
-        return {"delay": None}
+                return {"mode":"absence", "delay": 90}
+        return {"mode":"presence", "delay": None}
