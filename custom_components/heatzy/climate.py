@@ -732,6 +732,10 @@ class HeatzyPiloteProV1(HeatzyThermostat):
             return HVACAction.OFF
         return HVACAction.HEATING
 
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        return {'current_mode': self._attrs.get(self.entity_description.attr_preset)}
+
     async def async_set_temperature(self, **kwargs: Any) -> None:
         """Set new target temperature."""
         if (temp_eco := kwargs.get(ATTR_TARGET_TEMP_LOW)) and (
