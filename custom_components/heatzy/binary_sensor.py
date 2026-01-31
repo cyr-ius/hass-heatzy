@@ -9,20 +9,13 @@ from homeassistant.components.binary_sensor import (
     BinarySensorEntity,
     BinarySensorEntityDescription,
 )
-from homeassistant.components.climate import PRESET_COMFORT, PRESET_ECO
+from homeassistant.components.climate import PRESET_COMFORT
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from . import HeatzyDataUpdateCoordinator
-from .const import (
-    CONF_CUR_MODE,
-    CONF_DEROG_MODE,
-    CONF_PRODUCT_KEY,
-    PILOTE_PRO_V1,
-    PRESET_COMFORT_1,
-    PRESET_COMFORT_2,
-)
+from .const import CONF_CUR_MODE, CONF_DEROG_MODE, CONF_PRODUCT_KEY, PILOTE_PRO_V1
 from .entity import HeatzyEntity
 
 
@@ -48,7 +41,7 @@ PRESENCE_TYPES: Final[tuple[HeatzyBinarySensorEntityDescription, ...]] = (
         translation_key="presence_detected",
         cls=lambda *args: PresenceDetect(*args),
         device_class=BinarySensorDeviceClass.OCCUPANCY,
-        icon="mdi:location-exit",
+        icon="mdi:location-enter",
     ),
 )
 
@@ -113,15 +106,3 @@ class PresenceDetect(HeatzyEntity, BinarySensorEntity):
             self._attrs.get(CONF_DEROG_MODE) == 3
             and self._attrs.get(CONF_CUR_MODE) == PRESET_COMFORT
         )
-    
-    @property
-    def extra_state_attributes(self) -> dict[str, Any] | None:
-        """Return device state attributes."""
-        if self._attrs.get(CONF_DEROG_MODE) == 3:
-            if self._attrs.get(CONF_CUR_MODE) == PRESET_COMFORT_1:
-                return {"mode":"absence", "delay": 30}
-            if self._attrs.get(CONF_CUR_MODE) == PRESET_COMFORT_2:
-                return {"mode":"absence", "delay": 60}
-            if self._attrs.get(CONF_CUR_MODE) == PRESET_ECO:
-                return {"mode":"absence", "delay": 90}
-        return {"mode":"presence", "delay": None}
