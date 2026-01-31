@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
-import logging
 from collections.abc import Callable
 from dataclasses import dataclass, field
+import logging
 from typing import Any
 
 import voluptuous as vol
+
 from homeassistant.components.climate import (
     ATTR_TARGET_TEMP_HIGH,
     ATTR_TARGET_TEMP_LOW,
@@ -26,11 +27,7 @@ from homeassistant.const import CONF_DELAY, UnitOfTemperature
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import (
     config_validation as cv,
-)
-from homeassistant.helpers import (
     entity_platform,
-)
-from homeassistant.helpers import (
     entity_registry as er,
 )
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -279,7 +276,6 @@ CLIMATE_TYPES = (
         fn=lambda *args: HeatzyPiloteProV1(*args),
         preset_modes=[
             PRESET_BOOST,
-            PRESET_PRESENCE_DETECT,
             PRESET_VACATION,
             PRESET_COMFORT,
             PRESET_ECO,
@@ -396,8 +392,6 @@ class HeatzyThermostat(HeatzyEntity, ClimateEntity):
             return PRESET_VACATION
         if self._attrs.get(CONF_DEROG_MODE) == 2:
             return PRESET_BOOST
-        if self._attrs.get(CONF_DEROG_MODE) == 3:
-            return PRESET_PRESENCE_DETECT
 
         return self.entity_description.heatzy_to_ha_state.get(
             self._attrs.get(self.entity_description.attr_preset)
@@ -733,8 +727,26 @@ class HeatzyPiloteProV1(HeatzyThermostat):
         return HVACAction.HEATING
 
     @property
+    def hvac_mode(self) -> HVACMode:
+        """Return hvac mode ie. heat, auto, off."""
+        if self._attrs.get(CONF_TIMER_SWITCH) == 1:
+            return HVACMode.AUTO
+        if self._attrs.get(CONF_DEROG_MODE) == 1:
+            return HVACMode.AUTO
+        if self._attrs.get(CONF_DEROG_MODE) == 0:
+            return HVACMode.HEAT
+        if (
+            self._attrs.get(self.entity_description.attr_stop)
+            == self.entity_description.value_stop
+        ):
+            return HVACMode.OFF
+
+        return HVACMode.HEAT
+
+    @property
     def extra_state_attributes(self) -> dict[str, Any]:
-        return {'current_mode': self._attrs.get(self.entity_description.attr_preset)}
+        """Return device state attributes."""
+        return {"current_mode": self._attrs.get(self.entity_description.attr_preset)}
 
     async def async_set_temperature(self, **kwargs: Any) -> None:
         """Set new target temperature."""
