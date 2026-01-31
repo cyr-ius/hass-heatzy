@@ -2,13 +2,12 @@
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Callable
 from dataclasses import dataclass, field
-import logging
 from typing import Any
 
 import voluptuous as vol
-
 from homeassistant.components.climate import (
     ATTR_TARGET_TEMP_HIGH,
     ATTR_TARGET_TEMP_LOW,
@@ -27,7 +26,11 @@ from homeassistant.const import CONF_DELAY, UnitOfTemperature
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import (
     config_validation as cv,
+)
+from homeassistant.helpers import (
     entity_platform,
+)
+from homeassistant.helpers import (
     entity_registry as er,
 )
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -221,7 +224,6 @@ CLIMATE_TYPES = (
             PRESET_NONE: "stop",
         },
         attr_stop=CONF_ON_OFF,
-        attr_preset=CONF_CUR_MODE,
         attr_cur_temp=CUR_TEMP_L,
         attr_temp_high=CFT_TEMP_H,
         attr_temp_low=CFT_TEMP_L,
