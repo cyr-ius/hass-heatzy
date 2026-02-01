@@ -10,7 +10,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from . import HeatzyConfigEntry, HeatzyDataUpdateCoordinator
+from . import HeatzyConfigEntry
 from .const import (
     BLOOM,
     CONF_ATTRS,
@@ -104,15 +104,6 @@ class HeatzySwitch(HeatzyEntity, SwitchEntity):
     """Switch."""
 
     entity_description: HeatzySwitchEntityDescription
-
-    def __init__(
-        self,
-        coordinator: HeatzyDataUpdateCoordinator,
-        description: HeatzySwitchEntityDescription,
-        did: str,
-    ) -> None:
-        """Initialize switch."""
-        super().__init__(coordinator, description, did)
 
     @property
     def is_on(self) -> bool:
