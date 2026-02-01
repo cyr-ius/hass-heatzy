@@ -1,14 +1,11 @@
 """Climate sensors for Heatzy."""
 
-from __future__ import annotations
-
+import logging
 from collections.abc import Callable
 from dataclasses import dataclass, field
-import logging
 from typing import Any
 
 import voluptuous as vol
-
 from homeassistant.components.climate import (
     ATTR_TARGET_TEMP_HIGH,
     ATTR_TARGET_TEMP_LOW,
@@ -25,11 +22,9 @@ from homeassistant.components.climate import (
 )
 from homeassistant.const import CONF_DELAY, UnitOfTemperature
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers import (
-    config_validation as cv,
-    entity_platform,
-    entity_registry as er,
-)
+from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers import entity_platform
+from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from . import HeatzyConfigEntry, HeatzyDataUpdateCoordinator
@@ -65,7 +60,6 @@ from .const import (
     PILOTE_V4,
     PRESET_COMFORT_1,
     PRESET_COMFORT_2,
-    PRESET_PRESENCE_DETECT,
     PRESET_VACATION,
 )
 from .entity import HeatzyEntity
@@ -257,12 +251,12 @@ CLIMATE_TYPES = (
             "stop": PRESET_NONE,
         },
         ha_to_heatzy_state={
-            PRESET_COMFORT: 0,
-            PRESET_ECO: 1,
-            PRESET_AWAY: 2,
-            PRESET_COMFORT_1: 4,
-            PRESET_COMFORT_2: 5,
-            PRESET_NONE: 3,
+            PRESET_COMFORT: "cft",
+            PRESET_ECO: "eco",
+            PRESET_AWAY: "fro",
+            PRESET_COMFORT_1: "cft1",
+            PRESET_COMFORT_2: "cft2",
+            PRESET_NONE: "stop",
         },
         attr_cur_temp=CONF_CUR_TEMP,
         attr_temp_high=CONF_CFT_TEMP,
@@ -457,7 +451,7 @@ class HeatzyThermostat(HeatzyEntity, ClimateEntity):
 
     async def _async_derog_mode_action(self, derog_mode) -> bool:
         """Execute derogation mode."""
-        if derog_mode not in {PRESET_BOOST, PRESET_VACATION, PRESET_PRESENCE_DETECT}:
+        if derog_mode not in {PRESET_BOOST, PRESET_VACATION}:
             return False
 
         if derog_mode == PRESET_VACATION:
@@ -466,14 +460,12 @@ class HeatzyThermostat(HeatzyEntity, ClimateEntity):
         if derog_mode == PRESET_BOOST:
             minutes = self._device.get("boost", DEFAULT_BOOST)
             await self._async_boost_mode(int(minutes))
-        if derog_mode == PRESET_PRESENCE_DETECT:
-            await self._async_presence_detection()
 
         return True
 
     async def _async_vacation_mode(self, delay: int) -> None:
         """Service Vacation Mode."""
-        if value := self._get_state_by_name("Vacationnn"):
+        if value := self._get_state_by_name("Vacation"):
             delay = int(float(value))
         await self._async_derog_mode(1, delay)
 
@@ -733,8 +725,6 @@ class HeatzyPiloteProV1(HeatzyThermostat):
             return HVACMode.AUTO
         if self._attrs.get(CONF_DEROG_MODE) == 1:
             return HVACMode.AUTO
-        if self._attrs.get(CONF_DEROG_MODE) == 0:
-            return HVACMode.HEAT
         if (
             self._attrs.get(self.entity_description.attr_stop)
             == self.entity_description.value_stop
