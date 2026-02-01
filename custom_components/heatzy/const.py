@@ -38,7 +38,6 @@ FROST_TEMP = 7
 PLATFORMS = ["binary_sensor", "climate", "number", "switch", "sensor"]
 PRESET_COMFORT_1 = "Comfort 1"
 PRESET_COMFORT_2 = "Comfort 2"
-PRESET_PRESENCE_DETECT = "Presence detection"
 PRESET_VACATION = "Vacation"
 
 PILOTE_V1 = ["9420ae048da545c88fc6274d204dd25f"]
@@ -63,6 +62,9 @@ GLOW = [
     "fc89066ee74c4149a9beb37d4ea93604",  # INEA
 ]
 BLOOM = ["480253852d574f11b2d7fbf4460d7a41"]  # BLOOM
+
+ALL_WO_V1 = PILOTE_V2 + PILOTE_V3 + PILOTE_V4 + GLOW + BLOOM + PILOTE_PRO_V1
+ALL = PILOTE_V1 + ALL_WO_V1
 
 # -- Not integrated --
 # FLAM "f71ee820660f4f358db8b8a474689726"
