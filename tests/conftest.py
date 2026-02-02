@@ -14,23 +14,20 @@ from pytest_homeassistant_custom_component.common import (
 
 from custom_components.heatzy.const import (
     CONF_ATTRS,
+    CONF_CUR_MODE,
     CONF_DEROG_MODE,
     CONF_DEROG_TIME,
     CONF_TIMER_SWITCH,
     DOMAIN,
 )
 
-from .const import (
-    MOCK_USER_INPUT,
-)
+from .const import MOCK_USER_INPUT
 
 MODE_AUTO = {
-            CONF_ATTRS: {CONF_TIMER_SWITCH: 1, CONF_DEROG_MODE: 0, CONF_DEROG_TIME: 0}
-        }
+    CONF_ATTRS: {CONF_TIMER_SWITCH: 1, CONF_DEROG_MODE: 0, CONF_DEROG_TIME: 0}
+}
 MODE_ON = {CONF_ATTRS: {'mode': 'cft'}}
 MODE_OFF = {CONF_ATTRS: {'mode': 'stop'}}
-
-
 
 
 @pytest.fixture(autouse=True)
@@ -73,13 +70,16 @@ def mock_router(request) -> Generator[MagicMock | AsyncMock]:
 
         def _mock_contol(*args, **kwargs):
             device = api[args[0]]
-            mode= args[1].get('attrs', {}).get("mode")
-            if device['attrs'].get('cur_mode') and mode is not None :
-                device['attrs']['cur_mode'] = mode             
-                device['attrs']['cur_signal'] = mode             
-            if value := args[1].get('attrs', {}):
-                device['attrs'].update(value)
-            print(device)
+            attrs = args[1].get(CONF_ATTRS, {})
+            mode= attrs.get("mode")
+            
+            if mode and device[CONF_ATTRS].get('cur_mode'):
+                device[CONF_ATTRS][CONF_CUR_MODE] = mode      
+            if mode and device[CONF_ATTRS].get('cur_signal'):                       
+                device[CONF_ATTRS]['cur_signal'] = mode             
+            
+            device['attrs'].update(attrs)
+
 
         instance.websocket.async_control_device = AsyncMock(side_effect=_mock_contol)
         instance.async_get_devices = AsyncMock(return_value=api)
