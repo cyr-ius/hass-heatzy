@@ -371,6 +371,8 @@ class HeatzyThermostat(HeatzyEntity, ClimateEntity):
         """Return hvac mode ie. heat, auto, off."""
         if self._attrs.get(CONF_TIMER_SWITCH) == 1:
             return HVACMode.AUTO
+        if self._attrs.get(CONF_DEROG_MODE) == 1:
+            return HVACMode.AUTO        
         if (
             self._attrs.get(self.entity_description.attr_stop)
             == self.entity_description.value_stop
@@ -723,7 +725,7 @@ class HeatzyPiloteProV1(HeatzyThermostat):
         """Return hvac mode ie. heat, auto, off."""
         if self._attrs.get(CONF_TIMER_SWITCH) == 1:
             return HVACMode.AUTO
-        if self._attrs.get(CONF_DEROG_MODE) == 1:
+        if self._attrs.get(CONF_DEROG_MODE) in (1,3):
             return HVACMode.AUTO
         if (
             self._attrs.get(self.entity_description.attr_stop)
@@ -736,7 +738,7 @@ class HeatzyPiloteProV1(HeatzyThermostat):
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
         """Return device state attributes."""
-        return {"current_mode": self._attrs.get(self.entity_description.attr_preset)}
+        return {CONF_CUR_MODE: self._attrs.get(self.entity_description.attr_preset)}
 
     async def async_set_temperature(self, **kwargs: Any) -> None:
         """Set new target temperature."""
