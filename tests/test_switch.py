@@ -2,6 +2,7 @@ import copy
 from unittest.mock import AsyncMock
 
 import pytest
+from homeassistant.components.climate import HVACMode
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import ATTR_ENTITY_ID, STATE_OFF, STATE_ON, Platform
 from homeassistant.core import HomeAssistant, ServiceCall
@@ -117,4 +118,6 @@ async def test_presence_switch(
     await hass.services.async_call(Platform.SWITCH, "turn_on", data, blocking=True)
     await hass.async_block_till_done()
     state = hass.states.get(entity_id)
+    climate_state = hass.states.get('climate.test_pilote_pro')
     assert state.state == STATE_ON
+    assert climate_state.state == HVACMode.AUTO
