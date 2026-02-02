@@ -150,8 +150,10 @@ async def test_derogation_vacation(
     )
     assert len(service_calls) == 1
     await coordinator.async_refresh()
-    await hass.async_block_till_done()    
-    assert hass.states.get(entity_id).attributes[ATTR_PRESET_MODE] == PRESET_VACATION  
+    await hass.async_block_till_done()   
+    climate_state = hass.states.get(entity_id) 
+    assert climate_state.attributes[ATTR_PRESET_MODE] == PRESET_VACATION  
+    assert climate_state.state == HVACMode.AUTO
 
 @pytest.mark.parametrize("entity_id", [ "climate.test_bloom", "climate.test_pilote_pro",  "climate.test_onyx", "climate.test_glow"])
 async def test_derogation_vacation_temp(
@@ -288,4 +290,3 @@ async def test_current_humidity(
     await hass.config_entries.async_setup(config_entry.entry_id)
     await hass.async_block_till_done()
     assert hass.states.get(entity_id).attributes[ATTR_CURRENT_HUMIDITY] is not None  
-
