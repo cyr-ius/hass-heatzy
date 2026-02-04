@@ -35,6 +35,7 @@ from .const import (
     CONF_ATTRS,
     CONF_CFT_TEMP,
     CONF_CUR_MODE,
+    CONF_CUR_SIGNAL,
     CONF_CUR_TEMP,
     CONF_DEROG_MODE,
     CONF_DEROG_TIME,
@@ -738,7 +739,10 @@ class HeatzyPiloteProV1(HeatzyThermostat):
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
         """Return device state attributes."""
-        return {CONF_CUR_MODE: self._attrs.get(self.entity_description.attr_preset)}
+        return {
+            'current_mode': self._attrs.get(self.entity_description.attr_preset),
+            'current_signal': self._attrs.get(CONF_CUR_SIGNAL)
+        }
 
     async def async_set_temperature(self, **kwargs: Any) -> None:
         """Set new target temperature."""
