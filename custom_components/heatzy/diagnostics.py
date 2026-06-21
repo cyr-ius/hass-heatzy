@@ -11,6 +11,10 @@ from homeassistant.core import HomeAssistant
 
 from .const import CONF_ATTRS, CONF_MODE
 
+# Delay (in seconds) to let the websocket push the callbacks triggered by the
+# control commands before unregistering our listener.
+CALLBACK_WAIT = 3
+
 TO_REDACT = {
     "address",
     "api_key",
@@ -61,7 +65,7 @@ async def async_get_config_entry_diagnostics(
     except Exception as err:  # noqa: BLE001
         api_errors.append(err)
     finally:
-        await asyncio.sleep(3)
+        await asyncio.sleep(CALLBACK_WAIT)
         coordinator.api.websocket.unregister_callback(callback)
 
     return {
@@ -72,5 +76,5 @@ async def async_get_config_entry_diagnostics(
         "bindings": async_redact_data(bindings, TO_REDACT),
         "devices": async_redact_data(devices, TO_REDACT),
         "errors": api_errors,
-        "calbacks": api_callback,
+        "callbacks": api_callback,
     }
