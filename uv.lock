@@ -555,9 +555,7 @@ dependencies = [
     { name = "pip" },
     { name = "pytz" },
     { name = "pyyaml" },
-    { name = "requests", version = "2.32.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.13.2'" },
-    { name = "requests", version = "2.32.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.13.2' and python_full_version < '3.14.2'" },
-    { name = "requests", version = "2.34.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.14.2'" },
+    { name = "requests" },
     { name = "vincenty" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/4a/4d/9dc543c5acbea7b64775494a090b540f89a7356042946bd157b00d75b2ce/homeassistant-0.16.1.tar.gz", hash = "sha256:ddd300056316ba48cd33a86bbb31ac2f431ae7ef58ff5483857da7ceaac7a326", size = 1035486, upload-time = "2016-03-28T05:15:47.544Z" }
@@ -1424,58 +1422,17 @@ sdist = { url = "https://files.pythonhosted.org/packages/9e/a3/1d13970c3f36777c5
 
 [[package]]
 name = "requests"
-version = "2.32.3"
+version = "2.33.0"
 source = { registry = "https://pypi.org/simple" }
-resolution-markers = [
-    "python_full_version >= '3.13' and python_full_version < '3.13.2'",
-    "python_full_version < '3.13'",
-]
 dependencies = [
-    { name = "certifi", marker = "python_full_version < '3.13.2'" },
-    { name = "charset-normalizer", marker = "python_full_version < '3.13.2'" },
-    { name = "idna", marker = "python_full_version < '3.13.2'" },
-    { name = "urllib3", marker = "python_full_version < '3.13.2'" },
+    { name = "certifi" },
+    { name = "charset-normalizer" },
+    { name = "idna" },
+    { name = "urllib3" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/63/70/2bf7780ad2d390a8d301ad0b550f1581eadbd9a20f896afe06353c2a2913/requests-2.32.3.tar.gz", hash = "sha256:55365417734eb18255590a9ff9eb97e9e1da868d4ccd6402399eaf68af20a760", size = 131218, upload-time = "2024-05-29T15:37:49.536Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/34/64/8860370b167a9721e8956ae116825caff829224fbca0ca6e7bf8ddef8430/requests-2.33.0.tar.gz", hash = "sha256:c7ebc5e8b0f21837386ad0e1c8fe8b829fa5f544d8df3b2253bff14ef29d7652", size = 134232, upload-time = "2026-03-25T15:10:41.586Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/f9/9b/335f9764261e915ed497fcdeb11df5dfd6f7bf257d4a6a2a686d80da4d54/requests-2.32.3-py3-none-any.whl", hash = "sha256:70761cfe03c773ceb22aa2f671b4757976145175cdfca038c02654d061d6dcc6", size = 64928, upload-time = "2024-05-29T15:37:47.027Z" },
-]
-
-[[package]]
-name = "requests"
-version = "2.32.5"
-source = { registry = "https://pypi.org/simple" }
-resolution-markers = [
-    "python_full_version >= '3.14' and python_full_version < '3.14.2'",
-    "python_full_version >= '3.13.2' and python_full_version < '3.14'",
-]
-dependencies = [
-    { name = "certifi", marker = "python_full_version >= '3.13.2' and python_full_version < '3.14.2'" },
-    { name = "charset-normalizer", marker = "python_full_version >= '3.13.2' and python_full_version < '3.14.2'" },
-    { name = "idna", marker = "python_full_version >= '3.13.2' and python_full_version < '3.14.2'" },
-    { name = "urllib3", marker = "python_full_version >= '3.13.2' and python_full_version < '3.14.2'" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/c9/74/b3ff8e6c8446842c3f5c837e9c3dfcfe2018ea6ecef224c710c85ef728f4/requests-2.32.5.tar.gz", hash = "sha256:dbba0bac56e100853db0ea71b82b4dfd5fe2bf6d3754a8893c3af500cec7d7cf", size = 134517, upload-time = "2025-08-18T20:46:02.573Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/1e/db/4254e3eabe8020b458f1a747140d32277ec7a271daf1d235b70dc0b4e6e3/requests-2.32.5-py3-none-any.whl", hash = "sha256:2462f94637a34fd532264295e186976db0f5d453d1cdd31473c85a6a161affb6", size = 64738, upload-time = "2025-08-18T20:46:00.542Z" },
-]
-
-[[package]]
-name = "requests"
-version = "2.34.2"
-source = { registry = "https://pypi.org/simple" }
-resolution-markers = [
-    "python_full_version >= '3.14.2'",
-]
-dependencies = [
-    { name = "certifi", marker = "python_full_version >= '3.14.2'" },
-    { name = "charset-normalizer", marker = "python_full_version >= '3.14.2'" },
-    { name = "idna", marker = "python_full_version >= '3.14.2'" },
-    { name = "urllib3", marker = "python_full_version >= '3.14.2'" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/ac/c3/e2a2b89f2d3e2179abd6d00ebd70bff6273f37fb3e0cc209f48b39d00cbf/requests-2.34.2.tar.gz", hash = "sha256:f288924cae4e29463698d6d60bc6a4da69c89185ad1e0bcc4104f584e960b9ed", size = 142856, upload-time = "2026-05-14T19:25:27.735Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/a0/f4/c67b0b3f1b9245e8d266f0f112c500d50e5b4e83cb6f3b71b6528104182a/requests-2.34.2-py3-none-any.whl", hash = "sha256:2a0d60c172f83ac6ab31e4554906c0f3b3588d37b5cb939b1c061f4907e278e0", size = 73075, upload-time = "2026-05-14T19:25:26.443Z" },
+    { url = "https://files.pythonhosted.org/packages/56/5d/c814546c2333ceea4ba42262d8c4d55763003e767fa169adc693bd524478/requests-2.33.0-py3-none-any.whl", hash = "sha256:3324635456fa185245e24865e810cecec7b4caf933d7eb133dcde67d48cee69b", size = 65017, upload-time = "2026-03-25T15:10:40.382Z" },
 ]
 
 [[package]]
@@ -1483,9 +1440,7 @@ name = "requests-mock"
 version = "1.8.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "requests", version = "2.32.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.13.2'" },
-    { name = "requests", version = "2.32.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.13.2' and python_full_version < '3.14.2'" },
-    { name = "requests", version = "2.34.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.14.2'" },
+    { name = "requests" },
     { name = "six" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/45/2d/12f93bd2fd08fa2a77abea6370a6dd2d2dc748fb8d8a4521a8f289bde116/requests-mock-1.8.0.tar.gz", hash = "sha256:e68f46844e4cee9d447150343c9ae875f99fa8037c6dcf5f15bf1fe9ab43d226", size = 59794, upload-time = "2020-05-02T13:10:55.255Z" }
@@ -1498,9 +1453,7 @@ name = "responses"
 version = "0.12.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "requests", version = "2.32.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.13.2'" },
-    { name = "requests", version = "2.32.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.13.2' and python_full_version < '3.14.2'" },
-    { name = "requests", version = "2.34.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.14.2'" },
+    { name = "requests" },
     { name = "six" },
     { name = "urllib3" },
 ]
