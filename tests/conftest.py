@@ -41,7 +41,6 @@ def mock_router(request) -> Generator[MagicMock | AsyncMock]:
     """Mock a successful connection."""
     api = load_json_object_fixture("Devices.json")
     is_connected_prop = PropertyMock(return_value=False)
-    is_updated_prop = PropertyMock(return_value=False)
 
     with patch("custom_components.heatzy.coordinator.HeatzyClient") as mock:
         instance = mock.return_value
@@ -50,13 +49,14 @@ def mock_router(request) -> Generator[MagicMock | AsyncMock]:
             if cb := kwargs.get("callback"):
                 cb(api)
         instance.websocket.register_callback = MagicMock(side_effect=_mock_register_callback)
+        instance.websocket.is_fresh = MagicMock(return_value=False)
 
         async def _mock_connect(*args, **kwargs):
             is_connected_prop.return_value = True
         instance.websocket.async_connect = AsyncMock(side_effect=_mock_connect)
 
         async def _mock_listen(*args, **kwargs):
-            is_updated_prop.return_value = True
+            instance.websocket.is_fresh.return_value = True
             return api
 
         instance.websocket.async_listen = AsyncMock(side_effect=_mock_listen)
@@ -65,7 +65,6 @@ def mock_router(request) -> Generator[MagicMock | AsyncMock]:
             is_connected_prop.return_value = False
         instance.websocket.async_disconnect = AsyncMock(side_effect=_mock_disconnect)
 
-        type(instance.websocket).is_updated = is_updated_prop
         type(instance.websocket).is_connected = is_connected_prop
 
         def _mock_contol(*args, **kwargs):

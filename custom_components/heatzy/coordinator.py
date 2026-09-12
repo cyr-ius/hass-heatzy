@@ -91,7 +91,7 @@ class HeatzyDataUpdateCoordinator(DataUpdateCoordinator):
             self._init_websocket()
 
         try:
-            if not self.api.websocket.is_updated:
+            if not self.api.websocket.is_fresh(SCAN_INTERVAL * 2):
                 return await self.api.async_get_devices()
         except HeatzyException as error:
             raise UpdateFailed(f"Invalid response from API: {error}") from error

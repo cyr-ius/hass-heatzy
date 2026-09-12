@@ -1,7 +1,7 @@
 """Tests for the Heatzy coordinator."""
 
 import asyncio
-from unittest.mock import AsyncMock, PropertyMock
+from unittest.mock import AsyncMock, MagicMock, PropertyMock
 
 import pytest
 from heatzypy.exception import (
@@ -42,9 +42,9 @@ async def test_update_data_polls_when_not_updated(
     coordinator = HeatzyDataUpdateCoordinator(hass, config_entry)
     await coordinator._async_setup()
 
-    # Pretend the websocket is connected (skip init) but has no update.
+    # Pretend the websocket is connected (skip init) but has no fresh data.
     type(coordinator.api.websocket).is_connected = PropertyMock(return_value=True)
-    type(coordinator.api.websocket).is_updated = PropertyMock(return_value=False)
+    coordinator.api.websocket.is_fresh = MagicMock(return_value=False)
 
     data = await coordinator._async_update_data()
     assert "gizrKSNGrryMk9gAjWKFD3" in data
@@ -63,7 +63,7 @@ async def test_update_data_returns_cached_when_updated(
     sentinel = {"cached": True}
     coordinator.data = sentinel
     type(coordinator.api.websocket).is_connected = PropertyMock(return_value=True)
-    type(coordinator.api.websocket).is_updated = PropertyMock(return_value=True)
+    coordinator.api.websocket.is_fresh = MagicMock(return_value=True)
 
     data = await coordinator._async_update_data()
     assert data is sentinel
@@ -80,7 +80,7 @@ async def test_update_data_raises_update_failed(
     await coordinator._async_setup()
 
     type(coordinator.api.websocket).is_connected = PropertyMock(return_value=True)
-    type(coordinator.api.websocket).is_updated = PropertyMock(return_value=False)
+    coordinator.api.websocket.is_fresh = MagicMock(return_value=False)
     coordinator.api.async_get_devices = AsyncMock(
         side_effect=HeatzyException("boom")
     )
