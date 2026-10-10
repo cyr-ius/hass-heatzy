@@ -3,7 +3,7 @@
 import logging
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, ClassVar
 
 import voluptuous as vol
 from homeassistant.components.climate import (
@@ -90,7 +90,7 @@ class HeatzyClimateEntityDescription(ClimateEntityDescription):
     fn: Callable[..., Any]
     ha_to_heatzy_state: dict[int | str, str | int | list[int]]
     heatzy_to_ha_state: dict[int | str, str]
-    hvac_modes = [HVACMode.HEAT, HVACMode.OFF, HVACMode.AUTO]
+    hvac_modes: ClassVar[list[HVACMode]] = [HVACMode.HEAT, HVACMode.OFF, HVACMode.AUTO]
     preset_modes: list[str] = field(default_factory=list)
     products: list[str]
     supported_features: ClimateEntityFeature = (
@@ -373,7 +373,7 @@ class HeatzyThermostat(HeatzyEntity, ClimateEntity):
         if self._attrs.get(CONF_TIMER_SWITCH) == 1:
             return HVACMode.AUTO
         if self._attrs.get(CONF_DEROG_MODE) == 1:
-            return HVACMode.AUTO        
+            return HVACMode.AUTO
         if (
             self._attrs.get(self.entity_description.attr_stop)
             == self.entity_description.value_stop
@@ -726,7 +726,7 @@ class HeatzyPiloteProV1(HeatzyThermostat):
         """Return hvac mode ie. heat, auto, off."""
         if self._attrs.get(CONF_TIMER_SWITCH) == 1:
             return HVACMode.AUTO
-        if self._attrs.get(CONF_DEROG_MODE) in (1,3):
+        if self._attrs.get(CONF_DEROG_MODE) in (1, 3):
             return HVACMode.AUTO
         if (
             self._attrs.get(self.entity_description.attr_stop)
@@ -740,8 +740,8 @@ class HeatzyPiloteProV1(HeatzyThermostat):
     def extra_state_attributes(self) -> dict[str, Any]:
         """Return device state attributes."""
         return {
-            'current_mode': self._attrs.get(self.entity_description.attr_preset),
-            'current_signal': self._attrs.get(CONF_CUR_SIGNAL)
+            "current_mode": self._attrs.get(self.entity_description.attr_preset),
+            "current_signal": self._attrs.get(CONF_CUR_SIGNAL),
         }
 
     async def async_set_temperature(self, **kwargs: Any) -> None:

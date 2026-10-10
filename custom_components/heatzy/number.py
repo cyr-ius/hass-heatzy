@@ -40,7 +40,7 @@ NUMBER_TYPES: Final[tuple[HeatzyNumberEntityDescription, ...]] = (
         native_unit_of_measurement=UnitOfTime.DAYS,
         native_min_value=1,
         native_max_value=255,
-        attr = PRESET_VACATION
+        attr=PRESET_VACATION,
     ),
     HeatzyNumberEntityDescription(
         key="boost",
@@ -53,7 +53,7 @@ NUMBER_TYPES: Final[tuple[HeatzyNumberEntityDescription, ...]] = (
         native_unit_of_measurement=UnitOfTime.MINUTES,
         native_min_value=1,
         native_max_value=255,
-        attr= PRESET_BOOST
+        attr=PRESET_BOOST,
     ),
 )
 
