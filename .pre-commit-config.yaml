@@ -1,20 +1,14 @@
 ---
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.4.1
+    rev: v0.16.2
     hooks:
-      - id: ruff
-        args:
-          - --fix
+      - id: ruff-check
+      - id: ruff-format
   - repo: https://github.com/codespell-project/codespell
     rev: v2.2.2
     hooks:
       - id: codespell
-        args:
-          - --ignore-words-list=hass,fro,ony
-          - --skip="./.*,*.csv,*.json"
-          - --quiet-level=2
-        exclude_types: [csv, json]
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.4.0
     hooks:
@@ -31,17 +25,3 @@ repos:
     rev: v2.7.1
     hooks:
       - id: prettier
-  - repo: https://github.com/cdce8p/python-typing-update
-    rev: v0.6.0
-    hooks:
-      # Run `python-typing-update` hook manually from time to time
-      # to update python typing syntax.
-      # Will require manual work, before submitting changes!
-      # pre-commit run --hook-stage manual python-typing-update --all-files
-      - id: python-typing-update
-        stages: [manual]
-        args:
-          - --py311-plus
-          - --force
-          - --keep-updates
-        files: ^custom_components/.+\.py$
