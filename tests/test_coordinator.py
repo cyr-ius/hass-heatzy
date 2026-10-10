@@ -81,9 +81,7 @@ async def test_update_data_raises_update_failed(
 
     type(coordinator.api.websocket).is_connected = PropertyMock(return_value=True)
     coordinator.api.websocket.is_fresh = MagicMock(return_value=False)
-    coordinator.api.async_get_devices = AsyncMock(
-        side_effect=HeatzyException("boom")
-    )
+    coordinator.api.async_get_devices = AsyncMock(side_effect=HeatzyException("boom"))
 
     with pytest.raises(UpdateFailed):
         await coordinator._async_update_data()

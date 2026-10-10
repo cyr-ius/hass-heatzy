@@ -50,7 +50,9 @@ async def test_form_success(hass: HomeAssistant, HeatzyClient: AsyncMock) -> Non
         assert result2["data"] == MOCK_USER_INPUT  # From INFO fixture
 
 
-async def test_form_cannot_connect(hass: HomeAssistant, HeatzyClient: AsyncMock) -> None:
+async def test_form_cannot_connect(
+    hass: HomeAssistant, HeatzyClient: AsyncMock
+) -> None:
     """Test the flow handles connection errors."""
     await setup.async_setup_component(hass, "persistent_notification", {})
 
@@ -103,9 +105,7 @@ async def test_form_unknown(hass: HomeAssistant, HeatzyClient: AsyncMock) -> Non
     with patch("custom_components.heatzy.config_flow.HeatzyClient") as mock:
         # Simulate an authentication error
         mock.return_value = HeatzyClient
-        mock.return_value.async_bindings.side_effect = HeatzyException(
-            "Unknown error"
-        )
+        mock.return_value.async_bindings.side_effect = HeatzyException("Unknown error")
 
         # Start the flow and submit data
         result = await hass.config_entries.flow.async_init(
@@ -119,7 +119,9 @@ async def test_form_unknown(hass: HomeAssistant, HeatzyClient: AsyncMock) -> Non
         assert result["errors"] == {"base": "unknown"}
 
 
-async def test_form_already_configured(hass: HomeAssistant, HeatzyClient: AsyncMock) -> None:
+async def test_form_already_configured(
+    hass: HomeAssistant, HeatzyClient: AsyncMock
+) -> None:
     """Test the flow aborts if the device is already configured."""
     # Create a mock entry to simulate existing configuration
     MockConfigEntry(

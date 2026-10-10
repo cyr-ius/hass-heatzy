@@ -15,7 +15,7 @@ from custom_components.heatzy.const import (
 )
 
 
-@pytest.mark.parametrize("entity_id", [ "switch.test_pilote_v2_lock"])
+@pytest.mark.parametrize("entity_id", ["switch.test_pilote_v2_lock"])
 async def test_lock_switch(
     hass: HomeAssistant,
     config_entry: ConfigEntry,
@@ -26,7 +26,6 @@ async def test_lock_switch(
     """Test that the Wi-Fi switch toggles correctly."""
     await hass.config_entries.async_setup(config_entry.entry_id)
     await hass.async_block_till_done()
-
 
     # --- Test Setup ---
     coordinator = config_entry.runtime_data
@@ -40,7 +39,9 @@ async def test_lock_switch(
 
     # This function will be the side effect of our mock to simulate the state change
     async def mock_set_switch(device_id, data):
-        devices[device_id][CONF_ATTRS][CONF_LOCK] = 1 if data[CONF_ATTRS][CONF_LOCK] == 1 else 0
+        devices[device_id][CONF_ATTRS][CONF_LOCK] = (
+            1 if data[CONF_ATTRS][CONF_LOCK] == 1 else 0
+        )
         coordinator.async_set_updated_data(devices)
         await hass.async_block_till_done()
 
@@ -54,7 +55,7 @@ async def test_lock_switch(
 
     # --- Test Turn On ---
     # Simulate a service call to turn the switch on
-    data = { ATTR_ENTITY_ID: entity_id }
+    data = {ATTR_ENTITY_ID: entity_id}
     await hass.services.async_call(Platform.SWITCH, "turn_on", data, blocking=True)
     assert len(service_calls) == 1
     await hass.async_block_till_done()
@@ -62,7 +63,8 @@ async def test_lock_switch(
     state = hass.states.get(entity_id)
     assert state.state == STATE_ON
 
-@pytest.mark.parametrize("entity_id", [ "switch.test_pilote_pro_window"])
+
+@pytest.mark.parametrize("entity_id", ["switch.test_pilote_pro_window"])
 async def test_window_switch(
     hass: HomeAssistant,
     config_entry: ConfigEntry,
@@ -79,19 +81,23 @@ async def test_window_switch(
     devices = copy.deepcopy(HeatzyClient.__devices)
 
     async def mock_set_switch(device_id, data):
-        devices[device_id][CONF_ATTRS][CONF_WINDOW] = 1 if data[CONF_ATTRS][CONF_WINDOW] == 1 else 0
+        devices[device_id][CONF_ATTRS][CONF_WINDOW] = (
+            1 if data[CONF_ATTRS][CONF_WINDOW] == 1 else 0
+        )
         coordinator.async_set_updated_data(devices)
         await hass.async_block_till_done()
+
     HeatzyClient.websocket.async_control_device.side_effect = mock_set_switch
 
     # Simulate a service call to turn the switch on
-    data = { ATTR_ENTITY_ID: entity_id }
+    data = {ATTR_ENTITY_ID: entity_id}
     await hass.services.async_call(Platform.SWITCH, "turn_on", data, blocking=True)
     await hass.async_block_till_done()
     state = hass.states.get(entity_id)
     assert state.state == STATE_ON
 
-@pytest.mark.parametrize("entity_id", [ "switch.test_pilote_pro_presence_mode"])
+
+@pytest.mark.parametrize("entity_id", ["switch.test_pilote_pro_presence_mode"])
 async def test_presence_switch(
     hass: HomeAssistant,
     config_entry: ConfigEntry,
@@ -108,16 +114,19 @@ async def test_presence_switch(
     devices = copy.deepcopy(HeatzyClient.__devices)
 
     async def mock_set_switch(device_id, data):
-        devices[device_id][CONF_ATTRS][CONF_DEROG_MODE] = 3 if data[CONF_ATTRS][CONF_DEROG_MODE] == 3 else 0
+        devices[device_id][CONF_ATTRS][CONF_DEROG_MODE] = (
+            3 if data[CONF_ATTRS][CONF_DEROG_MODE] == 3 else 0
+        )
         coordinator.async_set_updated_data(devices)
         await hass.async_block_till_done()
+
     HeatzyClient.websocket.async_control_device.side_effect = mock_set_switch
 
     # Simulate a service call to turn the switch on
-    data = { ATTR_ENTITY_ID: entity_id }
+    data = {ATTR_ENTITY_ID: entity_id}
     await hass.services.async_call(Platform.SWITCH, "turn_on", data, blocking=True)
     await hass.async_block_till_done()
     state = hass.states.get(entity_id)
-    climate_state = hass.states.get('climate.test_pilote_pro')
+    climate_state = hass.states.get("climate.test_pilote_pro")
     assert state.state == STATE_ON
     assert climate_state.state == HVACMode.AUTO

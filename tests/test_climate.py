@@ -29,7 +29,17 @@ from custom_components.heatzy.const import (
 )
 
 
-@pytest.mark.parametrize("entity_id", [ "climate.test_pilote_v2", "climate.test_pilote_v4", "climate.test_bloom", "climate.test_pilote_pro",  "climate.test_onyx", "climate.test_glow"])
+@pytest.mark.parametrize(
+    "entity_id",
+    [
+        "climate.test_pilote_v2",
+        "climate.test_pilote_v4",
+        "climate.test_bloom",
+        "climate.test_pilote_pro",
+        "climate.test_onyx",
+        "climate.test_glow",
+    ],
+)
 async def test_current_preset(
     hass: HomeAssistant,
     config_entry: ConfigEntry,
@@ -41,7 +51,18 @@ async def test_current_preset(
     await hass.async_block_till_done()
     assert hass.states.get(entity_id).attributes[ATTR_PRESET_MODE] is not None
 
-@pytest.mark.parametrize("entity_id", [ "climate.test_pilote_v2", "climate.test_pilote_v4", "climate.test_bloom", "climate.test_pilote_pro",  "climate.test_onyx", "climate.test_glow"])
+
+@pytest.mark.parametrize(
+    "entity_id",
+    [
+        "climate.test_pilote_v2",
+        "climate.test_pilote_v4",
+        "climate.test_bloom",
+        "climate.test_pilote_pro",
+        "climate.test_onyx",
+        "climate.test_glow",
+    ],
+)
 async def test_set_hvac_mode(
     hass: HomeAssistant,
     config_entry: ConfigEntry,
@@ -71,8 +92,8 @@ async def test_set_hvac_mode(
     )
     assert len(service_calls) == 2
     await coordinator.async_refresh()
-    await hass.async_block_till_done()    
-    assert hass.states.get(entity_id).state == HVACMode.OFF    
+    await hass.async_block_till_done()
+    assert hass.states.get(entity_id).state == HVACMode.OFF
 
     await hass.services.async_call(
         CLIM_DOMAIN,
@@ -81,10 +102,21 @@ async def test_set_hvac_mode(
     )
     assert len(service_calls) == 3
     await coordinator.async_refresh()
-    await hass.async_block_till_done()    
-    assert hass.states.get(entity_id).state == HVACMode.AUTO    
-        
-@pytest.mark.parametrize("entity_id", [ "climate.test_pilote_v2", "climate.test_pilote_v4", "climate.test_bloom", "climate.test_pilote_pro",  "climate.test_onyx", "climate.test_glow"])
+    await hass.async_block_till_done()
+    assert hass.states.get(entity_id).state == HVACMode.AUTO
+
+
+@pytest.mark.parametrize(
+    "entity_id",
+    [
+        "climate.test_pilote_v2",
+        "climate.test_pilote_v4",
+        "climate.test_bloom",
+        "climate.test_pilote_pro",
+        "climate.test_onyx",
+        "climate.test_glow",
+    ],
+)
 async def test_set_preset(
     hass: HomeAssistant,
     config_entry: ConfigEntry,
@@ -105,9 +137,9 @@ async def test_set_preset(
     )
     assert len(service_calls) == 1
     await coordinator.async_refresh()
-    await hass.async_block_till_done()    
-    assert hass.states.get(entity_id).attributes[ATTR_PRESET_MODE] == PRESET_COMFORT  
-    
+    await hass.async_block_till_done()
+    assert hass.states.get(entity_id).attributes[ATTR_PRESET_MODE] == PRESET_COMFORT
+
     await hass.services.async_call(
         CLIM_DOMAIN,
         SERVICE_SET_PRESET_MODE,
@@ -115,9 +147,9 @@ async def test_set_preset(
     )
     assert len(service_calls) == 2
     await coordinator.async_refresh()
-    await hass.async_block_till_done()    
-    assert hass.states.get(entity_id).attributes[ATTR_PRESET_MODE] == PRESET_AWAY 
-    
+    await hass.async_block_till_done()
+    assert hass.states.get(entity_id).attributes[ATTR_PRESET_MODE] == PRESET_AWAY
+
     await hass.services.async_call(
         CLIM_DOMAIN,
         SERVICE_SET_PRESET_MODE,
@@ -125,10 +157,13 @@ async def test_set_preset(
     )
     assert len(service_calls) == 3
     await coordinator.async_refresh()
-    await hass.async_block_till_done()    
-    assert hass.states.get(entity_id).attributes[ATTR_PRESET_MODE] == PRESET_ECO 
-        
-@pytest.mark.parametrize("entity_id", [ "climate.test_pilote_v2", "climate.test_pilote_v4"])
+    await hass.async_block_till_done()
+    assert hass.states.get(entity_id).attributes[ATTR_PRESET_MODE] == PRESET_ECO
+
+
+@pytest.mark.parametrize(
+    "entity_id", ["climate.test_pilote_v2", "climate.test_pilote_v4"]
+)
 async def test_derogation_vacation(
     hass: HomeAssistant,
     config_entry: ConfigEntry,
@@ -150,12 +185,21 @@ async def test_derogation_vacation(
     )
     assert len(service_calls) == 1
     await coordinator.async_refresh()
-    await hass.async_block_till_done()   
-    climate_state = hass.states.get(entity_id) 
-    assert climate_state.attributes[ATTR_PRESET_MODE] == PRESET_VACATION  
+    await hass.async_block_till_done()
+    climate_state = hass.states.get(entity_id)
+    assert climate_state.attributes[ATTR_PRESET_MODE] == PRESET_VACATION
     assert climate_state.state == HVACMode.AUTO
 
-@pytest.mark.parametrize("entity_id", [ "climate.test_bloom", "climate.test_pilote_pro",  "climate.test_onyx", "climate.test_glow"])
+
+@pytest.mark.parametrize(
+    "entity_id",
+    [
+        "climate.test_bloom",
+        "climate.test_pilote_pro",
+        "climate.test_onyx",
+        "climate.test_glow",
+    ],
+)
 async def test_derogation_vacation_temp(
     hass: HomeAssistant,
     config_entry: ConfigEntry,
@@ -177,11 +221,22 @@ async def test_derogation_vacation_temp(
     )
     assert len(service_calls) == 1
     await coordinator.async_refresh()
-    await hass.async_block_till_done()    
-    assert hass.states.get(entity_id).attributes[ATTR_PRESET_MODE] == PRESET_VACATION  
+    await hass.async_block_till_done()
+    assert hass.states.get(entity_id).attributes[ATTR_PRESET_MODE] == PRESET_VACATION
     assert hass.states.get(entity_id).attributes[ATTR_TARGET_TEMP_LOW] is not None
 
-@pytest.mark.parametrize("entity_id", [ "climate.test_pilote_v2", "climate.test_pilote_v4", "climate.test_bloom", "climate.test_pilote_pro",  "climate.test_onyx", "climate.test_glow"])
+
+@pytest.mark.parametrize(
+    "entity_id",
+    [
+        "climate.test_pilote_v2",
+        "climate.test_pilote_v4",
+        "climate.test_bloom",
+        "climate.test_pilote_pro",
+        "climate.test_onyx",
+        "climate.test_glow",
+    ],
+)
 async def test_derogation_boost(
     hass: HomeAssistant,
     config_entry: ConfigEntry,
@@ -203,10 +258,20 @@ async def test_derogation_boost(
     )
     assert len(service_calls) == 1
     await coordinator.async_refresh()
-    await hass.async_block_till_done()    
-    assert hass.states.get(entity_id).attributes[ATTR_PRESET_MODE] == PRESET_BOOST       
+    await hass.async_block_till_done()
+    assert hass.states.get(entity_id).attributes[ATTR_PRESET_MODE] == PRESET_BOOST
 
-@pytest.mark.parametrize("entity_id", [ "climate.test_onyx", "climate.test_bloom", "climate.test_pilote_v4", "climate.test_pilote_pro","climate.test_glow"])
+
+@pytest.mark.parametrize(
+    "entity_id",
+    [
+        "climate.test_onyx",
+        "climate.test_bloom",
+        "climate.test_pilote_v4",
+        "climate.test_pilote_pro",
+        "climate.test_glow",
+    ],
+)
 async def test_set_preset_comfort1_2(
     hass: HomeAssistant,
     config_entry: ConfigEntry,
@@ -220,7 +285,7 @@ async def test_set_preset_comfort1_2(
     await hass.async_block_till_done()
 
     coordinator = config_entry.runtime_data
-    
+
     await hass.services.async_call(
         CLIM_DOMAIN,
         SERVICE_SET_PRESET_MODE,
@@ -228,9 +293,9 @@ async def test_set_preset_comfort1_2(
     )
     assert len(service_calls) == 1
     await coordinator.async_refresh()
-    await hass.async_block_till_done()    
-    assert hass.states.get(entity_id).attributes[ATTR_PRESET_MODE] == PRESET_COMFORT_1  
-    
+    await hass.async_block_till_done()
+    assert hass.states.get(entity_id).attributes[ATTR_PRESET_MODE] == PRESET_COMFORT_1
+
     await hass.services.async_call(
         CLIM_DOMAIN,
         SERVICE_SET_PRESET_MODE,
@@ -238,10 +303,13 @@ async def test_set_preset_comfort1_2(
     )
     assert len(service_calls) == 2
     await coordinator.async_refresh()
-    await hass.async_block_till_done()    
+    await hass.async_block_till_done()
     assert hass.states.get(entity_id).attributes[ATTR_PRESET_MODE] == PRESET_COMFORT_2
 
-@pytest.mark.parametrize("entity_id", ["climate.test_onyx", "climate.test_bloom","climate.test_glow"])
+
+@pytest.mark.parametrize(
+    "entity_id", ["climate.test_onyx", "climate.test_bloom", "climate.test_glow"]
+)
 async def test_set_temperature(
     hass: HomeAssistant,
     config_entry: ConfigEntry,
@@ -258,14 +326,27 @@ async def test_set_temperature(
     await hass.services.async_call(
         CLIM_DOMAIN,
         SERVICE_SET_TEMPERATURE,
-        {ATTR_ENTITY_ID: entity_id, ATTR_TARGET_TEMP_LOW: 10, ATTR_TARGET_TEMP_HIGH:10},
+        {
+            ATTR_ENTITY_ID: entity_id,
+            ATTR_TARGET_TEMP_LOW: 10,
+            ATTR_TARGET_TEMP_HIGH: 10,
+        },
     )
     assert len(service_calls) == 1
     await coordinator.async_refresh()
-    await hass.async_block_till_done()    
-    assert hass.states.get(entity_id).attributes[ATTR_TARGET_TEMP_LOW] == 10.0   
+    await hass.async_block_till_done()
+    assert hass.states.get(entity_id).attributes[ATTR_TARGET_TEMP_LOW] == 10.0
 
-@pytest.mark.parametrize("entity_id", ["climate.test_bloom", "climate.test_pilote_pro",  "climate.test_onyx","climate.test_glow"])
+
+@pytest.mark.parametrize(
+    "entity_id",
+    [
+        "climate.test_bloom",
+        "climate.test_pilote_pro",
+        "climate.test_onyx",
+        "climate.test_glow",
+    ],
+)
 async def test_current_temp(
     hass: HomeAssistant,
     config_entry: ConfigEntry,
@@ -276,7 +357,8 @@ async def test_current_temp(
 
     await hass.config_entries.async_setup(config_entry.entry_id)
     await hass.async_block_till_done()
-    assert hass.states.get(entity_id).attributes[ATTR_CURRENT_TEMPERATURE] is not None  
+    assert hass.states.get(entity_id).attributes[ATTR_CURRENT_TEMPERATURE] is not None
+
 
 @pytest.mark.parametrize("entity_id", ["climate.test_pilote_pro"])
 async def test_current_humidity(
@@ -289,4 +371,4 @@ async def test_current_humidity(
 
     await hass.config_entries.async_setup(config_entry.entry_id)
     await hass.async_block_till_done()
-    assert hass.states.get(entity_id).attributes[ATTR_CURRENT_HUMIDITY] is not None  
+    assert hass.states.get(entity_id).attributes[ATTR_CURRENT_HUMIDITY] is not None

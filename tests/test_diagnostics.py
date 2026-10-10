@@ -32,9 +32,7 @@ async def test_diagnostics(
         side_effect=lambda cb: cb({"update": True})
     )
 
-    with patch(
-        "custom_components.heatzy.diagnostics.asyncio.sleep", new=AsyncMock()
-    ):
+    with patch("custom_components.heatzy.diagnostics.asyncio.sleep", new=AsyncMock()):
         result = await async_get_config_entry_diagnostics(hass, config_entry)
 
     assert set(result) == {
@@ -70,9 +68,7 @@ async def test_diagnostics_collects_errors(
         side_effect=Exception("control failed")
     )
 
-    with patch(
-        "custom_components.heatzy.diagnostics.asyncio.sleep", new=AsyncMock()
-    ):
+    with patch("custom_components.heatzy.diagnostics.asyncio.sleep", new=AsyncMock()):
         result = await async_get_config_entry_diagnostics(hass, config_entry)
 
     assert len(result["errors"]) == 1
