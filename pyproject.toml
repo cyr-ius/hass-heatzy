@@ -9,7 +9,9 @@ authors = [{ name = "cyr-ius", email = "cyr-ius@ipocus.net" }]
 dependencies = ["heatzypy==2.6.1"]
 
 [dependency-groups]
+lint = ["prek"]
 dev = [
+    {include-group = "lint"},
     "heatzypy",
     "pytest-homeassistant-custom-component",
     "async-upnp-client",
@@ -21,6 +23,7 @@ Documentation = "https://github.com/cyr-ius/hass-heatzy"
 Issues = "https://github.com/cyr-ius/hass-heatzy/issues"
 
 [tool.ruff]
+fix = true
 target-version = "py314"
 line-length = 88
 indent-width = 4
@@ -59,3 +62,8 @@ testpaths = ["tests/"]
 python_files = ["test_*.py"]
 asyncio_mode = "auto"
 log_cli = true
+
+[tool.codespell]
+ignore-words-list = "hass,fro,ony"
+skip = "./.*,*.csv,*.json,uv.lock,pyproject.toml"
+quiet-level = 2
