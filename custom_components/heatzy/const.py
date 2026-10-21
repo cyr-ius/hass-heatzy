@@ -67,6 +67,11 @@ BLOOM = ["480253852d574f11b2d7fbf4460d7a41"]  # BLOOM
 ALL_WO_V1 = PILOTE_V2 + PILOTE_V3 + PILOTE_V4 + GLOW + BLOOM + PILOTE_PRO_V1
 ALL = PILOTE_V1 + ALL_WO_V1
 
+# Devices with a room temperature sensor; expose com_temp sensor calibration.
+# Glow family stores com_temp 0..10 (whole degrees, centred at 5): offset = raw - 5.
+# Bloom/Pilote Pro appear to use a different scale and need separate verification.
+CALIBRATION_PRODUCTS = GLOW
+
 # -- Not integrated --
 # FLAM "f71ee820660f4f358db8b8a474689726"
 # GLOW 51c35c204f854cebbc780bf9785db409

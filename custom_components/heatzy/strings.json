@@ -47,5 +47,12 @@
       "name": "Set Window Switch",
       "description": "Setting window switch mode"
     }
+  },
+  "entity": {
+    "number": {
+      "calibration": {
+        "name": "Temperature calibration"
+      }
+    }
   }
 }
