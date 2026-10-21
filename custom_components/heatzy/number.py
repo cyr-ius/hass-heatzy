@@ -7,15 +7,29 @@ from typing import Any, Final
 from homeassistant.components.climate import PRESET_BOOST
 from homeassistant.components.number import (
     NumberDeviceClass,
+    NumberEntity,
     NumberEntityDescription,
     RestoreNumber,
 )
-from homeassistant.const import STATE_UNAVAILABLE, STATE_UNKNOWN, UnitOfTime
+from homeassistant.const import (
+    STATE_UNAVAILABLE,
+    STATE_UNKNOWN,
+    UnitOfTemperature,
+    UnitOfTime,
+)
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from . import HeatzyConfigEntry, HeatzyDataUpdateCoordinator
-from .const import ALL, CONF_PRODUCT_KEY, PRESET_VACATION
+from .const import (
+    ALL,
+    CALIBRATION_PRODUCTS,
+    CONF_ATTRS,
+    CONF_COM_TEMP,
+    CONF_PRODUCT_KEY,
+    PRESET_VACATION,
+)
 from .entity import HeatzyEntity
 
 
@@ -54,6 +68,21 @@ NUMBER_TYPES: Final[tuple[HeatzyNumberEntityDescription, ...]] = (
         native_min_value=1,
         native_max_value=255,
         attr= PRESET_BOOST
+    ),
+    HeatzyNumberEntityDescription(
+        key="calibration",
+        name="Temperature calibration",
+        icon="mdi:thermometer-lines",
+        translation_key="calibration",
+        products=CALIBRATION_PRODUCTS,
+        entity_category=EntityCategory.CONFIG,
+        device_class=NumberDeviceClass.TEMPERATURE,
+        native_step=1,
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        native_min_value=-5,
+        native_max_value=5,
+        attr=CONF_COM_TEMP,
+        cls=lambda *args: HeatzyCalibrationNumber(*args),
     ),
 )
 
@@ -106,4 +135,27 @@ class HeatzyNumber(HeatzyEntity, RestoreNumber):
         """Set new value."""
         self._device[self.entity_description.attr] = value
         self._resolve_state = value
+        self.async_write_ha_state()
+
+
+class HeatzyCalibrationNumber(HeatzyEntity, NumberEntity):
+    """Sensor temperature calibration offset (com_temp), pushed to the device.
+
+    Glow family: com_temp is an int 0..10 in whole degrees, centred at 5:
+    0 = -5 C, 5 = 0 C (no correction), 10 = +5 C.
+    """
+
+    @property
+    def native_value(self) -> float | None:
+        """Return the current calibration offset in degrees Celsius."""
+        raw = self._attrs.get(self.entity_description.attr)
+        return None if raw is None else raw - 5
+
+    async def async_set_native_value(self, value: float) -> None:
+        """Push the new calibration offset to the device."""
+        raw = round(value) + 5
+        await self._handle_action(
+            {CONF_ATTRS: {self.entity_description.attr: raw}},
+            "Error setting temperature calibration",
+        )
         self.async_write_ha_state()
