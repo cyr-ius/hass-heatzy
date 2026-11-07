@@ -9,7 +9,10 @@ authors = [{ name = "cyr-ius", email = "cyr-ius@ipocus.net" }]
 dependencies = ["heatzypy==2.6.1"]
 
 [dependency-groups]
-lint = ["prek"]
+lint = [
+    "prek",
+    "ruff==0.16.2",
+]
 dev = [
     {include-group = "lint"},
     "heatzypy",

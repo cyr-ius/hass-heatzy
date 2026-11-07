@@ -57,20 +57,25 @@ PILOTE_V4 = [
 PILOTE_PRO_V1 = [
     "a77a929fcf0d4631bc4f669080376891",  # Pilote Pro
 ]
+GLOW_BLU = ["cffa0df68a52449085c5d1e72c2f6bb0"]  # GLOW BLU (Glow_Simple_ble)
 GLOW = [
     "2fd622e45283470f9e27e8e6167d7533",  # GLOW_SIMPLE
     "bb10d064f8de409db633b750faa22a52",  # ONYX
     "fc89066ee74c4149a9beb37d4ea93604",  # INEA
-]
+] + GLOW_BLU
 BLOOM = ["480253852d574f11b2d7fbf4460d7a41"]  # BLOOM
 
 ALL_WO_V1 = PILOTE_V2 + PILOTE_V3 + PILOTE_V4 + GLOW + BLOOM + PILOTE_PRO_V1
 ALL = PILOTE_V1 + ALL_WO_V1
 
+# Devices with a room temperature sensor; expose com_temp sensor calibration.
+# Glow family stores com_temp 0..10 (whole degrees, centred at 5): offset = raw - 5.
+# Bloom/Pilote Pro appear to use a different scale and need separate verification.
+CALIBRATION_PRODUCTS = GLOW
+
 # -- Not integrated --
 # FLAM "f71ee820660f4f358db8b8a474689726"
 # GLOW 51c35c204f854cebbc780bf9785db409
-# GLOW BLU cffa0df68a52449085c5d1e72c2f6bb0
 # ROCKET d60c58d724b845068bf4652a10883c92
 # SHINE BLU 2884feb88e0b4f30b75ea5572276a102
 # SOCKET 0a000341206048a0be23e2cbf9d8f29a

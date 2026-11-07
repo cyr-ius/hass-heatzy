@@ -372,3 +372,51 @@ async def test_current_humidity(
     await hass.config_entries.async_setup(config_entry.entry_id)
     await hass.async_block_till_done()
     assert hass.states.get(entity_id).attributes[ATTR_CURRENT_HUMIDITY] is not None
+
+
+async def test_glow_blu_preset_from_cur_mode(
+    hass: HomeAssistant,
+    config_entry: ConfigEntry,
+    HeatzyClient: AsyncMock,
+):
+    """Glow BLU: preset comes from numeric cur_mode, derog_mode 1 is PROG."""
+    await hass.config_entries.async_setup(config_entry.entry_id)
+    await hass.async_block_till_done()
+
+    state = hass.states.get("climate.test_glow_blu")
+    assert state is not None
+    assert state.state == HVACMode.AUTO
+    assert state.attributes[ATTR_PRESET_MODE] == PRESET_COMFORT
+    assert state.attributes[ATTR_CURRENT_TEMPERATURE] == 17.4
+    assert state.attributes[ATTR_TARGET_TEMP_HIGH] == 19.0
+    assert state.attributes[ATTR_TARGET_TEMP_LOW] == 16.0
+
+
+@pytest.mark.parametrize(
+    ("attrs", "expected"),
+    [
+        ({"cur_mode": 1, "derog_mode": 0}, PRESET_ECO),
+        ({"cur_mode": 2, "derog_mode": 0}, PRESET_AWAY),
+        ({"cur_mode": 3, "derog_mode": 0}, "none"),
+        ({"cur_mode": 0, "derog_mode": 2}, PRESET_BOOST),
+        ({"cur_mode": 0, "on_off": False}, "none"),
+    ],
+)
+async def test_glow_blu_preset_mapping(
+    hass: HomeAssistant,
+    config_entry: ConfigEntry,
+    HeatzyClient: AsyncMock,
+    attrs: dict,
+    expected: str,
+):
+    """Glow BLU: numeric cur_mode mapping."""
+    await hass.config_entries.async_setup(config_entry.entry_id)
+    await hass.async_block_till_done()
+
+    coordinator = config_entry.runtime_data
+    coordinator.data["GlowBluSimpleBle0000001"]["attrs"].update(attrs)
+    coordinator.async_update_listeners()
+    await hass.async_block_till_done()
+
+    state = hass.states.get("climate.test_glow_blu")
+    assert state.attributes[ATTR_PRESET_MODE] == expected

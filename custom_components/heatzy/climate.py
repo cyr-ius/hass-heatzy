@@ -54,6 +54,7 @@ from .const import (
     ECO_TEMP_L,
     FROST_TEMP,
     GLOW,
+    GLOW_BLU,
     PILOTE_PRO_V1,
     PILOTE_V1,
     PILOTE_V2,
@@ -572,7 +573,28 @@ class HeatzyPiloteV1Thermostat(HeatzyThermostat):
 
 
 class Glowv1Thermostat(HeatzyThermostat):
-    """Glow, Onyx, Inea."""
+    """Glow, Onyx, Inea, Glow BLU."""
+
+    # Glow BLU (Glow_Simple_ble) reports the effective mode as an integer in
+    # cur_mode, and derog_mode == 1 means the schedule (PROG) is running.
+    _CUR_MODE_NUM: ClassVar[dict[int, str]] = {
+        0: PRESET_COMFORT,
+        1: PRESET_ECO,
+        2: PRESET_AWAY,
+        3: PRESET_NONE,
+    }
+
+    @property
+    def preset_mode(self) -> str | None:
+        """Return the current preset mode."""
+        cur_mode = self._attrs.get(CONF_CUR_MODE)
+        if self._device.get(CONF_PRODUCT_KEY) in GLOW_BLU and isinstance(cur_mode, int):
+            if self._attrs.get(CONF_ON_OFF) in (0, False):
+                return PRESET_NONE
+            if self._attrs.get(CONF_DEROG_MODE) == 2:
+                return PRESET_BOOST
+            return self._CUR_MODE_NUM.get(cur_mode)
+        return super().preset_mode
 
     @property
     def native_current_temperature(self) -> float:
