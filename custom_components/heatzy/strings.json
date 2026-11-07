@@ -41,7 +41,8 @@
       }
     },
     "presence": {
-      "name": "Set Presence"
+      "name": "Set Presence",
+      "description": "Enable or disable presence detection mode"
     },
     "window_switch": {
       "name": "Set Window Switch",

@@ -39,6 +39,7 @@
       }
     },
     "presence": {
+      "name": "Définir la présence",
       "description": "Paramètre le mode présence"
     },
     "window_switch": {
