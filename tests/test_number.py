@@ -7,7 +7,7 @@ from homeassistant.const import ATTR_ENTITY_ID, Platform
 from homeassistant.core import HomeAssistant
 
 
-@pytest.mark.parametrize("entity_id", [ "number.test_pilote_v2_vacation"])
+@pytest.mark.parametrize("entity_id", ["number.test_pilote_v2_vacation"])
 async def test_number(
     hass: HomeAssistant,
     config_entry: ConfigEntry,
@@ -24,8 +24,10 @@ async def test_number(
     assert state is not None
     assert state.state == str(1)
 
-    data = { ATTR_ENTITY_ID: entity_id, ATTR_VALUE: 2}
-    await hass.services.async_call(Platform.NUMBER, SERVICE_SET_VALUE, data, blocking=True)
+    data = {ATTR_ENTITY_ID: entity_id, ATTR_VALUE: 2}
+    await hass.services.async_call(
+        Platform.NUMBER, SERVICE_SET_VALUE, data, blocking=True
+    )
 
     coordinator = config_entry.runtime_data
     await coordinator.async_refresh()

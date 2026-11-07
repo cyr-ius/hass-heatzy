@@ -128,3 +128,4 @@ dmypy.json
 ### Custo ###
 fakedevices.py
 # End of https://www.gitignore.io/api/python
+.mcp.json

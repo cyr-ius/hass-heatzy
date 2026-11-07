@@ -26,9 +26,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: HeatzyConfigEntry) -> bo
 
 async def async_unload_entry(hass: HomeAssistant, entry: HeatzyConfigEntry) -> bool:
     """Unload a config entry."""
-    if unload_ok := await hass.config_entries.async_unload_platforms(entry, PLATFORMS):
-        if entry.runtime_data.unsub:
-            entry.runtime_data.unsub()
+    unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
+    if unload_ok and entry.runtime_data.unsub:
+        entry.runtime_data.unsub()
 
     return unload_ok
 

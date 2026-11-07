@@ -27,14 +27,14 @@ async def test_diagnostics(
         return_value={"devices": [{"mac": "aa:bb", "did": "x"}]}
     )
 
-    # Invoke the registered callback so pushed updates are collected.
+    # Invoke the registered callback with a websocket push carrying the
+    # sensitive device fields, so pushed updates are collected.
+    pushed = {"x": {"did": "x", "mac": "aa:bb", "passcode": "secret", "attrs": {}}}
     HeatzyClient.websocket.register_callback = MagicMock(
-        side_effect=lambda cb: cb({"update": True})
+        side_effect=lambda cb: cb(pushed)
     )
 
-    with patch(
-        "custom_components.heatzy.diagnostics.asyncio.sleep", new=AsyncMock()
-    ):
+    with patch("custom_components.heatzy.diagnostics.asyncio.sleep", new=AsyncMock()):
         result = await async_get_config_entry_diagnostics(hass, config_entry)
 
     assert set(result) == {
@@ -49,7 +49,18 @@ async def test_diagnostics(
     assert result["bindings"]["devices"][0]["mac"] == "**REDACTED**"
     assert result["devices"]
     assert result["errors"] == []
-    assert result["callbacks"] == [{"update": True}]
+    assert result["callbacks"] == [
+        {
+            "x": {
+                "did": "x",
+                "mac": "**REDACTED**",
+                "passcode": "**REDACTED**",
+                "attrs": {},
+            }
+        }
+    ]
+    # The websocket data itself is left untouched.
+    assert pushed["x"]["passcode"] == "secret"
     # Each device toggles mode twice via the websocket control.
     assert HeatzyClient.websocket.async_control_device.await_count == len(devices) * 2
 
@@ -70,9 +81,7 @@ async def test_diagnostics_collects_errors(
         side_effect=Exception("control failed")
     )
 
-    with patch(
-        "custom_components.heatzy.diagnostics.asyncio.sleep", new=AsyncMock()
-    ):
+    with patch("custom_components.heatzy.diagnostics.asyncio.sleep", new=AsyncMock()):
         result = await async_get_config_entry_diagnostics(hass, config_entry)
 
     assert len(result["errors"]) == 1

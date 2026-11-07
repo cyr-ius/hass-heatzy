@@ -34,8 +34,9 @@ BINARY_SENSOR_TYPES: Final[tuple[HeatzyBinarySensorEntityDescription, ...]] = (
         products=PILOTE_PRO_V1,
         device_class=BinarySensorDeviceClass.OCCUPANCY,
         icon="mdi:location-enter",
-        value_fn=lambda attrs: attrs.get(CONF_DEROG_MODE) == 3
-        and attrs.get(CONF_CUR_MODE) == "cft",
+        value_fn=lambda attrs: (
+            attrs.get(CONF_DEROG_MODE) == 3 and attrs.get(CONF_CUR_MODE) == "cft"
+        ),
     ),
 )
 
