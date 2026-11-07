@@ -14,11 +14,11 @@ from homeassistant.components.number import (
 from homeassistant.const import (
     STATE_UNAVAILABLE,
     STATE_UNKNOWN,
+    EntityCategory,
     UnitOfTemperature,
     UnitOfTime,
 )
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from . import HeatzyConfigEntry, HeatzyDataUpdateCoordinator
@@ -76,7 +76,8 @@ NUMBER_TYPES: Final[tuple[HeatzyNumberEntityDescription, ...]] = (
         translation_key="calibration",
         products=CALIBRATION_PRODUCTS,
         entity_category=EntityCategory.CONFIG,
-        device_class=NumberDeviceClass.TEMPERATURE,
+        # No TEMPERATURE device class: this is an offset (delta), not an
+        # absolute temperature, so HA must not convert it to °F.
         native_step=1,
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         native_min_value=-5,
@@ -158,4 +159,3 @@ class HeatzyCalibrationNumber(HeatzyEntity, NumberEntity):
             {CONF_ATTRS: {self.entity_description.attr: raw}},
             "Error setting temperature calibration",
         )
-        self.async_write_ha_state()
