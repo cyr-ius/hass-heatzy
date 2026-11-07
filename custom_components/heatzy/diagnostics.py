@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import copy
 from typing import Any
 
 from homeassistant.components.diagnostics import async_redact_data
@@ -49,7 +50,8 @@ async def async_get_config_entry_diagnostics(
     api_callback = []
 
     def callback(data):
-        api_callback.append(data)
+        # Snapshot: the websocket keeps mutating the devices it pushes
+        api_callback.append(copy.deepcopy(data))
 
     coordinator.api.websocket.register_callback(callback)
     try:
@@ -76,5 +78,5 @@ async def async_get_config_entry_diagnostics(
         "bindings": async_redact_data(bindings, TO_REDACT),
         "devices": async_redact_data(devices, TO_REDACT),
         "errors": api_errors,
-        "callbacks": api_callback,
+        "callbacks": async_redact_data(api_callback, TO_REDACT),
     }
