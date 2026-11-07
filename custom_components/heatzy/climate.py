@@ -74,6 +74,9 @@ SERVICES = [
 
 _LOGGER = logging.getLogger(__name__)
 
+# Home Assistant < 2026.11 does not provide the native_* temperature API
+LEGACY_TEMPERATURE_API = not hasattr(ClimateEntity, "native_current_temperature")
+
 
 @dataclass(frozen=True, kw_only=True)
 class HeatzyClimateEntityDescription(ClimateEntityDescription):
@@ -348,11 +351,60 @@ class HeatzyThermostat(HeatzyEntity, ClimateEntity):
         """Init."""
         super().__init__(coordinator, description, did)
         self._attr_unique_id = did
-        self._attr_temperature_unit = description.temperature_unit
+        self._attr_native_temperature_unit = description.temperature_unit
         self._attr_supported_features = description.supported_features
         self._attr_preset_modes = description.preset_modes
         self._attr_hvac_modes = description.hvac_modes
         self._attr_available = coordinator.data[did].get(CONF_IS_ONLINE, True)
+
+    if LEGACY_TEMPERATURE_API:
+        # Backport of the native_* temperature API for Home Assistant < 2026.11.
+        # Newer versions provide it in ClimateEntity and deprecate the old names.
+
+        @property
+        def native_current_temperature(self) -> float | None:
+            """Return the current temperature in the native unit."""
+            return None
+
+        @property
+        def native_target_temperature(self) -> float | None:
+            """Return the target temperature in the native unit."""
+            return None
+
+        @property
+        def native_target_temperature_high(self) -> float | None:
+            """Return the highbound target temperature in the native unit."""
+            return None
+
+        @property
+        def native_target_temperature_low(self) -> float | None:
+            """Return the lowbound target temperature in the native unit."""
+            return None
+
+        @property
+        def temperature_unit(self) -> str:
+            """Return the unit of measurement."""
+            return self._attr_native_temperature_unit
+
+        @property
+        def current_temperature(self) -> float | None:
+            """Return the current temperature."""
+            return self.native_current_temperature
+
+        @property
+        def target_temperature(self) -> float | None:
+            """Return the target temperature."""
+            return self.native_target_temperature
+
+        @property
+        def target_temperature_high(self) -> float | None:
+            """Return the highbound target temperature."""
+            return self.native_target_temperature_high
+
+        @property
+        def target_temperature_low(self) -> float | None:
+            """Return the lowbound target temperature."""
+            return self.native_target_temperature_low
 
     @property
     def hvac_action(self) -> HVACAction | None:
@@ -360,9 +412,9 @@ class HeatzyThermostat(HeatzyEntity, ClimateEntity):
         if self.hvac_mode == HVACMode.OFF:
             return HVACAction.OFF
         if (
-            self.current_temperature
-            and self.target_temperature
-            and (self.current_temperature > self.target_temperature)
+            self.native_current_temperature
+            and self.native_target_temperature
+            and (self.native_current_temperature > self.native_target_temperature)
         ):
             return HVACAction.OFF
         return HVACAction.HEATING
@@ -523,12 +575,12 @@ class Glowv1Thermostat(HeatzyThermostat):
     """Glow, Onyx, Inea."""
 
     @property
-    def current_temperature(self) -> float:
+    def native_current_temperature(self) -> float:
         """Return current temperature."""
         return self._attrs.get(self.entity_description.attr_cur_temp, 0) / 10
 
     @property
-    def target_temperature_high(self) -> float:
+    def native_target_temperature_high(self) -> float:
         """Return comfort temperature."""
         cft_tempH = self._attrs.get(self.entity_description.attr_temp_high, 0)
         cft_tempL = self._attrs.get(self.entity_description.attr_temp_low, 0)
@@ -540,7 +592,7 @@ class Glowv1Thermostat(HeatzyThermostat):
         return (cft_tempL + (cft_tempH * 256)) / 10
 
     @property
-    def target_temperature_low(self) -> float:
+    def native_target_temperature_low(self) -> float:
         """Return comfort temperature."""
         eco_tempH = self._attrs.get(self.entity_description.attr_eco_temp_high, 0)
         eco_tempL = self._attrs.get(self.entity_description.attr_eco_temp_low, 0)
@@ -556,8 +608,8 @@ class Glowv1Thermostat(HeatzyThermostat):
         """Return hvac action ie. heating, off mode."""
         if self.hvac_mode == HVACMode.OFF:
             return HVACAction.OFF
-        if self.target_temperature and (
-            self.current_temperature > self.target_temperature
+        if self.native_target_temperature and (
+            self.native_current_temperature > self.native_target_temperature
         ):
             return HVACAction.OFF
         return HVACAction.HEATING
@@ -573,15 +625,15 @@ class Glowv1Thermostat(HeatzyThermostat):
         return HVACMode.HEAT
 
     @property
-    def target_temperature(self) -> float | None:
+    def native_target_temperature(self) -> float | None:
         """Return target temperature for mode."""
         # Target temp is set to Low/High/Away value according to the current [preset] mode
         if self.hvac_mode == HVACMode.OFF:
             return None
         if self.preset_mode == PRESET_ECO:
-            return self.target_temperature_low
+            return self.native_target_temperature_low
         if self.preset_mode == PRESET_COMFORT:
-            return self.target_temperature_high
+            return self.native_target_temperature_high
         if self.preset_mode in {PRESET_AWAY, PRESET_VACATION}:
             return FROST_TEMP
 
@@ -633,30 +685,30 @@ class Bloomv1Thermostat(HeatzyThermostat):
     """Bloom."""
 
     @property
-    def current_temperature(self) -> float:
+    def native_current_temperature(self) -> float:
         """Return current temperature."""
         return self._attrs.get(self.entity_description.attr_cur_temp)
 
     @property
-    def target_temperature_high(self) -> float:
+    def native_target_temperature_high(self) -> float:
         """Return comfort temperature."""
         return self._attrs.get(self.entity_description.attr_temp_high)
 
     @property
-    def target_temperature_low(self) -> float:
+    def native_target_temperature_low(self) -> float:
         """Return echo temperature."""
         return self._attrs.get(self.entity_description.attr_temp_low)
 
     @property
-    def target_temperature(self) -> float | None:
+    def native_target_temperature(self) -> float | None:
         """Return target temperature for mode."""
         # Target temp is set to value according to the current [preset] mode
         if self.hvac_mode == HVACMode.OFF:
             return None
         if self.preset_mode == PRESET_ECO:
-            return self.target_temperature_low
+            return self.native_target_temperature_low
         if self.preset_mode == PRESET_COMFORT:
-            return self.target_temperature_high
+            return self.native_target_temperature_high
         if self.preset_mode == PRESET_AWAY:
             return FROST_TEMP
         return None
@@ -681,29 +733,29 @@ class HeatzyPiloteProV1(HeatzyThermostat):
         return self._attrs.get(CONF_HUMIDITY)
 
     @property
-    def current_temperature(self) -> float:
+    def native_current_temperature(self) -> float:
         """Return current temperature."""
         return self._attrs.get(self.entity_description.attr_cur_temp, 0) / 10
 
     @property
-    def target_temperature_high(self) -> float:
+    def native_target_temperature_high(self) -> float:
         """Return comfort temperature."""
         return self._attrs.get(self.entity_description.attr_temp_high, 0) / 10
 
     @property
-    def target_temperature_low(self) -> float:
+    def native_target_temperature_low(self) -> float:
         """Return echo temperature."""
         return self._attrs.get(self.entity_description.attr_temp_low, 0) / 10
 
     @property
-    def target_temperature(self) -> float | None:
+    def native_target_temperature(self) -> float | None:
         """Return target temperature for mode."""
         if self.hvac_mode == HVACMode.OFF:
             return None
         if self.preset_mode == PRESET_ECO:
-            return self.target_temperature_low
+            return self.native_target_temperature_low
         if self.preset_mode == PRESET_COMFORT:
-            return self.target_temperature_high
+            return self.native_target_temperature_high
         if self.preset_mode == PRESET_AWAY:
             return FROST_TEMP
         return None
@@ -715,8 +767,8 @@ class HeatzyPiloteProV1(HeatzyThermostat):
             return HVACAction.OFF
         if self._attrs.get(CONF_HEATING_STATE) == 1:
             return HVACAction.OFF
-        if self.target_temperature and (
-            self.current_temperature > self.target_temperature
+        if self.native_target_temperature and (
+            self.native_current_temperature > self.native_target_temperature
         ):
             return HVACAction.OFF
         return HVACAction.HEATING
