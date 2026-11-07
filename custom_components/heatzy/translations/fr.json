@@ -52,5 +52,12 @@
         "days": "jours"
       }
     }
+  },
+  "entity": {
+    "number": {
+      "calibration": {
+        "name": "Étalonnage température"
+      }
+    }
   }
 }
