@@ -4,6 +4,7 @@ import pytest
 from homeassistant.components.climate import (
     ATTR_CURRENT_HUMIDITY,
     ATTR_CURRENT_TEMPERATURE,
+    ATTR_HVAC_ACTION,
     ATTR_HVAC_MODE,
     ATTR_PRESET_MODE,
     ATTR_TARGET_TEMP_HIGH,
@@ -420,3 +421,40 @@ async def test_glow_blu_preset_mapping(
 
     state = hass.states.get("climate.test_glow_blu")
     assert state.attributes[ATTR_PRESET_MODE] == expected
+
+
+@pytest.mark.parametrize(
+    ("attrs", "expected"),
+    [
+        # cur_signal reflects the real pilot-wire order (issue #76)
+        ({"cur_mode": "eco", "cur_signal": "fro", "heating_state": 0}, "off"),
+        ({"cur_mode": "eco", "cur_signal": "cft", "heating_state": 1}, "heating"),
+        ({"cur_mode": "cft", "cur_signal": "cft1", "heating_state": 0}, "heating"),
+        ({"cur_mode": "cft", "cur_signal": "stop", "heating_state": 0}, "off"),
+        # Without cur_signal, fall back on heating_state / temperatures
+        ({"cur_mode": "cft", "cur_signal": None, "heating_state": 1}, "off"),
+        ({"cur_mode": "cft", "cur_signal": None, "heating_state": 0}, "heating"),
+        # Stopped device is always off
+        ({"cur_mode": "stop", "mode": "stop", "cur_signal": "cft"}, "off"),
+    ],
+)
+async def test_pilote_pro_hvac_action(
+    hass: HomeAssistant,
+    config_entry: ConfigEntry,
+    HeatzyClient: AsyncMock,
+    attrs: dict,
+    expected: str,
+):
+    """Pilote Pro: hvac_action follows cur_signal when available."""
+    await hass.config_entries.async_setup(config_entry.entry_id)
+    await hass.async_block_till_done()
+
+    coordinator = config_entry.runtime_data
+    coordinator.data["6wHqU2TvH0YUUZVhdfLhi6"]["attrs"].update(
+        {"mode": "cft", "timer_switch": 0, "derog_mode": 0, **attrs}
+    )
+    coordinator.async_update_listeners()
+    await hass.async_block_till_done()
+
+    state = hass.states.get("climate.test_pilote_pro")
+    assert state.attributes[ATTR_HVAC_ACTION] == expected
