@@ -78,6 +78,9 @@ _LOGGER = logging.getLogger(__name__)
 # Home Assistant < 2026.11 does not provide the native_* temperature API
 LEGACY_TEMPERATURE_API = not hasattr(ClimateEntity, "native_current_temperature")
 
+# Pilot-wire orders for which the heater driven by a Pilote Pro does not heat
+PILOTE_PRO_IDLE_SIGNALS = ("fro", "stop", "off")
+
 
 @dataclass(frozen=True, kw_only=True)
 class HeatzyClimateEntityDescription(ClimateEntityDescription):
@@ -787,6 +790,13 @@ class HeatzyPiloteProV1(HeatzyThermostat):
         """Return hvac action ie. heating, off mode."""
         if self.hvac_mode == HVACMode.OFF:
             return HVACAction.OFF
+        # cur_signal is the order actually sent on the pilot wire: the Pilote Pro
+        # regulates with hysteresis by toggling the heater between a heating
+        # order (cft, cft1, cft2, ...) and a non-heating one (fro / stop).
+        if cur_signal := self._attrs.get(CONF_CUR_SIGNAL):
+            if cur_signal in PILOTE_PRO_IDLE_SIGNALS:
+                return HVACAction.OFF
+            return HVACAction.HEATING
         if self._attrs.get(CONF_HEATING_STATE) == 1:
             return HVACAction.OFF
         if self.native_target_temperature and (
