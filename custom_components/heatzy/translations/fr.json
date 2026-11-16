@@ -72,11 +72,31 @@
     "number": {
       "calibration": {
         "name": "Étalonnage température"
+      },
+      "vacation": {
+        "name": "Vacances"
+      },
+      "boost": {
+        "name": "Boost"
       }
     },
     "binary_sensor": {
       "connectivity": {
         "name": "Connectivité"
+      },
+      "presence_detected": {
+        "name": "Détection de présence"
+      }
+    },
+    "switch": {
+      "lock": {
+        "name": "Verrouillage"
+      },
+      "window": {
+        "name": "Fenêtre"
+      },
+      "presence_enabled": {
+        "name": "Mode présence"
       }
     }
   },

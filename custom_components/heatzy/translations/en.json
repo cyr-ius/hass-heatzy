@@ -68,11 +68,31 @@
     "number": {
       "calibration": {
         "name": "Temperature calibration"
+      },
+      "vacation": {
+        "name": "Vacation"
+      },
+      "boost": {
+        "name": "Boost"
       }
     },
     "binary_sensor": {
       "connectivity": {
         "name": "Connectivity"
+      },
+      "presence_detected": {
+        "name": "Presence detection"
+      }
+    },
+    "switch": {
+      "lock": {
+        "name": "Lock"
+      },
+      "window": {
+        "name": "Window"
+      },
+      "presence_enabled": {
+        "name": "Presence mode"
       }
     }
   },

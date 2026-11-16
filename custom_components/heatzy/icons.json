@@ -1,0 +1,39 @@
+{
+  "entity": {
+    "binary_sensor": {
+      "presence_detected": {
+        "default": "mdi:location-enter"
+      }
+    },
+    "number": {
+      "vacation": {
+        "default": "mdi:island"
+      },
+      "boost": {
+        "default": "mdi:thermometer-high"
+      },
+      "calibration": {
+        "default": "mdi:thermometer-lines"
+      }
+    },
+    "switch": {
+      "window": {
+        "default": "mdi:window-open-variant"
+      },
+      "presence_enabled": {
+        "default": "mdi:cog"
+      }
+    }
+  },
+  "services": {
+    "boost": {
+      "service": "mdi:thermometer-high"
+    },
+    "vacation": {
+      "service": "mdi:island"
+    },
+    "presence": {
+      "service": "mdi:location-enter"
+    }
+  }
+}

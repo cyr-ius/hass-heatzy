@@ -48,8 +48,6 @@ class HeatzyNumberEntityDescription(NumberEntityDescription):
 NUMBER_TYPES: Final[tuple[HeatzyNumberEntityDescription, ...]] = (
     HeatzyNumberEntityDescription(
         key="vacation",
-        name="Vacation",
-        icon="mdi:island",
         translation_key="vacation",
         products=ALL,
         device_class=NumberDeviceClass.DURATION,
@@ -61,8 +59,6 @@ NUMBER_TYPES: Final[tuple[HeatzyNumberEntityDescription, ...]] = (
     ),
     HeatzyNumberEntityDescription(
         key="boost",
-        name="Boost",
-        icon="mdi:thermometer-high",
         products=ALL,
         translation_key="boost",
         device_class=NumberDeviceClass.DURATION,
@@ -74,8 +70,6 @@ NUMBER_TYPES: Final[tuple[HeatzyNumberEntityDescription, ...]] = (
     ),
     HeatzyNumberEntityDescription(
         key="calibration",
-        name="Temperature calibration",
-        icon="mdi:thermometer-lines",
         translation_key="calibration",
         products=CALIBRATION_PRODUCTS,
         entity_category=EntityCategory.CONFIG,

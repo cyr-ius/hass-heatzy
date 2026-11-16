@@ -40,11 +40,9 @@ class HeatzyBinarySensorEntityDescription(BinarySensorEntityDescription):
 BINARY_SENSOR_TYPES: Final[tuple[HeatzyBinarySensorEntityDescription, ...]] = (
     HeatzyBinarySensorEntityDescription(
         key="presence_detected",
-        name="Presence detection",
         translation_key="presence_detected",
         products=PILOTE_PRO_V1,
         device_class=BinarySensorDeviceClass.OCCUPANCY,
-        icon="mdi:location-enter",
         value_fn=lambda device: (
             device.get("attrs", {}).get(CONF_DEROG_MODE) == 3
             and device.get("attrs", {}).get(CONF_CUR_MODE) == "cft"

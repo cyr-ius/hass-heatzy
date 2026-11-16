@@ -43,7 +43,6 @@ class HeatzySwitchEntityDescription(SwitchEntityDescription):
 SWITCH_TYPES: Final[tuple[HeatzySwitchEntityDescription, ...]] = (
     HeatzySwitchEntityDescription(
         key="lock",
-        name="Lock",
         translation_key="lock",
         products=PILOTE_V2 + PILOTE_V3 + PILOTE_V4 + BLOOM + PILOTE_PRO_V1,
         attr=CONF_LOCK,
@@ -52,7 +51,6 @@ SWITCH_TYPES: Final[tuple[HeatzySwitchEntityDescription, ...]] = (
     ),
     HeatzySwitchEntityDescription(
         key="lock",
-        name="Lock",
         translation_key="lock",
         products=GLOW,
         attr=CONF_LOCK_OTHER,
@@ -61,20 +59,16 @@ SWITCH_TYPES: Final[tuple[HeatzySwitchEntityDescription, ...]] = (
     ),
     HeatzySwitchEntityDescription(
         key="window",
-        name="Window",
         translation_key="window",
         products=PILOTE_PRO_V1,
-        icon="mdi:window-open-variant",
         attr=CONF_WINDOW,
         entity_category=EntityCategory.CONFIG,
         value_fn=lambda attrs: attrs.get(CONF_WINDOW) == 1,
     ),
     HeatzySwitchEntityDescription(
         key="presence_enabled",
-        name="Presence mode",
         translation_key="presence_enabled",
         products=PILOTE_PRO_V1,
-        icon="mdi:cog",
         attr=CONF_DEROG_MODE,
         entity_category=EntityCategory.CONFIG,
         cls=lambda *args: PresenceSwitch(*args),
