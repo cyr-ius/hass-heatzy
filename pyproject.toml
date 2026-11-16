@@ -4,7 +4,7 @@ version = "6.6.0"
 description = "Heatzy integration for Home Assistant"
 readme = "README.md"
 license = { file = "LICENSE" }
-requires-python = ">=3.14.0"
+requires-python = ">=3.14.2"
 authors = [{ name = "cyr-ius", email = "cyr-ius@ipocus.net" }]
 dependencies = ["heatzypy==2.6.2"]
 
