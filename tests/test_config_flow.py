@@ -50,73 +50,40 @@ async def test_form_success(hass: HomeAssistant, HeatzyClient: AsyncMock) -> Non
         assert result2["data"] == MOCK_USER_INPUT  # From INFO fixture
 
 
-async def test_form_cannot_connect(
-    hass: HomeAssistant, HeatzyClient: AsyncMock
+@pytest.mark.parametrize(
+    ("error", "reason"),
+    [
+        (HttpRequestFailed("Connection failed"), "cannot_connect"),
+        (AuthenticationFailed("Login error"), "invalid_auth"),
+        (HeatzyException("Unknown error"), "unknown"),
+    ],
+)
+async def test_form_error_then_recover(
+    hass: HomeAssistant, HeatzyClient: AsyncMock, error: Exception, reason: str
 ) -> None:
-    """Test the flow handles connection errors."""
+    """Show the error on the form, then create the entry once it is fixed."""
     await setup.async_setup_component(hass, "persistent_notification", {})
 
     with patch("custom_components.heatzy.config_flow.HeatzyClient") as mock:
-        # Simulate a successful connection and info retrieval
         mock.return_value = HeatzyClient
-        mock.return_value.async_bindings.side_effect = HttpRequestFailed(
-            "Connection failed"
-        )
+        mock.return_value.async_bindings.side_effect = error
 
-        # Start the flow and submit data
         result = await hass.config_entries.flow.async_init(
             DOMAIN,
             context={"source": config_entries.SOURCE_USER},
             data=MOCK_USER_INPUT,
         )
-
-        # Assert the form is shown again with a connection error
         assert result["type"] == FlowResultType.FORM
-        assert result["errors"] == {"base": "cannot_connect"}
+        assert result["errors"] == {"base": reason}
 
-
-async def test_form_invalid_auth(hass: HomeAssistant, HeatzyClient: AsyncMock) -> None:
-    """Test the flow handles invalid authentication."""
-    await setup.async_setup_component(hass, "persistent_notification", {})
-
-    with patch("custom_components.heatzy.config_flow.HeatzyClient") as mock:
-        # Simulate an authentication error
-        mock.return_value = HeatzyClient
-        mock.return_value.async_bindings.side_effect = AuthenticationFailed(
-            "Login error"
+        mock.return_value.async_bindings.side_effect = None
+        result = await hass.config_entries.flow.async_configure(
+            result["flow_id"], MOCK_USER_INPUT
         )
+        await hass.async_block_till_done()
 
-        # Start the flow and submit data
-        result = await hass.config_entries.flow.async_init(
-            DOMAIN,
-            context={"source": config_entries.SOURCE_USER},
-            data=MOCK_USER_INPUT,
-        )
-
-        # Assert the form is shown again with an auth error
-        assert result["type"] == FlowResultType.FORM
-        assert result["errors"] == {"base": "invalid_auth"}
-
-
-async def test_form_unknown(hass: HomeAssistant, HeatzyClient: AsyncMock) -> None:
-    """Test the flow handles invalid authentication."""
-    await setup.async_setup_component(hass, "persistent_notification", {})
-
-    with patch("custom_components.heatzy.config_flow.HeatzyClient") as mock:
-        # Simulate an authentication error
-        mock.return_value = HeatzyClient
-        mock.return_value.async_bindings.side_effect = HeatzyException("Unknown error")
-
-        # Start the flow and submit data
-        result = await hass.config_entries.flow.async_init(
-            DOMAIN,
-            context={"source": config_entries.SOURCE_USER},
-            data=MOCK_USER_INPUT,
-        )
-
-        # Assert the form is shown again with an auth error
-        assert result["type"] == FlowResultType.FORM
-        assert result["errors"] == {"base": "unknown"}
+        assert result["type"] == FlowResultType.CREATE_ENTRY
+        assert result["data"] == MOCK_USER_INPUT
 
 
 async def test_form_already_configured(
