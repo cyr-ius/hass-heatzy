@@ -7,6 +7,10 @@
         "data": {
           "username": "Username",
           "password": "Password"
+        },
+        "data_description": {
+          "username": "The email address of your Heatzy account (the one used in the Heatzy app).",
+          "password": "The password of your Heatzy account."
         }
       }
     },
