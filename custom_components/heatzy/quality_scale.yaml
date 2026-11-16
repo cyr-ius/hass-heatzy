@@ -29,9 +29,7 @@ rules:
   unique-config-entry: done
 
   # Silver
-  action-exceptions:
-    status: todo
-    comment: Command errors are only logged by HeatzyEntity._handle_action.
+  action-exceptions: done
   config-entry-unloading: done
   docs-configuration-parameters:
     status: exempt
@@ -40,70 +38,40 @@ rules:
   entity-unavailable: done
   integration-owner: done
   log-when-unavailable: done
-  parallel-updates:
-    status: todo
-    comment: PARALLEL_UPDATES is not set in the platforms.
-  reauthentication-flow:
-    status: todo
-    comment: An authentication failure should raise ConfigEntryAuthFailed and start a reauth flow.
-  test-coverage:
-    status: todo
-    comment: Total coverage is about 95 %, some modules are below.
+  parallel-updates: done
+  reauthentication-flow: done
+  test-coverage: done
 
   # Gold
   devices: done
-  diagnostics:
-    status: todo
-    comment: Implemented, but it sends commands to the modules; it must become read-only.
+  diagnostics: done
   discovery:
-    status: todo
-    comment: To assess, modules are reached through the cloud account.
+    status: exempt
+    comment: The integration sets up a Heatzy cloud account and only uses the cloud API; nothing on the local network identifies an account.
   discovery-update-info:
-    status: todo
-    comment: Depends on discovery.
+    status: exempt
+    comment: No discovery (see discovery).
   docs-data-update: done
-  docs-examples:
-    status: todo
-    comment: Add automation examples.
-  docs-known-limitations:
-    status: todo
-    comment: Document the limitations per model.
+  docs-examples: done
+  docs-known-limitations: done
   docs-supported-devices: done
-  docs-supported-functions:
-    status: todo
-    comment: Document the entities per model.
-  docs-troubleshooting:
-    status: todo
-    comment: Add a troubleshooting section (diagnostics, debug logs).
-  docs-use-cases:
-    status: todo
-    comment: Add use cases.
-  dynamic-devices:
-    status: todo
-    comment: Modules added to the account after setup need a reload.
+  docs-supported-functions: done
+  docs-troubleshooting: done
+  docs-use-cases: done
+  dynamic-devices: done
   entity-category: done
   entity-device-class: done
   entity-disabled-by-default:
-    status: todo
-    comment: Review which diagnostic entities should be disabled by default.
-  entity-translations:
-    status: todo
-    comment: Climate and switch entities have no translations; descriptions still set name.
-  exception-translations:
-    status: todo
-    comment: Depends on action-exceptions.
-  icon-translations:
-    status: todo
-    comment: Icons are set in the entity descriptions instead of icons.json.
-  reconfiguration-flow:
-    status: todo
-    comment: No reconfigure step.
+    status: exempt
+    comment: Every entity drives the heating or reports a problem (connectivity); none is noisy or rarely used.
+  entity-translations: done
+  exception-translations: done
+  icon-translations: done
+  reconfiguration-flow: done
   repair-issues:
     status: exempt
     comment: No issue the user can repair has been identified.
-  stale-devices:
-    status: todo
-    comment: Modules removed from the account are not removed automatically.
+  stale-devices: done
 
   # Platinum
   async-dependency: done

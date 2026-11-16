@@ -76,6 +76,93 @@ data:
   delay: 60
 ```
 
+## Supported functions
+
+| Model (family)                                                                  | Presets                                                   | Temperatures                                 | Switches                    | Other entities                     |
+| ------------------------------------------------------------------------------- | --------------------------------------------------------- | -------------------------------------------- | --------------------------- | ---------------------------------- |
+| Heatzy Pilote 1 (`PILOTE_V1`)                                                   | comfort, eco, away                                        | —                                            | —                           | —                                  |
+| Heatzy Pilote 2, Elec'Pro (`PILOTE_V2`), Pilote SoC, Elec'Pro SoC (`PILOTE_V3`) | comfort, eco, away, boost, vacation                       | —                                            | lock                        | boost and vacation durations       |
+| Elec'Pro BLE, Sauter (`PILOTE_V4`)                                              | comfort, comfort 1, comfort 2, eco, away, boost, vacation | —                                            | lock                        | boost and vacation durations       |
+| Glow, Onyx, Inea, Glow BLU (`GLOW`)                                             | comfort, comfort 1, comfort 2, eco, away, boost, vacation | current, comfort and eco setpoints           | lock                        | durations, temperature calibration |
+| Bloom (`BLOOM`)                                                                 | comfort, comfort 1, comfort 2, eco, away, boost, vacation | current, comfort and eco setpoints           | lock                        | boost and vacation durations       |
+| Pilote Pro (`PILOTE_PRO_V1`)                                                    | comfort, comfort 1, comfort 2, eco, away, boost, vacation | current, comfort and eco setpoints, humidity | lock, window, presence mode | durations, presence detection      |
+
+Every module also has a **connectivity** binary sensor, and a climate entity with
+the `heat`, `off` and `auto` (module schedule) modes.
+
+## Data updates
+
+The Heatzy cloud pushes every change over a websocket. Every minute, the
+integration also reads the cloud API when the websocket has no recent data, and
+every 30 minutes it reads the full list of modules of the account: a module
+added to the account then appears without reloading, and a module removed from
+the account is removed from Home Assistant.
+
+## Use cases
+
+- Switch the whole house to eco at night or when everybody is away, and back to
+  comfort in the morning.
+- Start a boost when you come home earlier than planned.
+- Put the heaters in vacation mode for the length of a trip.
+- Get a notification when a module goes offline (connectivity binary sensor).
+
+## Automation examples
+
+Eco when the house is empty:
+
+```yaml
+triggers:
+  - trigger: state
+    entity_id: zone.home
+    to: "0"
+actions:
+  - action: climate.set_preset_mode
+    target:
+      entity_id: all
+    data:
+      preset_mode: eco
+```
+
+Notify when a module is offline for 10 minutes:
+
+```yaml
+triggers:
+  - trigger: state
+    entity_id: binary_sensor.living_room_connectivity
+    to: "off"
+    for: "00:10:00"
+actions:
+  - action: notify.notify
+    data:
+      message: "The Heatzy module of the living room is offline."
+```
+
+## Known limitations
+
+- The integration needs the Heatzy cloud: without internet access, the modules
+  cannot be controlled from Home Assistant.
+- Heatzy Pilote 1 only supports the comfort, eco and away presets, without
+  temperatures, boost or vacation.
+- Pilot-wire modules (Pilote 2, 3, Elec'Pro, Sauter) have no temperature sensor:
+  the setpoint is the one of the heater.
+- Boost and vacation durations go from 1 to 255 (minutes or days).
+- The window and presence modes only exist on the Pilote Pro, the temperature
+  calibration only on the Glow family.
+
+## Troubleshooting
+
+- **Home Assistant asks to reauthenticate**: the password of the Heatzy account
+  changed. Enter the new one; to change it yourself, use **Reconfigure** on the
+  integration entry.
+- **Entities are unavailable**: check the connectivity binary sensor. If it is
+  off, the module is offline in the Heatzy app as well; check its power and Wi-Fi.
+- **An action fails with "Command to … failed"**: the Heatzy cloud refused the
+  command or the module is offline; try again from the Heatzy app.
+- **Report an issue**: download the diagnostics of the integration entry
+  (passwords and identifiers are redacted) and attach them to a
+  [GitHub issue](https://github.com/cyr-ius/hass-heatzy/issues). If you also
+  enable debug logs, check them for tokens or passwords before sharing them.
+
 ## Removal
 
 1. Go to **Settings > Devices & services**, select **Heatzy**, open the menu of

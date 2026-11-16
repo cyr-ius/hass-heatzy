@@ -12,6 +12,26 @@
           "username": "The email address of your Heatzy account (the one used in the Heatzy app).",
           "password": "The password of your Heatzy account."
         }
+      },
+      "reauth_confirm": {
+        "title": "Reauthenticate your Heatzy account",
+        "description": "The password of {username} was refused. Enter the new password of the account.",
+        "data": {
+          "password": "[%key:common::config_flow::data::password%]"
+        },
+        "data_description": {
+          "password": "The password of your Heatzy account."
+        }
+      },
+      "reconfigure": {
+        "title": "Change the password of your Heatzy account",
+        "description": "Enter the new password of {username}. To use another Heatzy account, add a new entry.",
+        "data": {
+          "password": "[%key:common::config_flow::data::password%]"
+        },
+        "data_description": {
+          "password": "The password of your Heatzy account."
+        }
       }
     },
     "error": {
@@ -20,7 +40,9 @@
       "unknown": "[%key:common::config_flow::error::unknown%]"
     },
     "abort": {
-      "already_configured": "[%key:common::config_flow::abort::already_configured_service%]"
+      "already_configured": "[%key:common::config_flow::abort::already_configured_service%]",
+      "reauth_successful": "[%key:common::config_flow::abort::reauth_successful%]",
+      "reconfigure_successful": "[%key:common::config_flow::abort::reconfigure_successful%]"
     }
   },
   "services": {
@@ -57,12 +79,40 @@
     "number": {
       "calibration": {
         "name": "Temperature calibration"
+      },
+      "vacation": {
+        "name": "Vacation"
+      },
+      "boost": {
+        "name": "Boost"
       }
     },
     "binary_sensor": {
       "connectivity": {
         "name": "Connectivity"
+      },
+      "presence_detected": {
+        "name": "Presence detection"
       }
+    },
+    "switch": {
+      "lock": {
+        "name": "Lock"
+      },
+      "window": {
+        "name": "Window"
+      },
+      "presence_enabled": {
+        "name": "Presence mode"
+      }
+    }
+  },
+  "exceptions": {
+    "command_failed": {
+      "message": "Command to {device} failed: {error}"
+    },
+    "invalid_auth": {
+      "message": "The Heatzy account password was refused."
     }
   }
 }
