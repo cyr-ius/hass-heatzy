@@ -12,6 +12,16 @@
           "username": "L'adresse e-mail de votre compte Heatzy (celle de l'application Heatzy).",
           "password": "Le mot de passe de votre compte Heatzy."
         }
+      },
+      "reauth_confirm": {
+        "title": "Réauthentifier votre compte Heatzy",
+        "description": "Le mot de passe de {username} a été refusé. Saisissez le nouveau mot de passe du compte.",
+        "data": {
+          "password": "Mot de passe"
+        },
+        "data_description": {
+          "password": "Le mot de passe de votre compte Heatzy."
+        }
       }
     },
     "error": {
@@ -20,7 +30,8 @@
       "unknown": "Une erreur inconnue s'est produite."
     },
     "abort": {
-      "already_configured": "Votre compte est déjà enregistré."
+      "already_configured": "Votre compte est déjà enregistré.",
+      "reauth_successful": "La réauthentification a réussi"
     }
   },
   "services": {
@@ -67,6 +78,14 @@
       "connectivity": {
         "name": "Connectivité"
       }
+    }
+  },
+  "exceptions": {
+    "command_failed": {
+      "message": "La commande vers {device} a échoué : {error}"
+    },
+    "invalid_auth": {
+      "message": "Le mot de passe du compte Heatzy a été refusé."
     }
   }
 }

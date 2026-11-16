@@ -10,6 +10,7 @@ from heatzypy.exception import AuthenticationFailed, ConnectionFailed, HeatzyExc
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_PASSWORD, CONF_USERNAME, EVENT_HOMEASSISTANT_STOP
 from homeassistant.core import CALLBACK_TYPE, Event, HomeAssistant, callback
+from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers.aiohttp_client import async_create_clientsession
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
@@ -55,6 +56,7 @@ class HeatzyDataUpdateCoordinator(DataUpdateCoordinator):
             except AuthenticationFailed as error:
                 self.logger.error("Authentication failed (%s)", error)
                 self.last_update_success = False
+                self.entry.async_start_reauth(self.hass)
             except ConnectionFailed as error:
                 self.logger.error("Connection failed (%s)", error)
                 self.last_update_success = False
@@ -93,6 +95,10 @@ class HeatzyDataUpdateCoordinator(DataUpdateCoordinator):
         try:
             if not self.api.websocket.is_fresh(SCAN_INTERVAL * 2):
                 return await self.api.async_get_devices()
+        except AuthenticationFailed as error:
+            raise ConfigEntryAuthFailed(
+                translation_domain=DOMAIN, translation_key="invalid_auth"
+            ) from error
         except HeatzyException as error:
             raise UpdateFailed(f"Invalid response from API: {error}") from error
         else:

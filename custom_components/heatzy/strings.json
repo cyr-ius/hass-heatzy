@@ -12,6 +12,16 @@
           "username": "The email address of your Heatzy account (the one used in the Heatzy app).",
           "password": "The password of your Heatzy account."
         }
+      },
+      "reauth_confirm": {
+        "title": "Reauthenticate your Heatzy account",
+        "description": "The password of {username} was refused. Enter the new password of the account.",
+        "data": {
+          "password": "[%key:common::config_flow::data::password%]"
+        },
+        "data_description": {
+          "password": "The password of your Heatzy account."
+        }
       }
     },
     "error": {
@@ -20,7 +30,8 @@
       "unknown": "[%key:common::config_flow::error::unknown%]"
     },
     "abort": {
-      "already_configured": "[%key:common::config_flow::abort::already_configured_service%]"
+      "already_configured": "[%key:common::config_flow::abort::already_configured_service%]",
+      "reauth_successful": "[%key:common::config_flow::abort::reauth_successful%]"
     }
   },
   "services": {
@@ -63,6 +74,14 @@
       "connectivity": {
         "name": "Connectivity"
       }
+    }
+  },
+  "exceptions": {
+    "command_failed": {
+      "message": "Command to {device} failed: {error}"
+    },
+    "invalid_auth": {
+      "message": "The Heatzy account password was refused."
     }
   }
 }

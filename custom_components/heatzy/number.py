@@ -32,6 +32,9 @@ from .const import (
 )
 from .entity import HeatzyEntity
 
+# Data comes from the coordinator; actions are not limited.
+PARALLEL_UPDATES = 0
+
 
 @dataclass(frozen=True, kw_only=True)
 class HeatzyNumberEntityDescription(NumberEntityDescription):
@@ -155,7 +158,4 @@ class HeatzyCalibrationNumber(HeatzyEntity, NumberEntity):
     async def async_set_native_value(self, value: float) -> None:
         """Push the new calibration offset to the device."""
         raw = round(value) + 5
-        await self._handle_action(
-            {CONF_ATTRS: {self.entity_description.attr: raw}},
-            "Error setting temperature calibration",
-        )
+        await self._handle_action({CONF_ATTRS: {self.entity_description.attr: raw}})

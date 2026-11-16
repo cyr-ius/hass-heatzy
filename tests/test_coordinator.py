@@ -6,10 +6,12 @@ from unittest.mock import AsyncMock, MagicMock, PropertyMock
 from heatzypy.exception import AuthenticationFailed, ConnectionFailed, HeatzyException
 import pytest
 
+from custom_components.heatzy.const import DOMAIN
 from custom_components.heatzy.coordinator import HeatzyDataUpdateCoordinator
-from homeassistant.config_entries import ConfigEntry
+from homeassistant.config_entries import SOURCE_REAUTH, ConfigEntry
 from homeassistant.const import EVENT_HOMEASSISTANT_STOP
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers.update_coordinator import UpdateFailed
 
 
@@ -66,29 +68,38 @@ async def test_update_data_returns_cached_when_updated(
     coordinator.api.async_get_devices.assert_not_awaited()
 
 
+@pytest.mark.parametrize(
+    ("error", "expected"),
+    [
+        (HeatzyException("boom"), UpdateFailed),
+        (AuthenticationFailed("bad credentials"), ConfigEntryAuthFailed),
+    ],
+)
 async def test_update_data_raises_update_failed(
     hass: HomeAssistant,
     config_entry: ConfigEntry,
     HeatzyClient: AsyncMock,
+    error: Exception,
+    expected: type[Exception],
 ):
-    """A HeatzyException during polling is converted to UpdateFailed."""
+    """A polling error fails the update; a refused password asks for reauth."""
     coordinator = HeatzyDataUpdateCoordinator(hass, config_entry)
     await coordinator._async_setup()
 
     type(coordinator.api.websocket).is_connected = PropertyMock(return_value=True)
     coordinator.api.websocket.is_fresh = MagicMock(return_value=False)
-    coordinator.api.async_get_devices = AsyncMock(side_effect=HeatzyException("boom"))
+    coordinator.api.async_get_devices = AsyncMock(side_effect=error)
 
-    with pytest.raises(UpdateFailed):
+    with pytest.raises(expected):
         await coordinator._async_update_data()
 
 
 @pytest.mark.parametrize(
-    "error",
+    ("error", "reauth"),
     [
-        AuthenticationFailed("bad credentials"),
-        ConnectionFailed("no route"),
-        HeatzyException("unexpected"),
+        (AuthenticationFailed("bad credentials"), True),
+        (ConnectionFailed("no route"), False),
+        (HeatzyException("unexpected"), False),
     ],
 )
 async def test_websocket_listener_errors(
@@ -96,6 +107,7 @@ async def test_websocket_listener_errors(
     config_entry: ConfigEntry,
     HeatzyClient: AsyncMock,
     error: Exception,
+    reauth: bool,
 ):
     """The listener marks the update as failed on websocket errors."""
     coordinator = HeatzyDataUpdateCoordinator(hass, config_entry)
@@ -107,6 +119,8 @@ async def test_websocket_listener_errors(
 
     assert coordinator.last_update_success is False
     coordinator.api.websocket.async_disconnect.assert_awaited()
+    flows = hass.config_entries.flow.async_progress_by_handler(DOMAIN)
+    assert any(flow["context"]["source"] == SOURCE_REAUTH for flow in flows) is reauth
 
 
 async def test_websocket_closed_on_hass_stop(

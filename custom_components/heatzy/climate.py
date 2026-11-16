@@ -62,6 +62,9 @@ from .const import (
 )
 from .entity import HeatzyEntity
 
+# Data comes from the coordinator; actions are not limited.
+PARALLEL_UPDATES = 0
+
 _LOGGER = logging.getLogger(__name__)
 
 # Home Assistant < 2026.11 does not provide the native_* temperature API
@@ -449,7 +452,7 @@ class HeatzyThermostat(HeatzyEntity, ClimateEntity):
         config = {
             CONF_ATTRS: {CONF_TIMER_SWITCH: 1, CONF_DEROG_MODE: 0, CONF_DEROG_TIME: 0}
         }
-        await self._handle_action(config, "Error while turn auto")
+        await self._handle_action(config)
 
     async def async_set_hvac_mode(self, hvac_mode: HVACMode) -> None:
         """Set new hvac mode."""
@@ -467,14 +470,14 @@ class HeatzyThermostat(HeatzyEntity, ClimateEntity):
             config = {CONF_ATTRS: {CONF_MODE: mode}}
             if self._attrs.get(CONF_DEROG_MODE, 0) > 0:
                 config[CONF_ATTRS].update({CONF_DEROG_MODE: 0, CONF_DEROG_TIME: 0})
-            await self._handle_action(config, f"Error preset mode: {preset_mode}")
+            await self._handle_action(config)
 
     async def _async_derog_mode(self, mode: int, delay: int | None = None) -> None:
         """Derogation mode."""
         config: dict[str, Any] = {CONF_ATTRS: {CONF_DEROG_MODE: mode}}
         if delay:
             config[CONF_ATTRS][CONF_DEROG_TIME] = delay
-        await self._handle_action(config, f"Error to set derog mode:{mode}")
+        await self._handle_action(config)
 
     async def _async_derog_mode_off(self) -> None:
         """Disable derog mode."""
@@ -555,7 +558,7 @@ class HeatzyPiloteV1Thermostat(HeatzyThermostat):
     async def async_set_preset_mode(self, preset_mode: str) -> None:
         """Set new preset mode."""
         mode = self.entity_description.ha_to_heatzy_state.get(preset_mode)
-        await self._handle_action({"raw": mode}, f"Error preset mode: {preset_mode}")
+        await self._handle_action({"raw": mode})
         await self.coordinator.async_request_refresh()
 
 
@@ -651,17 +654,17 @@ class Glowv1Thermostat(HeatzyThermostat):
     async def async_turn_on(self) -> None:
         """Turn device on."""
         config = {CONF_ATTRS: {CONF_ON_OFF: True, CONF_DEROG_MODE: 0}}
-        await self._handle_action(config, f"Error to turn on {self.unique_id}")
+        await self._handle_action(config)
 
     async def async_turn_off(self) -> None:
         """Turn device off."""
         config = {CONF_ATTRS: {CONF_ON_OFF: False, CONF_DEROG_MODE: 0}}
-        await self._handle_action(config, f"Error to turn off {self.unique_id}")
+        await self._handle_action(config)
 
     async def async_turn_auto(self) -> None:
         """Turn device off."""
         config = {CONF_ATTRS: {CONF_ON_OFF: True, CONF_DEROG_MODE: 1}}
-        await self._handle_action(config, f"Error to turn auto {self.unique_id}")
+        await self._handle_action(config)
 
     async def async_set_temperature(self, **kwargs: Any) -> None:
         """Set new target temperature."""
@@ -675,7 +678,7 @@ class Glowv1Thermostat(HeatzyThermostat):
                 }
             }
 
-            await self._handle_action(config, "Error to set temperature")
+            await self._handle_action(config)
 
     async def async_set_preset_mode(self, preset_mode: str) -> None:
         """Set new preset mode."""
@@ -687,7 +690,7 @@ class Glowv1Thermostat(HeatzyThermostat):
                 config[CONF_ATTRS].update({CONF_DEROG_MODE: 0, CONF_DEROG_TIME: 0})
             else:
                 config[CONF_ATTRS].update({CONF_DEROG_MODE: 0, CONF_DEROG_TIME: 0})
-            await self._handle_action(config, f"Error preset mode: {preset_mode}")
+            await self._handle_action(config)
 
 
 class Bloomv1Thermostat(HeatzyThermostat):
@@ -730,7 +733,7 @@ class Bloomv1Thermostat(HeatzyThermostat):
             config = {
                 CONF_ATTRS: {CONF_CFT_TEMP: int(temp_cft), CONF_ECO_TEMP: int(temp_eco)}
             }
-            await self._handle_action(config, "Error to set temperature")
+            await self._handle_action(config)
 
 
 class HeatzyPiloteProV1(HeatzyThermostat):
@@ -823,4 +826,4 @@ class HeatzyPiloteProV1(HeatzyThermostat):
                     CONF_ECO_TEMP: int(temp_eco) * 10,
                 }
             }
-            await self._handle_action(config, "Error to set temperature")
+            await self._handle_action(config)

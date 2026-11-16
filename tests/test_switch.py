@@ -3,6 +3,7 @@
 import copy
 from unittest.mock import AsyncMock
 
+from heatzypy.exception import CommandFailed
 import pytest
 
 from custom_components.heatzy.const import (
@@ -13,8 +14,16 @@ from custom_components.heatzy.const import (
 )
 from homeassistant.components.climate import HVACMode
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import ATTR_ENTITY_ID, STATE_OFF, STATE_ON, Platform
+from homeassistant.const import (
+    ATTR_ENTITY_ID,
+    SERVICE_TURN_OFF,
+    SERVICE_TURN_ON,
+    STATE_OFF,
+    STATE_ON,
+    Platform,
+)
 from homeassistant.core import HomeAssistant, ServiceCall
+from homeassistant.exceptions import HomeAssistantError
 
 
 @pytest.mark.parametrize("entity_id", ["switch.test_pilote_v2_lock"])
@@ -132,3 +141,48 @@ async def test_presence_switch(
     climate_state = hass.states.get("climate.test_pilote_pro")
     assert state.state == STATE_ON
     assert climate_state.state == HVACMode.AUTO
+
+
+async def test_switch_command_error(
+    hass: HomeAssistant, config_entry: ConfigEntry, HeatzyClient: AsyncMock
+) -> None:
+    """Show the user why a command failed instead of only logging it."""
+    await hass.config_entries.async_setup(config_entry.entry_id)
+    await hass.async_block_till_done()
+    HeatzyClient.websocket.async_control_device.side_effect = CommandFailed("refused")
+
+    with pytest.raises(HomeAssistantError) as exc_info:
+        await hass.services.async_call(
+            Platform.SWITCH,
+            SERVICE_TURN_ON,
+            {ATTR_ENTITY_ID: "switch.test_pilote_v2_lock"},
+            blocking=True,
+        )
+    assert exc_info.value.translation_key == "command_failed"
+    assert exc_info.value.translation_placeholders["error"] == "refused"
+
+
+@pytest.mark.parametrize(
+    ("entity_id", "attr"),
+    [
+        ("switch.test_pilote_v2_lock", CONF_LOCK),
+        ("switch.test_pilote_pro_presence_mode", CONF_DEROG_MODE),
+    ],
+)
+async def test_switch_turn_off(
+    hass: HomeAssistant,
+    config_entry: ConfigEntry,
+    HeatzyClient: AsyncMock,
+    entity_id: str,
+    attr: str,
+) -> None:
+    """Turning a switch off sends 0 for its attribute."""
+    await hass.config_entries.async_setup(config_entry.entry_id)
+    await hass.async_block_till_done()
+
+    await hass.services.async_call(
+        Platform.SWITCH, SERVICE_TURN_OFF, {ATTR_ENTITY_ID: entity_id}, blocking=True
+    )
+    assert HeatzyClient.websocket.async_control_device.await_args.args[1] == {
+        CONF_ATTRS: {attr: 0}
+    }

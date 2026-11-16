@@ -23,6 +23,9 @@ from .const import (
 )
 from .entity import HeatzyEntity
 
+# Data comes from the coordinator; actions are not limited.
+PARALLEL_UPDATES = 0
+
 
 @dataclass(frozen=True, kw_only=True)
 class HeatzyBinarySensorEntityDescription(BinarySensorEntityDescription):

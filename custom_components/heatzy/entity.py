@@ -6,6 +6,7 @@ from typing import Any
 from heatzypy import HeatzyException
 
 from homeassistant.core import callback
+from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity import EntityDescription
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
@@ -56,15 +57,23 @@ class HeatzyEntity(CoordinatorEntity[HeatzyDataUpdateCoordinator]):
         """Return True if the coordinator is healthy and the device is online."""
         return super().available and bool(self._device.get(CONF_IS_ONLINE, True))
 
-    async def _handle_action(
-        self, config: dict[str, Any], error_msg: str = "Error unknown"
-    ):
-        """Execute action."""
+    async def _handle_action(self, config: dict[str, Any]) -> None:
+        """Send a command to the module.
+
+        Raises HomeAssistantError so that the user sees why the action failed.
+        """
+        _LOGGER.debug("Handle action (%s): %s", self.device_id, config)
         try:
-            _LOGGER.debug("Handle action (%s): %s", self.device_id, config)
             await self.async_control_device(self.device_id, config)
         except HeatzyException as error:
-            _LOGGER.error("%s (%s)", error_msg, error)
+            raise HomeAssistantError(
+                translation_domain=DOMAIN,
+                translation_key="command_failed",
+                translation_placeholders={
+                    "device": self._device.get(CONF_ALIAS, self.device_id),
+                    "error": str(error),
+                },
+            ) from error
 
     @callback
     def _handle_coordinator_update(self) -> None:
