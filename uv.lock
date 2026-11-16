@@ -1182,7 +1182,7 @@ lint = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "heatzypy", specifier = "==2.6.1" }]
+requires-dist = [{ name = "heatzypy", specifier = "==2.6.2" }]
 
 [package.metadata.requires-dev]
 dev = [
@@ -1227,14 +1227,14 @@ wheels = [
 
 [[package]]
 name = "heatzypy"
-version = "2.6.1"
+version = "2.6.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aiohttp" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/76/c7/27a00601fb85f008283181f9c9c709e511b81478b276c6c882af699e8290/heatzypy-2.6.1.tar.gz", hash = "sha256:b8a49902fa57a8ab44b06ffd5954828f6e01044978c5bd16be8ac9050a03dfdc", size = 32955, upload-time = "2026-09-12T14:44:58.569Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/80/0b/cfe6eeecedc61ce7b319710594f3b82c833013b697a4f028aa813d6533ee/heatzypy-2.6.2.tar.gz", hash = "sha256:3a4b15d6c68eab94a5dc3937a6b6c0cfd6d14462cc8c24e2ba24ce2a6e80ae4d", size = 32880, upload-time = "2026-11-16T12:38:09.3Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ff/89/f4f29bf8266566f102a3806b3dcbd0854c7fad0b49c11368de8c85ba0304/heatzypy-2.6.1-py3-none-any.whl", hash = "sha256:c000be9a3ad44670bc1c2a626c86a443f234e9a55d8dc85c55f2cbbee2714c72", size = 31491, upload-time = "2026-09-12T14:44:57.008Z" },
+    { url = "https://files.pythonhosted.org/packages/6c/ad/777ccc6f1cc0d2e61c2c7544fd818f0a5c139e726deb1dfc802a131e7fc6/heatzypy-2.6.2-py3-none-any.whl", hash = "sha256:c42b6995a4e230e7b358b077ce1f403bed0580cae6cfedf8977180a1b5317b82", size = 31857, upload-time = "2026-11-16T12:38:08.093Z" },
 ]
 
 [[package]]
