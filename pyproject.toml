@@ -6,7 +6,7 @@ readme = "README.md"
 license = { file = "LICENSE" }
 requires-python = ">=3.14.0"
 authors = [{ name = "cyr-ius", email = "cyr-ius@ipocus.net" }]
-dependencies = ["heatzypy==2.6.1"]
+dependencies = ["heatzypy==2.6.2"]
 
 [dependency-groups]
 lint = [

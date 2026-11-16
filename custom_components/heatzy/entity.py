@@ -9,7 +9,14 @@ from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity import EntityDescription
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import CONF_ALIAS, CONF_ATTRS, CONF_MODEL, CONF_VERSION, DOMAIN
+from .const import (
+    CONF_ALIAS,
+    CONF_ATTRS,
+    CONF_IS_ONLINE,
+    CONF_MODEL,
+    CONF_VERSION,
+    DOMAIN,
+)
 from .coordinator import HeatzyDataUpdateCoordinator
 
 _LOGGER = logging.getLogger(__name__)
@@ -42,6 +49,11 @@ class HeatzyEntity(CoordinatorEntity[HeatzyDataUpdateCoordinator]):
         self._device = coordinator.data.get(did, {})
         self._attrs = self._device.get(CONF_ATTRS, {})
         self.async_control_device = coordinator.api.websocket.async_control_device
+
+    @property
+    def available(self) -> bool:
+        """Return True if the coordinator is healthy and the device is online."""
+        return super().available and bool(self._device.get(CONF_IS_ONLINE, True))
 
     async def _handle_action(
         self, config: dict[str, Any], error_msg: str = "Error unknown"

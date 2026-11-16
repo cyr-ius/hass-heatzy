@@ -42,7 +42,6 @@ from .const import (
     CONF_ECO_TEMP,
     CONF_HEATING_STATE,
     CONF_HUMIDITY,
-    CONF_IS_ONLINE,
     CONF_MODE,
     CONF_ON_OFF,
     CONF_PRODUCT_KEY,
@@ -359,7 +358,6 @@ class HeatzyThermostat(HeatzyEntity, ClimateEntity):
         self._attr_supported_features = description.supported_features
         self._attr_preset_modes = description.preset_modes
         self._attr_hvac_modes = description.hvac_modes
-        self._attr_available = coordinator.data[did].get(CONF_IS_ONLINE, True)
 
     if LEGACY_TEMPERATURE_API:
         # Backport of the native_* temperature API for Home Assistant < 2026.11.

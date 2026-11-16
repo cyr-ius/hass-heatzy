@@ -10,10 +10,17 @@ from homeassistant.components.binary_sensor import (
     BinarySensorEntityDescription,
 )
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import CONF_CUR_MODE, CONF_DEROG_MODE, CONF_PRODUCT_KEY, PILOTE_PRO_V1
+from .const import (
+    CONF_CUR_MODE,
+    CONF_DEROG_MODE,
+    CONF_IS_ONLINE,
+    CONF_PRODUCT_KEY,
+    PILOTE_PRO_V1,
+)
 from .entity import HeatzyEntity
 
 
@@ -21,7 +28,8 @@ from .entity import HeatzyEntity
 class HeatzyBinarySensorEntityDescription(BinarySensorEntityDescription):
     """Represents an Flow Sensor."""
 
-    products: list[str]
+    # None means the sensor applies to every product.
+    products: list[str] | None
     value_fn: Callable[..., Any]
     cls: Callable[..., Any] = lambda *args: HeatzyBinarySensor(*args)
 
@@ -34,9 +42,19 @@ BINARY_SENSOR_TYPES: Final[tuple[HeatzyBinarySensorEntityDescription, ...]] = (
         products=PILOTE_PRO_V1,
         device_class=BinarySensorDeviceClass.OCCUPANCY,
         icon="mdi:location-enter",
-        value_fn=lambda attrs: (
-            attrs.get(CONF_DEROG_MODE) == 3 and attrs.get(CONF_CUR_MODE) == "cft"
+        value_fn=lambda device: (
+            device.get("attrs", {}).get(CONF_DEROG_MODE) == 3
+            and device.get("attrs", {}).get(CONF_CUR_MODE) == "cft"
         ),
+    ),
+    HeatzyBinarySensorEntityDescription(
+        key="connectivity",
+        translation_key="connectivity",
+        products=None,
+        device_class=BinarySensorDeviceClass.CONNECTIVITY,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda device: bool(device.get(CONF_IS_ONLINE, True)),
+        cls=lambda *args: HeatzyConnectivitySensor(*args),
     ),
 )
 
@@ -53,19 +71,30 @@ async def async_setup_entry(
     for unique_id, device in coordinator.data.items():
         product_key = device.get(CONF_PRODUCT_KEY)
         for description in BINARY_SENSOR_TYPES:
-            cls = description.cls
-            if product_key in description.products:
-                entities.extend([cls(coordinator, description, unique_id)])
+            if description.products is None or product_key in description.products:
+                entities.append(description.cls(coordinator, description, unique_id))
 
     async_add_entities(entities)
 
 
 class HeatzyBinarySensor(HeatzyEntity, BinarySensorEntity):
-    """Heatzy presence."""
+    """Heatzy binary sensor."""
 
     entity_description: HeatzyBinarySensorEntityDescription
 
     @property
     def is_on(self) -> bool:
-        """Presence status."""
-        return self.entity_description.value_fn(self._attrs)
+        """Return sensor state."""
+        return self.entity_description.value_fn(self._device)
+
+
+class HeatzyConnectivitySensor(HeatzyBinarySensor):
+    """Cloud connectivity of a Heatzy module.
+
+    Stays available while the module is offline so that it can report it.
+    """
+
+    @property
+    def available(self) -> bool:
+        """Only depend on the coordinator, not on the device online status."""
+        return self.coordinator.last_update_success
