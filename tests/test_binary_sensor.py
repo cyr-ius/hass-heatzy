@@ -7,9 +7,7 @@ from homeassistant.const import STATE_OFF, STATE_ON, STATE_UNAVAILABLE
 from homeassistant.core import HomeAssistant
 
 
-@pytest.mark.parametrize(
-    "entity_id", ["binary_sensor.test_pilote_pro_presence_detection"]
-)
+@pytest.mark.parametrize("entity_id", ["binary_sensor.test_pilote_pro_presence_detection"])
 async def test_sensors(
     hass: HomeAssistant,
     config_entry: ConfigEntry,

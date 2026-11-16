@@ -25,9 +25,7 @@ async def test_number(
     assert state.state == str(1)
 
     data = {ATTR_ENTITY_ID: entity_id, ATTR_VALUE: 2}
-    await hass.services.async_call(
-        Platform.NUMBER, SERVICE_SET_VALUE, data, blocking=True
-    )
+    await hass.services.async_call(Platform.NUMBER, SERVICE_SET_VALUE, data, blocking=True)
 
     coordinator = config_entry.runtime_data
     await coordinator.async_refresh()

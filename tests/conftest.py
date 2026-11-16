@@ -47,9 +47,7 @@ def mock_router(request) -> Generator[MagicMock | AsyncMock]:
             if cb := kwargs.get("callback"):
                 cb(api)
 
-        instance.websocket.register_callback = MagicMock(
-            side_effect=_mock_register_callback
-        )
+        instance.websocket.register_callback = MagicMock(side_effect=_mock_register_callback)
         instance.websocket.is_fresh = MagicMock(return_value=False)
 
         async def _mock_connect(*args, **kwargs):

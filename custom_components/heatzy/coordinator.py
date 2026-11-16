@@ -44,12 +44,8 @@ class HeatzyDataUpdateCoordinator(DataUpdateCoordinator):
         async def async_listener() -> None:
             """Create the connection and listen to the websocket."""
             try:
-                self.api.websocket.register_callback(
-                    callback=self.async_set_updated_data
-                )
-                await self.api.websocket.async_connect(
-                    auto_subscribe=True, all_devices=True
-                )
+                self.api.websocket.register_callback(callback=self.async_set_updated_data)
+                await self.api.websocket.async_connect(auto_subscribe=True, all_devices=True)
                 await self.api.websocket.async_listen()
             except AuthenticationFailed as error:
                 self.logger.error("Authentication failed (%s)", error)
@@ -75,14 +71,10 @@ class HeatzyDataUpdateCoordinator(DataUpdateCoordinator):
             await self.api.websocket.async_disconnect()
 
         # Clean disconnect WebSocket on Home Assistant shutdown
-        self.unsub = self.hass.bus.async_listen_once(
-            EVENT_HOMEASSISTANT_STOP, close_websocket
-        )
+        self.unsub = self.hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, close_websocket)
 
         # Start listening
-        self.entry.async_create_background_task(
-            self.hass, async_listener(), "heatzy-listen"
-        )
+        self.entry.async_create_background_task(self.hass, async_listener(), "heatzy-listen")
 
     async def _async_update_data(self) -> dict[str, Any]:
         """Fetch data."""

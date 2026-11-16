@@ -30,9 +30,7 @@ async def test_diagnostics(
     # Invoke the registered callback with a websocket push carrying the
     # sensitive device fields, so pushed updates are collected.
     pushed = {"x": {"did": "x", "mac": "aa:bb", "passcode": "secret", "attrs": {}}}
-    HeatzyClient.websocket.register_callback = MagicMock(
-        side_effect=lambda cb: cb(pushed)
-    )
+    HeatzyClient.websocket.register_callback = MagicMock(side_effect=lambda cb: cb(pushed))
 
     with patch("custom_components.heatzy.diagnostics.asyncio.sleep", new=AsyncMock()):
         result = await async_get_config_entry_diagnostics(hass, config_entry)
@@ -77,9 +75,7 @@ async def test_diagnostics_collects_errors(
     devices = copy.deepcopy(load_json_object_fixture("Devices.json"))
     HeatzyClient.websocket.async_get_devices = AsyncMock(return_value=devices)
     HeatzyClient.async_bindings = AsyncMock(return_value={})
-    HeatzyClient.websocket.async_control_device = AsyncMock(
-        side_effect=Exception("control failed")
-    )
+    HeatzyClient.websocket.async_control_device = AsyncMock(side_effect=Exception("control failed"))
 
     with patch("custom_components.heatzy.diagnostics.asyncio.sleep", new=AsyncMock()):
         result = await async_get_config_entry_diagnostics(hass, config_entry)

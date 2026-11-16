@@ -11,9 +11,7 @@ from homeassistant.helpers.aiohttp_client import async_create_clientsession
 
 from .const import DOMAIN
 
-DATA_SCHEMA = vol.Schema(
-    {vol.Required(CONF_USERNAME): str, vol.Required(CONF_PASSWORD): str}
-)
+DATA_SCHEMA = vol.Schema({vol.Required(CONF_USERNAME): str, vol.Required(CONF_PASSWORD): str})
 
 
 class HeatzyFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
@@ -41,10 +39,6 @@ class HeatzyFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             except HeatzyException:
                 errors["base"] = "unknown"
             else:
-                return self.async_create_entry(
-                    title=f"{DOMAIN} ({username})", data=user_input
-                )
+                return self.async_create_entry(title=f"{DOMAIN} ({username})", data=user_input)
 
-        return self.async_show_form(
-            step_id="user", data_schema=DATA_SCHEMA, errors=errors
-        )
+        return self.async_show_form(step_id="user", data_schema=DATA_SCHEMA, errors=errors)

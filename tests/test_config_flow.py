@@ -50,18 +50,14 @@ async def test_form_success(hass: HomeAssistant, HeatzyClient: AsyncMock) -> Non
         assert result2["data"] == MOCK_USER_INPUT  # From INFO fixture
 
 
-async def test_form_cannot_connect(
-    hass: HomeAssistant, HeatzyClient: AsyncMock
-) -> None:
+async def test_form_cannot_connect(hass: HomeAssistant, HeatzyClient: AsyncMock) -> None:
     """Test the flow handles connection errors."""
     await setup.async_setup_component(hass, "persistent_notification", {})
 
     with patch("custom_components.heatzy.config_flow.HeatzyClient") as mock:
         # Simulate a successful connection and info retrieval
         mock.return_value = HeatzyClient
-        mock.return_value.async_bindings.side_effect = HttpRequestFailed(
-            "Connection failed"
-        )
+        mock.return_value.async_bindings.side_effect = HttpRequestFailed("Connection failed")
 
         # Start the flow and submit data
         result = await hass.config_entries.flow.async_init(
@@ -82,9 +78,7 @@ async def test_form_invalid_auth(hass: HomeAssistant, HeatzyClient: AsyncMock) -
     with patch("custom_components.heatzy.config_flow.HeatzyClient") as mock:
         # Simulate an authentication error
         mock.return_value = HeatzyClient
-        mock.return_value.async_bindings.side_effect = AuthenticationFailed(
-            "Login error"
-        )
+        mock.return_value.async_bindings.side_effect = AuthenticationFailed("Login error")
 
         # Start the flow and submit data
         result = await hass.config_entries.flow.async_init(
@@ -119,14 +113,12 @@ async def test_form_unknown(hass: HomeAssistant, HeatzyClient: AsyncMock) -> Non
         assert result["errors"] == {"base": "unknown"}
 
 
-async def test_form_already_configured(
-    hass: HomeAssistant, HeatzyClient: AsyncMock
-) -> None:
+async def test_form_already_configured(hass: HomeAssistant, HeatzyClient: AsyncMock) -> None:
     """Test the flow aborts if the device is already configured."""
     # Create a mock entry to simulate existing configuration
-    MockConfigEntry(
-        domain=DOMAIN, unique_id="012345678901234", data=MOCK_USER_INPUT
-    ).add_to_hass(hass)
+    MockConfigEntry(domain=DOMAIN, unique_id="012345678901234", data=MOCK_USER_INPUT).add_to_hass(
+        hass
+    )
 
     with patch("custom_components.heatzy.config_flow.HeatzyClient") as mock:
         # Simulate a successful connection and info retrieval

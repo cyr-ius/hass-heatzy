@@ -112,16 +112,12 @@ class HeatzySwitch(HeatzyEntity, SwitchEntity):
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn the entity on."""
         config = {CONF_ATTRS: {self.entity_description.attr: 1}}
-        await self._handle_action(
-            config, f"Error to turn on: {self.entity_description.key}"
-        )
+        await self._handle_action(config, f"Error to turn on: {self.entity_description.key}")
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn the entity off."""
         config = {CONF_ATTRS: {self.entity_description.attr: 0}}
-        await self._handle_action(
-            config, f"Error to turn off: {self.entity_description.key}"
-        )
+        await self._handle_action(config, f"Error to turn off: {self.entity_description.key}")
 
 
 class PresenceSwitch(HeatzySwitch):
@@ -130,13 +126,9 @@ class PresenceSwitch(HeatzySwitch):
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn the entity on."""
         config = {CONF_ATTRS: {self.entity_description.attr: 3}}
-        await self._handle_action(
-            config, f"Error to turn on: {self.entity_description.key}"
-        )
+        await self._handle_action(config, f"Error to turn on: {self.entity_description.key}")
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn the entity off."""
         config = {CONF_ATTRS: {self.entity_description.attr: 0}}
-        await self._handle_action(
-            config, f"Error to turn off: {self.entity_description.key}"
-        )
+        await self._handle_action(config, f"Error to turn off: {self.entity_description.key}")

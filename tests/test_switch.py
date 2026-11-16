@@ -39,9 +39,7 @@ async def test_lock_switch(
 
     # This function will be the side effect of our mock to simulate the state change
     async def mock_set_switch(device_id, data):
-        devices[device_id][CONF_ATTRS][CONF_LOCK] = (
-            1 if data[CONF_ATTRS][CONF_LOCK] == 1 else 0
-        )
+        devices[device_id][CONF_ATTRS][CONF_LOCK] = 1 if data[CONF_ATTRS][CONF_LOCK] == 1 else 0
         coordinator.async_set_updated_data(devices)
         await hass.async_block_till_done()
 
@@ -81,9 +79,7 @@ async def test_window_switch(
     devices = copy.deepcopy(HeatzyClient.__devices)
 
     async def mock_set_switch(device_id, data):
-        devices[device_id][CONF_ATTRS][CONF_WINDOW] = (
-            1 if data[CONF_ATTRS][CONF_WINDOW] == 1 else 0
-        )
+        devices[device_id][CONF_ATTRS][CONF_WINDOW] = 1 if data[CONF_ATTRS][CONF_WINDOW] == 1 else 0
         coordinator.async_set_updated_data(devices)
         await hass.async_block_till_done()
 

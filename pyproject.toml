@@ -28,7 +28,7 @@ Issues = "https://github.com/cyr-ius/hass-heatzy/issues"
 [tool.ruff]
 fix = true
 target-version = "py314"
-line-length = 88
+line-length = 100
 indent-width = 4
 exclude = [
     ".bzr",
@@ -55,7 +55,8 @@ exclude = [
 ]
 
 [tool.ruff.lint]
-ignore = ["E402"]
+select = ["E", "F", "W", "I", "B", "C4", "UP"]
+ignore = ["E402", "E501"]  # E501: line length is handled by the formatter
 
 [tool.pytest.ini_options]
 minversion = "7.0"
