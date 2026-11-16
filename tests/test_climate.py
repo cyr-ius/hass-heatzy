@@ -3,8 +3,10 @@
 from unittest.mock import AsyncMock
 
 import pytest
+import voluptuous as vol
 
 from custom_components.heatzy.const import (
+    DOMAIN,
     PRESET_COMFORT_1,
     PRESET_COMFORT_2,
     PRESET_VACATION,
@@ -28,7 +30,7 @@ from homeassistant.components.climate import (
     HVACMode,
 )
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import ATTR_ENTITY_ID
+from homeassistant.const import ATTR_ENTITY_ID, CONF_DELAY
 from homeassistant.core import HomeAssistant, ServiceCall
 
 
@@ -263,6 +265,28 @@ async def test_derogation_boost(
     await coordinator.async_refresh()
     await hass.async_block_till_done()
     assert hass.states.get(entity_id).attributes[ATTR_PRESET_MODE] == PRESET_BOOST
+
+
+@pytest.mark.parametrize("service", ["boost", "vacation"])
+@pytest.mark.parametrize("delay", [0, 256])
+async def test_derogation_service_delay_out_of_range(
+    hass: HomeAssistant,
+    config_entry: ConfigEntry,
+    HeatzyClient: AsyncMock,
+    service: str,
+    delay: int,
+):
+    """Reject a derogation delay that does not fit on one byte (1..255)."""
+    await hass.config_entries.async_setup(config_entry.entry_id)
+    await hass.async_block_till_done()
+
+    with pytest.raises(vol.Invalid):
+        await hass.services.async_call(
+            DOMAIN,
+            service,
+            {ATTR_ENTITY_ID: "climate.test_pilote_v2", CONF_DELAY: delay},
+            blocking=True,
+        )
 
 
 @pytest.mark.parametrize(

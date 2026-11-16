@@ -23,11 +23,7 @@ from homeassistant.components.climate import (
 )
 from homeassistant.const import CONF_DELAY, UnitOfTemperature
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers import (
-    config_validation as cv,
-    entity_platform,
-    entity_registry as er,
-)
+from homeassistant.helpers import entity_platform, entity_registry as er
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from . import HeatzyConfigEntry, HeatzyDataUpdateCoordinator
@@ -68,9 +64,12 @@ from .const import (
 )
 from .entity import HeatzyEntity
 
+# derog_time is stored on one byte by the module (see services.yaml)
+DELAY_SCHEMA = vol.All(vol.Coerce(int), vol.Range(min=1, max=255))
+
 SERVICES = [
-    ["boost", {vol.Required(CONF_DELAY): cv.positive_int}, "_async_boost_mode"],
-    ["vacation", {vol.Required(CONF_DELAY): cv.positive_int}, "_async_vacation_mode"],
+    ["boost", {vol.Required(CONF_DELAY): DELAY_SCHEMA}, "_async_boost_mode"],
+    ["vacation", {vol.Required(CONF_DELAY): DELAY_SCHEMA}, "_async_vacation_mode"],
     ["presence", {}, "_async_presence_detection"],
 ]
 
