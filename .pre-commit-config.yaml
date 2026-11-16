@@ -1,4 +1,9 @@
 ---
+ci:
+  # pre-commit.ci commits follow Conventional Commits
+  autofix_commit_msg: "style: auto fixes from pre-commit hooks"
+  autoupdate_commit_msg: "chore(pre-commit): autoupdate hooks"
+
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
