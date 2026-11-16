@@ -55,7 +55,8 @@ exclude = [
 ]
 
 [tool.ruff.lint]
-ignore = ["E402"]
+select = ["E", "F", "W", "I", "B", "C4", "UP"]
+ignore = ["E402", "E501"]  # E501: line length is handled by the formatter
 
 [tool.pytest.ini_options]
 minversion = "7.0"
