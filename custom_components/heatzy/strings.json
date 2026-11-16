@@ -22,6 +22,16 @@
         "data_description": {
           "password": "The password of your Heatzy account."
         }
+      },
+      "reconfigure": {
+        "title": "Change the password of your Heatzy account",
+        "description": "Enter the new password of {username}. To use another Heatzy account, add a new entry.",
+        "data": {
+          "password": "[%key:common::config_flow::data::password%]"
+        },
+        "data_description": {
+          "password": "The password of your Heatzy account."
+        }
       }
     },
     "error": {
@@ -31,7 +41,8 @@
     },
     "abort": {
       "already_configured": "[%key:common::config_flow::abort::already_configured_service%]",
-      "reauth_successful": "[%key:common::config_flow::abort::reauth_successful%]"
+      "reauth_successful": "[%key:common::config_flow::abort::reauth_successful%]",
+      "reconfigure_successful": "[%key:common::config_flow::abort::reconfigure_successful%]"
     }
   },
   "services": {

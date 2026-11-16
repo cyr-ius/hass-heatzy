@@ -81,3 +81,24 @@ class HeatzyFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             description_placeholders={CONF_USERNAME: username},
             errors=errors,
         )
+
+    async def async_step_reconfigure(
+        self, user_input: dict[str, Any] | None = None
+    ) -> config_entries.ConfigFlowResult:
+        """Change the password of the account before it is refused."""
+        entry = self._get_reconfigure_entry()
+        username = entry.data[CONF_USERNAME]
+        errors: dict[str, str] = {}
+        if user_input:
+            errors = await self._async_validate(username, user_input[CONF_PASSWORD])
+            if not errors:
+                return self.async_update_reload_and_abort(
+                    entry, data_updates={CONF_PASSWORD: user_input[CONF_PASSWORD]}
+                )
+
+        return self.async_show_form(
+            step_id="reconfigure",
+            data_schema=REAUTH_SCHEMA,
+            description_placeholders={CONF_USERNAME: username},
+            errors=errors,
+        )
