@@ -6,6 +6,8 @@ import pytest
 import voluptuous as vol
 
 from custom_components.heatzy.const import (
+    CONF_ATTRS,
+    CONF_DEROG_MODE,
     DOMAIN,
     PRESET_COMFORT_1,
     PRESET_COMFORT_2,
@@ -335,7 +337,13 @@ async def test_set_preset_comfort1_2(
 
 
 @pytest.mark.parametrize(
-    "entity_id", ["climate.test_onyx", "climate.test_bloom", "climate.test_glow"]
+    "entity_id",
+    [
+        "climate.test_onyx",
+        "climate.test_bloom",
+        "climate.test_glow",
+        "climate.test_pilote_pro",
+    ],
 )
 async def test_set_temperature(
     hass: HomeAssistant,
@@ -484,3 +492,41 @@ async def test_pilote_pro_hvac_action(
 
     state = hass.states.get("climate.test_pilote_pro")
     assert state.attributes[ATTR_HVAC_ACTION] == expected
+
+
+async def test_presence_action(
+    hass: HomeAssistant, config_entry: ConfigEntry, HeatzyClient: AsyncMock
+) -> None:
+    """Start the presence detection derogation (derog_mode 3)."""
+    await hass.config_entries.async_setup(config_entry.entry_id)
+    await hass.async_block_till_done()
+
+    await hass.services.async_call(
+        DOMAIN,
+        "presence",
+        {ATTR_ENTITY_ID: "climate.test_pilote_pro"},
+        blocking=True,
+    )
+    HeatzyClient.websocket.async_control_device.assert_awaited_with(
+        "6wHqU2TvH0YUUZVhdfLhi6", {CONF_ATTRS: {CONF_DEROG_MODE: 3}}
+    )
+
+
+async def test_pilote_v1_set_preset(
+    hass: HomeAssistant, config_entry: ConfigEntry, HeatzyClient: AsyncMock
+) -> None:
+    """Pilote V1 takes raw commands through the REST API."""
+    # The entity binds the REST method at creation: mock it before the setup.
+    HeatzyClient.async_control_device = AsyncMock()
+    await hass.config_entries.async_setup(config_entry.entry_id)
+    await hass.async_block_till_done()
+
+    await hass.services.async_call(
+        CLIM_DOMAIN,
+        SERVICE_SET_PRESET_MODE,
+        {ATTR_ENTITY_ID: "climate.test_pilote_v1", ATTR_PRESET_MODE: PRESET_ECO},
+        blocking=True,
+    )
+    did, config = HeatzyClient.async_control_device.await_args.args
+    assert did == "AKcJWxXqnqrlTip2CB6buh"
+    assert "raw" in config

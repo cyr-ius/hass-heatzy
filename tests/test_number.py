@@ -3,11 +3,14 @@
 from unittest.mock import AsyncMock
 
 import pytest
+from pytest_homeassistant_custom_component.common import (
+    mock_restore_cache_with_extra_data,
+)
 
 from homeassistant.components.number import ATTR_VALUE, SERVICE_SET_VALUE
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import ATTR_ENTITY_ID, Platform
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, State
 
 
 @pytest.mark.parametrize("entity_id", ["number.test_pilote_v2_vacation"])
@@ -76,3 +79,28 @@ async def test_calibration(
     await hass.async_block_till_done()
 
     assert float(hass.states.get(entity_id).state) == -2
+
+
+async def test_number_restores_last_value(
+    hass: HomeAssistant, config_entry: ConfigEntry, HeatzyClient: AsyncMock
+) -> None:
+    """Restore the vacation duration set before a restart."""
+    mock_restore_cache_with_extra_data(
+        hass,
+        [
+            (
+                State("number.test_pilote_v2_vacation", "12"),
+                {
+                    "native_value": 12,
+                    "native_min_value": 1,
+                    "native_max_value": 255,
+                    "native_step": 1,
+                    "native_unit_of_measurement": "d",
+                },
+            )
+        ],
+    )
+    await hass.config_entries.async_setup(config_entry.entry_id)
+    await hass.async_block_till_done()
+
+    assert hass.states.get("number.test_pilote_v2_vacation").state == "12"
