@@ -1,7 +1,10 @@
+"""Tests for the Heatzy binary sensors."""
+
 import copy
 from unittest.mock import AsyncMock
 
 import pytest
+
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import STATE_OFF, STATE_ON, STATE_UNAVAILABLE
 from homeassistant.core import HomeAssistant

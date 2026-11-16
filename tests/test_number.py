@@ -1,6 +1,9 @@
+"""Tests for the Heatzy number entities."""
+
 from unittest.mock import AsyncMock
 
 import pytest
+
 from homeassistant.components.number import ATTR_VALUE, SERVICE_SET_VALUE
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import ATTR_ENTITY_ID, Platform
@@ -14,7 +17,7 @@ async def test_number(
     HeatzyClient: AsyncMock,
     entity_id: str,
 ):
-    """Test number"""
+    """Test number."""
 
     await hass.config_entries.async_setup(config_entry.entry_id)
     await hass.async_block_till_done()

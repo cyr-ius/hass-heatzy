@@ -1,3 +1,5 @@
+"""Constants for the Heatzy tests."""
+
 from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
 
 MOCK_USER_INPUT = {

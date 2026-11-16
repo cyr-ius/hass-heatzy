@@ -1,15 +1,15 @@
-"""Test the livebox config flow."""
+"""Test the Heatzy config flow."""
 
 from unittest.mock import AsyncMock, patch
 
-import pytest
 from heatzypy.exception import AuthenticationFailed, HeatzyException, HttpRequestFailed
-from homeassistant import config_entries, setup
-from homeassistant.core import HomeAssistant
-from homeassistant.data_entry_flow import FlowResultType
+import pytest
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.heatzy.const import DOMAIN
+from homeassistant import config_entries, setup
+from homeassistant.core import HomeAssistant
+from homeassistant.data_entry_flow import FlowResultType
 
 from .const import MOCK_USER_INPUT
 

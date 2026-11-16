@@ -3,18 +3,14 @@
 import asyncio
 from unittest.mock import AsyncMock, MagicMock, PropertyMock
 
+from heatzypy.exception import AuthenticationFailed, ConnectionFailed, HeatzyException
 import pytest
-from heatzypy.exception import (
-    AuthenticationFailed,
-    ConnectionFailed,
-    HeatzyException,
-)
+
+from custom_components.heatzy.coordinator import HeatzyDataUpdateCoordinator
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import EVENT_HOMEASSISTANT_STOP
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import UpdateFailed
-
-from custom_components.heatzy.coordinator import HeatzyDataUpdateCoordinator
 
 
 async def test_setup_success(

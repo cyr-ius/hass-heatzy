@@ -4,6 +4,7 @@ import logging
 from typing import Any
 
 from heatzypy import HeatzyException
+
 from homeassistant.core import callback
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity import EntityDescription

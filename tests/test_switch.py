@@ -1,11 +1,9 @@
+"""Tests for the Heatzy switches."""
+
 import copy
 from unittest.mock import AsyncMock
 
 import pytest
-from homeassistant.components.climate import HVACMode
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import ATTR_ENTITY_ID, STATE_OFF, STATE_ON, Platform
-from homeassistant.core import HomeAssistant, ServiceCall
 
 from custom_components.heatzy.const import (
     CONF_ATTRS,
@@ -13,6 +11,10 @@ from custom_components.heatzy.const import (
     CONF_LOCK,
     CONF_WINDOW,
 )
+from homeassistant.components.climate import HVACMode
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import ATTR_ENTITY_ID, STATE_OFF, STATE_ON, Platform
+from homeassistant.core import HomeAssistant, ServiceCall
 
 
 @pytest.mark.parametrize("entity_id", ["switch.test_pilote_v2_lock"])

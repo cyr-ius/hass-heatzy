@@ -1,7 +1,5 @@
 """Diagnostics support for Heatzy."""
 
-from __future__ import annotations
-
 import asyncio
 import copy
 from typing import Any

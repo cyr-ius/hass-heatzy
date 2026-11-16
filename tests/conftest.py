@@ -4,9 +4,6 @@ from collections.abc import Generator
 from unittest.mock import AsyncMock, MagicMock, PropertyMock, patch
 
 import pytest
-from homeassistant.config_entries import SOURCE_USER, ConfigEntry
-from homeassistant.const import CONF_USERNAME
-from homeassistant.core import HomeAssistant
 from pytest_homeassistant_custom_component.common import (
     MockConfigEntry,
     load_json_object_fixture,
@@ -20,6 +17,9 @@ from custom_components.heatzy.const import (
     CONF_TIMER_SWITCH,
     DOMAIN,
 )
+from homeassistant.config_entries import SOURCE_USER, ConfigEntry
+from homeassistant.const import CONF_USERNAME
+from homeassistant.core import HomeAssistant
 
 from .const import MOCK_USER_INPUT
 
@@ -31,7 +31,6 @@ MODE_OFF = {CONF_ATTRS: {"mode": "stop"}}
 @pytest.fixture(autouse=True)
 def auto_enable_custom_integrations(enable_custom_integrations):
     """Enable custom integrations for hass."""
-    yield
 
 
 @pytest.fixture(name="HeatzyClient")
