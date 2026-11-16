@@ -2,12 +2,22 @@
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers import device_registry as dr
+from homeassistant.helpers import config_validation as cv, device_registry as dr
+from homeassistant.helpers.typing import ConfigType
 
-from .const import PLATFORMS
+from .const import DOMAIN, PLATFORMS
 from .coordinator import HeatzyDataUpdateCoordinator
+from .services import async_setup_services
 
 type HeatzyConfigEntry = ConfigEntry[HeatzyDataUpdateCoordinator]
+
+CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
+
+
+async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
+    """Set up the Heatzy component: register its services once."""
+    async_setup_services(hass)
+    return True
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: HeatzyConfigEntry) -> bool:

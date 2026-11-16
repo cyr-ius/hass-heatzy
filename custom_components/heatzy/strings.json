@@ -5,8 +5,12 @@
       "user": {
         "title": "Register your heatzy account",
         "data": {
-          "username": "[%key:common::config_flow::data::email]",
-          "password": "[%key:common::config_flow::data::password]"
+          "username": "[%key:common::config_flow::data::email%]",
+          "password": "[%key:common::config_flow::data::password%]"
+        },
+        "data_description": {
+          "username": "The email address of your Heatzy account (the one used in the Heatzy app).",
+          "password": "The password of your Heatzy account."
         }
       }
     },

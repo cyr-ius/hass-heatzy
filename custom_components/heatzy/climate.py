@@ -5,8 +5,6 @@ from dataclasses import dataclass, field
 import logging
 from typing import Any, ClassVar
 
-import voluptuous as vol
-
 from homeassistant.components.climate import (
     ATTR_TARGET_TEMP_HIGH,
     ATTR_TARGET_TEMP_LOW,
@@ -21,9 +19,9 @@ from homeassistant.components.climate import (
     HVACAction,
     HVACMode,
 )
-from homeassistant.const import CONF_DELAY, UnitOfTemperature
+from homeassistant.const import UnitOfTemperature
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers import entity_platform, entity_registry as er
+from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from . import HeatzyConfigEntry, HeatzyDataUpdateCoordinator
@@ -63,16 +61,6 @@ from .const import (
     PRESET_VACATION,
 )
 from .entity import HeatzyEntity
-
-# derog_time is stored on one byte by the module (see services.yaml)
-DELAY_SCHEMA = vol.All(vol.Coerce(int), vol.Range(min=1, max=255))
-
-SERVICES = [
-    ["boost", {vol.Required(CONF_DELAY): DELAY_SCHEMA}, "_async_boost_mode"],
-    ["vacation", {vol.Required(CONF_DELAY): DELAY_SCHEMA}, "_async_vacation_mode"],
-    ["presence", {}, "_async_presence_detection"],
-]
-
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -325,10 +313,6 @@ async def async_setup_entry(
 ) -> None:
     """Load all Heatzy devices."""
     coordinator = entry.runtime_data
-
-    platform = entity_platform.async_get_current_platform()
-    for service in SERVICES:
-        platform.async_register_entity_service(*service)
 
     entities: list[HeatzyThermostat] = []
     for unique_id, device in coordinator.data.items():

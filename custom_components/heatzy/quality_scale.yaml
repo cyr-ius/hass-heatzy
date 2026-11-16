@@ -1,0 +1,113 @@
+---
+# Integration quality scale: https://developers.home-assistant.io/docs/core/integration-quality-scale/
+# hassfest only checks this file for core integrations: it tracks progress here.
+rules:
+  # Bronze
+  action-setup: done
+  appropriate-polling: done
+  brands: done
+  common-modules: done
+  config-flow: done
+  config-flow-test-coverage: done
+  dependency-transparency: done
+  docs-actions: done
+  docs-conditions:
+    status: exempt
+    comment: The integration provides no conditions.
+  docs-high-level-description: done
+  docs-installation-instructions: done
+  docs-removal-instructions: done
+  docs-triggers:
+    status: exempt
+    comment: The integration provides no triggers.
+  entity-event-setup: done
+  entity-unique-id: done
+  has-entity-name: done
+  runtime-data: done
+  test-before-configure: done
+  test-before-setup: done
+  unique-config-entry: done
+
+  # Silver
+  action-exceptions:
+    status: todo
+    comment: Command errors are only logged by HeatzyEntity._handle_action.
+  config-entry-unloading: done
+  docs-configuration-parameters:
+    status: exempt
+    comment: The integration has no options flow.
+  docs-installation-parameters: done
+  entity-unavailable: done
+  integration-owner: done
+  log-when-unavailable: done
+  parallel-updates:
+    status: todo
+    comment: PARALLEL_UPDATES is not set in the platforms.
+  reauthentication-flow:
+    status: todo
+    comment: An authentication failure should raise ConfigEntryAuthFailed and start a reauth flow.
+  test-coverage:
+    status: todo
+    comment: Total coverage is about 95 %, some modules are below.
+
+  # Gold
+  devices: done
+  diagnostics:
+    status: todo
+    comment: Implemented, but it sends commands to the modules; it must become read-only.
+  discovery:
+    status: todo
+    comment: To assess, modules are reached through the cloud account.
+  discovery-update-info:
+    status: todo
+    comment: Depends on discovery.
+  docs-data-update: done
+  docs-examples:
+    status: todo
+    comment: Add automation examples.
+  docs-known-limitations:
+    status: todo
+    comment: Document the limitations per model.
+  docs-supported-devices: done
+  docs-supported-functions:
+    status: todo
+    comment: Document the entities per model.
+  docs-troubleshooting:
+    status: todo
+    comment: Add a troubleshooting section (diagnostics, debug logs).
+  docs-use-cases:
+    status: todo
+    comment: Add use cases.
+  dynamic-devices:
+    status: todo
+    comment: Modules added to the account after setup need a reload.
+  entity-category: done
+  entity-device-class: done
+  entity-disabled-by-default:
+    status: todo
+    comment: Review which diagnostic entities should be disabled by default.
+  entity-translations:
+    status: todo
+    comment: Climate and switch entities have no translations; descriptions still set name.
+  exception-translations:
+    status: todo
+    comment: Depends on action-exceptions.
+  icon-translations:
+    status: todo
+    comment: Icons are set in the entity descriptions instead of icons.json.
+  reconfiguration-flow:
+    status: todo
+    comment: No reconfigure step.
+  repair-issues:
+    status: exempt
+    comment: No issue the user can repair has been identified.
+  stale-devices:
+    status: todo
+    comment: Modules removed from the account are not removed automatically.
+
+  # Platinum
+  async-dependency: done
+  inject-websession: done
+  strict-typing:
+    status: todo
+    comment: Needs mypy strict here and a typed heatzypy (py.typed).
