@@ -129,3 +129,6 @@ dmypy.json
 fakedevices.py
 # End of https://www.gitignore.io/api/python
 .mcp.json
+
+# Claude Code local settings
+.claude/settings.local.json
