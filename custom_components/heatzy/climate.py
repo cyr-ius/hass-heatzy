@@ -19,7 +19,12 @@ from homeassistant.components.climate import (
     HVACAction,
     HVACMode,
 )
-from homeassistant.const import UnitOfTemperature
+from homeassistant.const import (
+    STATE_UNAVAILABLE,
+    STATE_UNKNOWN,
+    Platform,
+    UnitOfTemperature,
+)
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -46,6 +51,7 @@ from .const import (
     CUR_TEMP_L,
     DEFAULT_BOOST,
     DEFAULT_VACATION,
+    DOMAIN,
     ECO_TEMP_H,
     ECO_TEMP_L,
     FROST_TEMP,
@@ -60,7 +66,7 @@ from .const import (
     PRESET_COMFORT_2,
     PRESET_VACATION,
 )
-from .entity import HeatzyEntity
+from .entity import HeatzyEntity, async_setup_device_entities
 
 # Data comes from the coordinator; actions are not limited.
 PARALLEL_UPDATES = 0
@@ -314,17 +320,17 @@ async def async_setup_entry(
     entry: HeatzyConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    """Load all Heatzy devices."""
-    coordinator = entry.runtime_data
+    """Set up the climate entity of each module."""
 
-    entities: list[HeatzyThermostat] = []
-    for unique_id, device in coordinator.data.items():
+    def build(coordinator, did: str, device: dict[str, Any]) -> list[HeatzyThermostat]:
         product_key = device.get(CONF_PRODUCT_KEY)
-        for description in CLIMATE_TYPES:
-            if product_key in description.products:
-                entities.extend([description.fn(coordinator, description, unique_id)])
+        return [
+            description.fn(coordinator, description, did)
+            for description in CLIMATE_TYPES
+            if product_key in description.products
+        ]
 
-    async_add_entities(entities)
+    async_setup_device_entities(entry, async_add_entities, build)
 
 
 class HeatzyThermostat(HeatzyEntity, ClimateEntity):
@@ -496,50 +502,38 @@ class HeatzyThermostat(HeatzyEntity, ClimateEntity):
             )
 
     async def _async_derog_mode_action(self, derog_mode) -> bool:
-        """Execute derogation mode."""
-        if derog_mode not in {PRESET_BOOST, PRESET_VACATION}:
-            return False
-
+        """Start the vacation or boost derogation chosen as preset."""
         if derog_mode == PRESET_VACATION:
-            days = self._device.get("vacation", DEFAULT_VACATION)
-            await self._async_vacation_mode(int(days))
+            days = self._get_number_value("vacation") or DEFAULT_VACATION
+            await self._async_derog_mode(1, days)
+            return True
         if derog_mode == PRESET_BOOST:
-            minutes = self._device.get("boost", DEFAULT_BOOST)
-            await self._async_boost_mode(int(minutes))
-
-        return True
+            minutes = self._get_number_value("boost") or DEFAULT_BOOST
+            await self._async_derog_mode(2, minutes)
+            return True
+        return False
 
     async def _async_vacation_mode(self, delay: int) -> None:
-        """Service Vacation Mode."""
-        if value := self._get_state_by_name("Vacation"):
-            delay = int(float(value))
+        """Action heatzy.vacation: frost protection for delay days."""
         await self._async_derog_mode(1, delay)
 
     async def _async_boost_mode(self, delay: int) -> None:
-        """Service Boost Mode."""
-        if value := self._get_state_by_name("Boost"):
-            delay = int(float(value))
+        """Action heatzy.boost: comfort for delay minutes."""
         await self._async_derog_mode(2, delay)
 
     async def _async_presence_detection(self) -> None:
         """Presence detection derog."""
         return await self._async_derog_mode(3)
 
-    def _get_state_by_name(self, original_name: str) -> Any:
-        """Get state for a entity."""
-        entity_reg = er.async_get(self.hass)
-        if self.device_entry is None or self.device_entry.id is None:
+    def _get_number_value(self, key: str) -> int | None:
+        """Return the duration set in the number entity of this module."""
+        entity_id = er.async_get(self.hass).async_get_entity_id(
+            Platform.NUMBER, DOMAIN, f"{self.device_id}_{key}"
+        )
+        state = self.hass.states.get(entity_id) if entity_id else None
+        if state is None or state.state in (STATE_UNKNOWN, STATE_UNAVAILABLE):
             return None
-        entities = er.async_entries_for_device(entity_reg, self.device_entry.id)
-        try:
-            entity = next(
-                entity for entity in entities if entity.original_name == original_name
-            )
-            states = self.hass.states.get(entity.entity_id)
-            if states is not None and hasattr(states, "state"):
-                return states.state
-        except StopIteration:
-            return None
+        return int(float(state.state))
 
 
 class HeatzyPiloteV1Thermostat(HeatzyThermostat):

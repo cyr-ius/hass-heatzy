@@ -1,18 +1,16 @@
-"""Diagnostics support for Heatzy."""
+"""Diagnostics support for Heatzy.
 
-import asyncio
-import copy
+Read-only: it never sends a command to the modules.
+"""
+
 from typing import Any
 
+from heatzypy import HeatzyException
+
 from homeassistant.components.diagnostics import async_redact_data
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 
-from .const import CONF_ATTRS, CONF_MODE
-
-# Delay (in seconds) to let the websocket push the callbacks triggered by the
-# control commands before unregistering our listener.
-CALLBACK_WAIT = 3
+from . import HeatzyConfigEntry
 
 TO_REDACT = {
     "address",
@@ -26,55 +24,49 @@ TO_REDACT = {
     "imei",
     "ip4_addr",
     "ip6_addr",
+    "mac",
+    "passcode",
     "password",
     "phone",
     "serial",
     "system_serial",
+    "token",
+    "uid",
     "userId",
     "username",
-    "mac",
-    "passcode",
 }
 
 
 async def async_get_config_entry_diagnostics(
-    hass: HomeAssistant, entry: ConfigEntry
+    hass: HomeAssistant, entry: HeatzyConfigEntry
 ) -> dict[str, Any]:
     """Return diagnostics for a config entry."""
     coordinator = entry.runtime_data
-    bindings = await coordinator.api.async_bindings()
-    devices = await coordinator.api.websocket.async_get_devices()
-    api_errors = []
-    api_callback = []
+    errors: list[str] = []
 
-    def callback(data):
-        # Snapshot: the websocket keeps mutating the devices it pushes
-        api_callback.append(copy.deepcopy(data))
-
-    coordinator.api.websocket.register_callback(callback)
+    bindings: Any = None
     try:
-        for did, device in devices.items():
-            old_state = device.get("attrs").get("mode")
-            if old_state:
-                await coordinator.api.websocket.async_control_device(
-                    did, {CONF_ATTRS: {CONF_MODE: "eco"}}
-                )
-                await coordinator.api.websocket.async_control_device(
-                    did, {CONF_ATTRS: {CONF_MODE: old_state}}
-                )
-    except Exception as err:  # noqa: BLE001
-        api_errors.append(err)
-    finally:
-        await asyncio.sleep(CALLBACK_WAIT)
-        coordinator.api.websocket.unregister_callback(callback)
+        bindings = await coordinator.api.async_bindings()
+    except HeatzyException as err:
+        errors.append(f"bindings: {err}")
+
+    devices: Any = None
+    try:
+        devices = await coordinator.api.websocket.async_get_devices()
+    except HeatzyException as err:
+        errors.append(f"websocket devices: {err}")
 
     return {
         "entry": {
             "data": async_redact_data(entry.data, TO_REDACT),
             "options": async_redact_data(entry.options, TO_REDACT),
         },
+        "coordinator": {
+            "last_update_success": coordinator.last_update_success,
+            "websocket_connected": coordinator.api.websocket.is_connected,
+            "data": async_redact_data(coordinator.data, TO_REDACT),
+        },
         "bindings": async_redact_data(bindings, TO_REDACT),
         "devices": async_redact_data(devices, TO_REDACT),
-        "errors": api_errors,
-        "callbacks": async_redact_data(api_callback, TO_REDACT),
+        "errors": errors,
     }

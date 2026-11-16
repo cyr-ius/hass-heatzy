@@ -21,7 +21,7 @@ from .const import (
     CONF_PRODUCT_KEY,
     PILOTE_PRO_V1,
 )
-from .entity import HeatzyEntity
+from .entity import HeatzyEntity, async_setup_device_entities
 
 # Data comes from the coordinator; actions are not limited.
 PARALLEL_UPDATES = 0
@@ -40,11 +40,9 @@ class HeatzyBinarySensorEntityDescription(BinarySensorEntityDescription):
 BINARY_SENSOR_TYPES: Final[tuple[HeatzyBinarySensorEntityDescription, ...]] = (
     HeatzyBinarySensorEntityDescription(
         key="presence_detected",
-        name="Presence detection",
         translation_key="presence_detected",
         products=PILOTE_PRO_V1,
         device_class=BinarySensorDeviceClass.OCCUPANCY,
-        icon="mdi:location-enter",
         value_fn=lambda device: (
             device.get("attrs", {}).get(CONF_DEROG_MODE) == 3
             and device.get("attrs", {}).get(CONF_CUR_MODE) == "cft"
@@ -67,19 +65,19 @@ async def async_setup_entry(
     entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    """Set up the sensors."""
-    coordinator = entry.runtime_data
-    entities = []
+    """Set up the binary sensors of each module."""
 
-    for unique_id, device in coordinator.data.items():
+    def build(
+        coordinator, did: str, device: dict[str, Any]
+    ) -> list[HeatzyBinarySensor]:
         product_key = device.get(CONF_PRODUCT_KEY)
-        entities.extend(
-            description.cls(coordinator, description, unique_id)
+        return [
+            description.cls(coordinator, description, did)
             for description in BINARY_SENSOR_TYPES
             if description.products is None or product_key in description.products
-        )
+        ]
 
-    async_add_entities(entities)
+    async_setup_device_entities(entry, async_add_entities, build)
 
 
 class HeatzyBinarySensor(HeatzyEntity, BinarySensorEntity):

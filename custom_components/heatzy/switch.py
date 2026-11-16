@@ -24,7 +24,7 @@ from .const import (
     PILOTE_V3,
     PILOTE_V4,
 )
-from .entity import HeatzyEntity
+from .entity import HeatzyEntity, async_setup_device_entities
 
 # Data comes from the coordinator; actions are not limited.
 PARALLEL_UPDATES = 0
@@ -43,7 +43,6 @@ class HeatzySwitchEntityDescription(SwitchEntityDescription):
 SWITCH_TYPES: Final[tuple[HeatzySwitchEntityDescription, ...]] = (
     HeatzySwitchEntityDescription(
         key="lock",
-        name="Lock",
         translation_key="lock",
         products=PILOTE_V2 + PILOTE_V3 + PILOTE_V4 + BLOOM + PILOTE_PRO_V1,
         attr=CONF_LOCK,
@@ -52,7 +51,6 @@ SWITCH_TYPES: Final[tuple[HeatzySwitchEntityDescription, ...]] = (
     ),
     HeatzySwitchEntityDescription(
         key="lock",
-        name="Lock",
         translation_key="lock",
         products=GLOW,
         attr=CONF_LOCK_OTHER,
@@ -61,20 +59,16 @@ SWITCH_TYPES: Final[tuple[HeatzySwitchEntityDescription, ...]] = (
     ),
     HeatzySwitchEntityDescription(
         key="window",
-        name="Window",
         translation_key="window",
         products=PILOTE_PRO_V1,
-        icon="mdi:window-open-variant",
         attr=CONF_WINDOW,
         entity_category=EntityCategory.CONFIG,
         value_fn=lambda attrs: attrs.get(CONF_WINDOW) == 1,
     ),
     HeatzySwitchEntityDescription(
         key="presence_enabled",
-        name="Presence mode",
         translation_key="presence_enabled",
         products=PILOTE_PRO_V1,
-        icon="mdi:cog",
         attr=CONF_DEROG_MODE,
         entity_category=EntityCategory.CONFIG,
         cls=lambda *args: PresenceSwitch(*args),
@@ -88,18 +82,17 @@ async def async_setup_entry(
     entry: HeatzyConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    """Set the sensor platform."""
-    coordinator = entry.runtime_data
-    entities = []
+    """Set up the switches of each module."""
 
-    for unique_id, device in coordinator.data.items():
+    def build(coordinator, did: str, device: dict[str, Any]) -> list[HeatzySwitch]:
         product_key = device.get(CONF_PRODUCT_KEY)
-        for description in SWITCH_TYPES:
-            cls = description.cls
-            if product_key in description.products:
-                entities.extend([cls(coordinator, description, unique_id)])
+        return [
+            description.cls(coordinator, description, did)
+            for description in SWITCH_TYPES
+            if product_key in description.products
+        ]
 
-    async_add_entities(entities)
+    async_setup_device_entities(entry, async_add_entities, build)
 
 
 class HeatzySwitch(HeatzyEntity, SwitchEntity):
