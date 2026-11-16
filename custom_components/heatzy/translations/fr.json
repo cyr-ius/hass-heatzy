@@ -58,6 +58,11 @@
       "calibration": {
         "name": "Étalonnage température"
       }
+    },
+    "binary_sensor": {
+      "connectivity": {
+        "name": "Connectivité"
+      }
     }
   }
 }

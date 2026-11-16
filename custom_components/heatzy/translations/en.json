@@ -54,6 +54,11 @@
       "calibration": {
         "name": "Temperature calibration"
       }
+    },
+    "binary_sensor": {
+      "connectivity": {
+        "name": "Connectivity"
+      }
     }
   }
 }
