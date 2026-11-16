@@ -3,13 +3,11 @@
 import copy
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant
 from pytest_homeassistant_custom_component.common import load_json_object_fixture
 
-from custom_components.heatzy.diagnostics import (
-    async_get_config_entry_diagnostics,
-)
+from custom_components.heatzy.diagnostics import async_get_config_entry_diagnostics
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.core import HomeAssistant
 
 
 async def test_diagnostics(

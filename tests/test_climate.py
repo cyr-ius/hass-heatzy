@@ -1,6 +1,14 @@
+"""Tests for the Heatzy climate entities."""
+
 from unittest.mock import AsyncMock
 
 import pytest
+
+from custom_components.heatzy.const import (
+    PRESET_COMFORT_1,
+    PRESET_COMFORT_2,
+    PRESET_VACATION,
+)
 from homeassistant.components.climate import (
     ATTR_CURRENT_HUMIDITY,
     ATTR_CURRENT_TEMPERATURE,
@@ -9,6 +17,7 @@ from homeassistant.components.climate import (
     ATTR_PRESET_MODE,
     ATTR_TARGET_TEMP_HIGH,
     ATTR_TARGET_TEMP_LOW,
+    DOMAIN as CLIM_DOMAIN,
     PRESET_AWAY,
     PRESET_BOOST,
     PRESET_COMFORT,
@@ -18,16 +27,9 @@ from homeassistant.components.climate import (
     SERVICE_SET_TEMPERATURE,
     HVACMode,
 )
-from homeassistant.components.climate import DOMAIN as CLIM_DOMAIN
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import ATTR_ENTITY_ID
 from homeassistant.core import HomeAssistant, ServiceCall
-
-from custom_components.heatzy.const import (
-    PRESET_COMFORT_1,
-    PRESET_COMFORT_2,
-    PRESET_VACATION,
-)
 
 
 @pytest.mark.parametrize(
@@ -47,7 +49,7 @@ async def test_current_preset(
     HeatzyClient: AsyncMock,
     entity_id: str,
 ):
-    """Test preset state"""
+    """Test preset state."""
     await hass.config_entries.async_setup(config_entry.entry_id)
     await hass.async_block_till_done()
     assert hass.states.get(entity_id).attributes[ATTR_PRESET_MODE] is not None
@@ -71,7 +73,7 @@ async def test_set_hvac_mode(
     service_calls: list[ServiceCall],
     entity_id: str,
 ):
-    """Test Hvac mode"""
+    """Test Hvac mode."""
     await hass.config_entries.async_setup(config_entry.entry_id)
     await hass.async_block_till_done()
 
@@ -125,7 +127,7 @@ async def test_set_preset(
     service_calls: list[ServiceCall],
     entity_id: str,
 ):
-    """Test number"""
+    """Test number."""
     await hass.config_entries.async_setup(config_entry.entry_id)
     await hass.async_block_till_done()
 
@@ -172,7 +174,7 @@ async def test_derogation_vacation(
     service_calls: list[ServiceCall],
     entity_id: str,
 ):
-    """Test number"""
+    """Test number."""
 
     await hass.config_entries.async_setup(config_entry.entry_id)
     await hass.async_block_till_done()
@@ -208,7 +210,7 @@ async def test_derogation_vacation_temp(
     service_calls: list[ServiceCall],
     entity_id: str,
 ):
-    """Test number"""
+    """Test number."""
 
     await hass.config_entries.async_setup(config_entry.entry_id)
     await hass.async_block_till_done()
@@ -245,7 +247,7 @@ async def test_derogation_boost(
     service_calls: list[ServiceCall],
     entity_id: str,
 ):
-    """Test number"""
+    """Test number."""
 
     await hass.config_entries.async_setup(config_entry.entry_id)
     await hass.async_block_till_done()
@@ -280,7 +282,7 @@ async def test_set_preset_comfort1_2(
     service_calls: list[ServiceCall],
     entity_id: str,
 ):
-    """Test number"""
+    """Test number."""
 
     await hass.config_entries.async_setup(config_entry.entry_id)
     await hass.async_block_till_done()
@@ -318,7 +320,7 @@ async def test_set_temperature(
     service_calls: list[ServiceCall],
     entity_id: str,
 ):
-    """Test number"""
+    """Test number."""
 
     await hass.config_entries.async_setup(config_entry.entry_id)
     await hass.async_block_till_done()
@@ -354,7 +356,7 @@ async def test_current_temp(
     HeatzyClient: AsyncMock,
     entity_id: str,
 ):
-    """Test number"""
+    """Test number."""
 
     await hass.config_entries.async_setup(config_entry.entry_id)
     await hass.async_block_till_done()
@@ -368,7 +370,7 @@ async def test_current_humidity(
     HeatzyClient: AsyncMock,
     entity_id: str,
 ):
-    """Test number"""
+    """Test number."""
 
     await hass.config_entries.async_setup(config_entry.entry_id)
     await hass.async_block_till_done()

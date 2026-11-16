@@ -70,9 +70,11 @@ async def async_setup_entry(
 
     for unique_id, device in coordinator.data.items():
         product_key = device.get(CONF_PRODUCT_KEY)
-        for description in BINARY_SENSOR_TYPES:
-            if description.products is None or product_key in description.products:
-                entities.append(description.cls(coordinator, description, unique_id))
+        entities.extend(
+            description.cls(coordinator, description, unique_id)
+            for description in BINARY_SENSOR_TYPES
+            if description.products is None or product_key in description.products
+        )
 
     async_add_entities(entities)
 

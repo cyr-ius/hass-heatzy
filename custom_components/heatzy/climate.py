@@ -1,11 +1,12 @@
 """Climate sensors for Heatzy."""
 
-import logging
 from collections.abc import Callable
 from dataclasses import dataclass, field
+import logging
 from typing import Any, ClassVar
 
 import voluptuous as vol
+
 from homeassistant.components.climate import (
     ATTR_TARGET_TEMP_HIGH,
     ATTR_TARGET_TEMP_LOW,
@@ -22,9 +23,11 @@ from homeassistant.components.climate import (
 )
 from homeassistant.const import CONF_DELAY, UnitOfTemperature
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers import config_validation as cv
-from homeassistant.helpers import entity_platform
-from homeassistant.helpers import entity_registry as er
+from homeassistant.helpers import (
+    config_validation as cv,
+    entity_platform,
+    entity_registry as er,
+)
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from . import HeatzyConfigEntry, HeatzyDataUpdateCoordinator
@@ -605,26 +608,26 @@ class Glowv1Thermostat(HeatzyThermostat):
     @property
     def native_target_temperature_high(self) -> float:
         """Return comfort temperature."""
-        cft_tempH = self._attrs.get(self.entity_description.attr_temp_high, 0)
-        cft_tempL = self._attrs.get(self.entity_description.attr_temp_low, 0)
+        cft_temp_h = self._attrs.get(self.entity_description.attr_temp_high, 0)
+        cft_temp_l = self._attrs.get(self.entity_description.attr_temp_low, 0)
 
         if self.preset_mode in {PRESET_AWAY, PRESET_VACATION}:
-            cft_tempH = 0
-            cft_tempL = FROST_TEMP * 10
+            cft_temp_h = 0
+            cft_temp_l = FROST_TEMP * 10
 
-        return (cft_tempL + (cft_tempH * 256)) / 10
+        return (cft_temp_l + (cft_temp_h * 256)) / 10
 
     @property
     def native_target_temperature_low(self) -> float:
         """Return comfort temperature."""
-        eco_tempH = self._attrs.get(self.entity_description.attr_eco_temp_high, 0)
-        eco_tempL = self._attrs.get(self.entity_description.attr_eco_temp_low, 0)
+        eco_temp_h = self._attrs.get(self.entity_description.attr_eco_temp_high, 0)
+        eco_temp_l = self._attrs.get(self.entity_description.attr_eco_temp_low, 0)
 
         if self.preset_mode in {PRESET_AWAY, PRESET_VACATION}:
-            eco_tempH = 0
-            eco_tempL = FROST_TEMP * 10
+            eco_temp_h = 0
+            eco_temp_l = FROST_TEMP * 10
 
-        return (eco_tempL + (eco_tempH * 256)) / 10
+        return (eco_temp_l + (eco_temp_h * 256)) / 10
 
     @property
     def hvac_action(self) -> HVACAction:
