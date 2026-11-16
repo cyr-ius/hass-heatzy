@@ -1,5 +1,6 @@
 """Tests for the Heatzy climate entities."""
 
+import copy
 from unittest.mock import AsyncMock
 
 import pytest
@@ -579,3 +580,21 @@ async def test_vacation_preset_uses_number_value(
     assert HeatzyClient.websocket.async_control_device.await_args.args[1] == {
         CONF_ATTRS: {CONF_DEROG_MODE: 1, CONF_DEROG_TIME: 12}
     }
+
+
+async def test_new_module_added_without_reload(
+    hass: HomeAssistant, config_entry: ConfigEntry, HeatzyClient: AsyncMock
+) -> None:
+    """A module added to the account gets its entities at the next update."""
+    await hass.config_entries.async_setup(config_entry.entry_id)
+    await hass.async_block_till_done()
+    coordinator = config_entry.runtime_data
+
+    data = copy.deepcopy(coordinator.data)
+    new = copy.deepcopy(data["gizrKSNGrryMk9gAjWKFD3"])
+    new.update(did="newModule", dev_alias="NEW_MODULE")
+    data["newModule"] = new
+    coordinator.async_set_updated_data(data)
+    await hass.async_block_till_done()
+
+    assert hass.states.get("climate.new_module") is not None

@@ -30,7 +30,7 @@ from .const import (
     CONF_PRODUCT_KEY,
     PRESET_VACATION,
 )
-from .entity import HeatzyEntity
+from .entity import HeatzyEntity, async_setup_device_entities
 
 # Data comes from the coordinator; actions are not limited.
 PARALLEL_UPDATES = 0
@@ -90,16 +90,17 @@ async def async_setup_entry(
     entry: HeatzyConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    """Set up the platform."""
-    coordinator = entry.runtime_data
-    entities = []
-    for unique_id, device in coordinator.data.items():
+    """Set up the number entities of each module."""
+
+    def build(coordinator, did: str, device: dict[str, Any]) -> list[NumberEntity]:
         product_key = device.get(CONF_PRODUCT_KEY)
-        for description in NUMBER_TYPES:
-            cls = description.cls
-            if product_key in description.products:
-                entities.extend([cls(coordinator, description, unique_id)])
-    async_add_entities(entities)
+        return [
+            description.cls(coordinator, description, did)
+            for description in NUMBER_TYPES
+            if product_key in description.products
+        ]
+
+    async_setup_device_entities(entry, async_add_entities, build)
 
 
 class HeatzyNumber(HeatzyEntity, RestoreNumber):

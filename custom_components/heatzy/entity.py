@@ -1,14 +1,17 @@
 """Parent Entity."""
 
+from collections.abc import Callable, Iterable
 import logging
 from typing import Any
 
 from heatzypy import HeatzyException
 
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import callback
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.device_registry import DeviceInfo
-from homeassistant.helpers.entity import EntityDescription
+from homeassistant.helpers.entity import Entity, EntityDescription
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import (
@@ -22,6 +25,39 @@ from .const import (
 from .coordinator import HeatzyDataUpdateCoordinator
 
 _LOGGER = logging.getLogger(__name__)
+
+type EntityBuilder = Callable[
+    [HeatzyDataUpdateCoordinator, str, dict[str, Any]], Iterable[Entity]
+]
+
+
+@callback
+def async_setup_device_entities(
+    entry: ConfigEntry,
+    async_add_entities: AddEntitiesCallback,
+    build: EntityBuilder,
+) -> None:
+    """Add the entities of each module, also for modules added to the account later.
+
+    build returns the entities of one module (did, device data).
+    """
+    coordinator: HeatzyDataUpdateCoordinator = entry.runtime_data
+    known: set[str] = set()
+
+    @callback
+    def _async_add_new_devices() -> None:
+        if new := set(coordinator.data or {}) - known:
+            known.update(new)
+            async_add_entities(
+                [
+                    entity
+                    for did in sorted(new)
+                    for entity in build(coordinator, did, coordinator.data[did])
+                ]
+            )
+
+    _async_add_new_devices()
+    entry.async_on_unload(coordinator.async_add_listener(_async_add_new_devices))
 
 
 class HeatzyEntity(CoordinatorEntity[HeatzyDataUpdateCoordinator]):
