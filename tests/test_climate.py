@@ -8,6 +8,7 @@ import voluptuous as vol
 from custom_components.heatzy.const import (
     CONF_ATTRS,
     CONF_DEROG_MODE,
+    CONF_DEROG_TIME,
     DOMAIN,
     PRESET_COMFORT_1,
     PRESET_COMFORT_2,
@@ -31,8 +32,9 @@ from homeassistant.components.climate import (
     SERVICE_SET_TEMPERATURE,
     HVACMode,
 )
+from homeassistant.components.number import ATTR_VALUE, SERVICE_SET_VALUE
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import ATTR_ENTITY_ID, CONF_DELAY
+from homeassistant.const import ATTR_ENTITY_ID, CONF_DELAY, Platform
 from homeassistant.core import HomeAssistant, ServiceCall
 
 
@@ -530,3 +532,50 @@ async def test_pilote_v1_set_preset(
     did, config = HeatzyClient.async_control_device.await_args.args
     assert did == "AKcJWxXqnqrlTip2CB6buh"
     assert "raw" in config
+
+
+@pytest.mark.parametrize(("service", "mode"), [("boost", 2), ("vacation", 1)])
+async def test_action_uses_given_delay(
+    hass: HomeAssistant,
+    config_entry: ConfigEntry,
+    HeatzyClient: AsyncMock,
+    service: str,
+    mode: int,
+) -> None:
+    """The action sends its own delay, not the duration of the number entity."""
+    await hass.config_entries.async_setup(config_entry.entry_id)
+    await hass.async_block_till_done()
+
+    await hass.services.async_call(
+        DOMAIN,
+        service,
+        {ATTR_ENTITY_ID: "climate.test_pilote_v2", CONF_DELAY: 30},
+        blocking=True,
+    )
+    assert HeatzyClient.websocket.async_control_device.await_args.args[1] == {
+        CONF_ATTRS: {CONF_DEROG_MODE: mode, CONF_DEROG_TIME: 30}
+    }
+
+
+async def test_vacation_preset_uses_number_value(
+    hass: HomeAssistant, config_entry: ConfigEntry, HeatzyClient: AsyncMock
+) -> None:
+    """The vacation preset takes the duration set in the number entity."""
+    await hass.config_entries.async_setup(config_entry.entry_id)
+    await hass.async_block_till_done()
+
+    await hass.services.async_call(
+        Platform.NUMBER,
+        SERVICE_SET_VALUE,
+        {ATTR_ENTITY_ID: "number.test_pilote_v2_vacation", ATTR_VALUE: 12},
+        blocking=True,
+    )
+    await hass.services.async_call(
+        CLIM_DOMAIN,
+        SERVICE_SET_PRESET_MODE,
+        {ATTR_ENTITY_ID: "climate.test_pilote_v2", ATTR_PRESET_MODE: PRESET_VACATION},
+        blocking=True,
+    )
+    assert HeatzyClient.websocket.async_control_device.await_args.args[1] == {
+        CONF_ATTRS: {CONF_DEROG_MODE: 1, CONF_DEROG_TIME: 12}
+    }
