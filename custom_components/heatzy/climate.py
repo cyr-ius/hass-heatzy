@@ -430,7 +430,10 @@ class HeatzyThermostat(HeatzyEntity, ClimateEntity):
             return HVACMode.AUTO
         if self._attrs.get(CONF_DEROG_MODE) == 1:
             return HVACMode.AUTO
-        if self._attrs.get(self.entity_description.attr_stop) == self.entity_description.value_stop:
+        if (
+            self._attrs.get(self.entity_description.attr_stop)
+            == self.entity_description.value_stop
+        ):
             return HVACMode.OFF
 
         return HVACMode.HEAT
@@ -459,7 +462,9 @@ class HeatzyThermostat(HeatzyEntity, ClimateEntity):
 
     async def async_turn_auto(self) -> None:
         """Presence detection derog."""
-        config = {CONF_ATTRS: {CONF_TIMER_SWITCH: 1, CONF_DEROG_MODE: 0, CONF_DEROG_TIME: 0}}
+        config = {
+            CONF_ATTRS: {CONF_TIMER_SWITCH: 1, CONF_DEROG_MODE: 0, CONF_DEROG_TIME: 0}
+        }
         await self._handle_action(config, "Error while turn auto")
 
     async def async_set_hvac_mode(self, hvac_mode: HVACMode) -> None:
@@ -489,7 +494,10 @@ class HeatzyThermostat(HeatzyEntity, ClimateEntity):
 
     async def _async_derog_mode_off(self) -> None:
         """Disable derog mode."""
-        if self._attrs.get(CONF_DEROG_MODE, 0) > 0 or self._attrs.get(CONF_TIMER_SWITCH, 0) == 1:
+        if (
+            self._attrs.get(CONF_DEROG_MODE, 0) > 0
+            or self._attrs.get(CONF_TIMER_SWITCH, 0) == 1
+        ):
             await self._handle_action(
                 {
                     CONF_ATTRS: {
@@ -537,7 +545,9 @@ class HeatzyThermostat(HeatzyEntity, ClimateEntity):
             return None
         entities = er.async_entries_for_device(entity_reg, self.device_entry.id)
         try:
-            entity = next(entity for entity in entities if entity.original_name == original_name)
+            entity = next(
+                entity for entity in entities if entity.original_name == original_name
+            )
             states = self.hass.states.get(entity.entity_id)
             if states is not None and hasattr(states, "state"):
                 return states.state
@@ -733,7 +743,9 @@ class Bloomv1Thermostat(HeatzyThermostat):
         if (temp_eco := kwargs.get(ATTR_TARGET_TEMP_LOW)) and (
             temp_cft := kwargs.get(ATTR_TARGET_TEMP_HIGH)
         ):
-            config = {CONF_ATTRS: {CONF_CFT_TEMP: int(temp_cft), CONF_ECO_TEMP: int(temp_eco)}}
+            config = {
+                CONF_ATTRS: {CONF_CFT_TEMP: int(temp_cft), CONF_ECO_TEMP: int(temp_eco)}
+            }
             await self._handle_action(config, "Error to set temperature")
 
 
@@ -800,7 +812,10 @@ class HeatzyPiloteProV1(HeatzyThermostat):
             return HVACMode.AUTO
         if self._attrs.get(CONF_DEROG_MODE) in (1, 3):
             return HVACMode.AUTO
-        if self._attrs.get(self.entity_description.attr_stop) == self.entity_description.value_stop:
+        if (
+            self._attrs.get(self.entity_description.attr_stop)
+            == self.entity_description.value_stop
+        ):
             return HVACMode.OFF
 
         return HVACMode.HEAT

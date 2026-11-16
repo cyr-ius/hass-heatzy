@@ -164,7 +164,9 @@ async def test_set_preset(
     assert hass.states.get(entity_id).attributes[ATTR_PRESET_MODE] == PRESET_ECO
 
 
-@pytest.mark.parametrize("entity_id", ["climate.test_pilote_v2", "climate.test_pilote_v4"])
+@pytest.mark.parametrize(
+    "entity_id", ["climate.test_pilote_v2", "climate.test_pilote_v4"]
+)
 async def test_derogation_vacation(
     hass: HomeAssistant,
     config_entry: ConfigEntry,

@@ -55,7 +55,9 @@ class HeatzyEntity(CoordinatorEntity[HeatzyDataUpdateCoordinator]):
         """Return True if the coordinator is healthy and the device is online."""
         return super().available and bool(self._device.get(CONF_IS_ONLINE, True))
 
-    async def _handle_action(self, config: dict[str, Any], error_msg: str = "Error unknown"):
+    async def _handle_action(
+        self, config: dict[str, Any], error_msg: str = "Error unknown"
+    ):
         """Execute action."""
         try:
             _LOGGER.debug("Handle action (%s): %s", self.device_id, config)
