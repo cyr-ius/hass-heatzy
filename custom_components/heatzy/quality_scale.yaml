@@ -29,9 +29,7 @@ rules:
   unique-config-entry: done
 
   # Silver
-  action-exceptions:
-    status: todo
-    comment: Command errors are only logged by HeatzyEntity._handle_action.
+  action-exceptions: done
   config-entry-unloading: done
   docs-configuration-parameters:
     status: exempt
@@ -40,15 +38,9 @@ rules:
   entity-unavailable: done
   integration-owner: done
   log-when-unavailable: done
-  parallel-updates:
-    status: todo
-    comment: PARALLEL_UPDATES is not set in the platforms.
-  reauthentication-flow:
-    status: todo
-    comment: An authentication failure should raise ConfigEntryAuthFailed and start a reauth flow.
-  test-coverage:
-    status: todo
-    comment: Total coverage is about 95 %, some modules are below.
+  parallel-updates: done
+  reauthentication-flow: done
+  test-coverage: done
 
   # Gold
   devices: done
@@ -89,9 +81,7 @@ rules:
   entity-translations:
     status: todo
     comment: Climate and switch entities have no translations; descriptions still set name.
-  exception-translations:
-    status: todo
-    comment: Depends on action-exceptions.
+  exception-translations: done
   icon-translations:
     status: todo
     comment: Icons are set in the entity descriptions instead of icons.json.
